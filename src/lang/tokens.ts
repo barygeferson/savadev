@@ -18,6 +18,7 @@ export enum TokenType {
   VOID = 'VOID',           // null
   WITHIN = 'WITHIN',       // for-in
   BE = 'BE',               // assignment operator
+  SUMMON = 'SUMMON',       // import from gist
   
   // Operators
   PLUS = 'PLUS',
@@ -83,4 +84,5 @@ export const KEYWORDS: Record<string, TokenType> = {
   'isnt': TokenType.ISNT,
   'equals': TokenType.EQUALS,
   'differs': TokenType.DIFFERS,
+  'summon': TokenType.SUMMON,
 };
