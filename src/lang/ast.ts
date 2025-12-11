@@ -11,6 +11,7 @@ export type ASTNode =
   | MemberExpr
   | ArrayLiteral
   | DictLiteral
+  | LambdaExpr
   | LetStatement
   | AssignStatement
   | IndexAssignStatement
@@ -96,6 +97,13 @@ export interface ArrayLiteral {
 export interface DictLiteral {
   type: 'DictLiteral';
   entries: { key: ASTNode; value: ASTNode }[];
+  line: number;
+}
+
+export interface LambdaExpr {
+  type: 'LambdaExpr';
+  params: string[];
+  body: ASTNode;
   line: number;
 }
 

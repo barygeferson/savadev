@@ -54,6 +54,8 @@ export class Interpreter {
         return node.elements.map((el) => this.execute(el, env));
       case 'DictLiteral':
         return this.executeDict(node, env);
+      case 'LambdaExpr':
+        return this.executeLambda(node, env);
       case 'LetStatement':
         return this.executeLet(node, env);
       case 'AssignStatement':
@@ -86,13 +88,13 @@ export class Interpreter {
   }
 
   private executeBinary(node: AST.BinaryExpr, env: Environment): unknown {
-    // Short-circuit evaluation for && and ||
-    if (node.operator === '&&') {
+    // Short-circuit evaluation for also/either
+    if (node.operator === 'also') {
       const left = this.execute(node.left, env);
       if (!isTruthy(left)) return left;
       return this.execute(node.right, env);
     }
-    if (node.operator === '||') {
+    if (node.operator === 'either') {
       const left = this.execute(node.left, env);
       if (isTruthy(left)) return left;
       return this.execute(node.right, env);
@@ -121,6 +123,8 @@ export class Interpreter {
         });
       case '%':
         return this.requireNumbers(left, right, '%', node.line, (a, b) => a % b);
+      case '^':
+        return this.requireNumbers(left, right, '^', node.line, (a, b) => Math.pow(a, b));
       case '<':
         return this.requireNumbers(left, right, '<', node.line, (a, b) => a < b);
       case '>':
@@ -129,9 +133,10 @@ export class Interpreter {
         return this.requireNumbers(left, right, '<=', node.line, (a, b) => a <= b);
       case '>=':
         return this.requireNumbers(left, right, '>=', node.line, (a, b) => a >= b);
-      case '==':
+      case 'equals':
         return this.isEqual(left, right);
-      case '!=':
+      case 'differs':
+      case '<>':
         return !this.isEqual(left, right);
       default:
         throw new SdevError(`Unknown operator: ${node.operator}`, node.line);
@@ -147,8 +152,7 @@ export class Interpreter {
           throw new SdevError("Cannot use '-' with non-number", node.line);
         }
         return -operand;
-      case '!':
-      case 'not':
+      case 'isnt':
         return !isTruthy(operand);
       default:
         throw new SdevError(`Unknown unary operator: ${node.operator}`, node.line);
@@ -164,7 +168,7 @@ export class Interpreter {
     }
 
     const fn = callee as SdevFunction;
-    if (fn.type !== 'builtin' && fn.type !== 'user') {
+    if (fn.type !== 'builtin' && fn.type !== 'user' && fn.type !== 'lambda') {
       throw new SdevError('Cannot call non-function', node.line);
     }
 
@@ -223,6 +227,27 @@ export class Interpreter {
       result[key] = value;
     }
     return result;
+  }
+
+  private executeLambda(node: AST.LambdaExpr, env: Environment): SdevFunction {
+    return {
+      type: 'lambda' as const,
+      call: (args: unknown[], callLine: number) => {
+        if (args.length !== node.params.length) {
+          throw new SdevError(
+            `Lambda expects ${node.params.length} arguments, got ${args.length}`,
+            callLine
+          );
+        }
+
+        const lambdaEnv = new Environment(env);
+        for (let i = 0; i < node.params.length; i++) {
+          lambdaEnv.define(node.params[i], args[i]);
+        }
+
+        return this.execute(node.body, lambdaEnv);
+      },
+    };
   }
 
   private executeLet(node: AST.LetStatement, env: Environment): void {

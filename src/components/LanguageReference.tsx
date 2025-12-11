@@ -7,72 +7,99 @@ import {
 
 const REFERENCE = [
   {
-    title: 'Data Types',
-    content: `**int** - Integer numbers: \`42\`, \`-10\`
-**float** - Decimal numbers: \`3.14\`, \`-0.5\`
-**string** - Text: \`"hello"\`, \`'world'\`
-**bool** - Boolean: \`true\`, \`false\`
-**null** - Null value: \`null\`
+    title: 'Core Types',
+    content: `**number** - Any number: \`42\`, \`3.14\`, \`-10\`
+**text** - Strings: \`"hello"\`, \`'world'\`, \`\`backticks\`\`
+**truth** - Booleans: \`yep\`, \`nope\`
+**void** - Null value: \`void\`
 **list** - Arrays: \`[1, 2, 3]\`
-**dict** - Objects: \`{"key": "value"}\``,
+**tome** - Dictionaries: \`:: "key": value ;;\``,
   },
   {
     title: 'Variables',
-    content: `Declare with \`let\`:
+    content: `Use \`forge\` and \`be\`:
 \`\`\`
-let x = 10;
-let name = "sdev";
-x = 20;  // reassign
+forge x be 10
+forge name be "sdev"
+x be 20  // reassign
 \`\`\``,
   },
   {
-    title: 'Functions',
-    content: `Define with \`func\`:
+    title: 'Conjurations (Functions)',
+    content: `Define with \`conjure\`:
 \`\`\`
-func add(a, b) {
-  return a + b;
-}
+conjure add(a, b) ::
+  yield a + b
+;;
 
-let result = add(2, 3);
+forge result be add(2, 3)
+\`\`\`
+
+**Lambdas** with \`->\`:
+\`\`\`
+forge double be (x) -> x * 2
+forge sum be (a, b) -> a + b
 \`\`\``,
   },
   {
     title: 'Control Flow',
-    content: `**If/Else:**
+    content: `**Ponder (If):**
 \`\`\`
-if x > 10 {
-  print("big");
-} else if x > 5 {
-  print("medium");
-} else {
-  print("small");
-}
+ponder x > 10 ::
+  speak("big")
+;; otherwise ponder x > 5 ::
+  speak("medium")
+;; otherwise ::
+  speak("small")
+;;
 \`\`\`
 
-**While:**
+**Cycle (While):**
 \`\`\`
-while x < 10 {
-  x = x + 1;
-}
+cycle x < 10 ::
+  x be x + 1
+;;
 \`\`\``,
   },
   {
     title: 'Operators',
-    content: `**Arithmetic:** \`+\`, \`-\`, \`*\`, \`/\`, \`%\`
-**Comparison:** \`==\`, \`!=\`, \`<\`, \`>\`, \`<=\`, \`>=\`
-**Logical:** \`and\`, \`or\`, \`not\` (or \`&&\`, \`||\`, \`!\`)
-**String concat:** \`"a" + "b"\` → \`"ab"\``,
+    content: `**Math:** \`+\`, \`-\`, \`*\`, \`/\`, \`%\`, \`^\` (power)
+**Compare:** \`equals\`, \`differs\`, \`<\`, \`>\`, \`<=\`, \`>=\`
+**Logic:** \`also\` (and), \`either\` (or), \`isnt\` (not)
+**Pipe:** \`|>\` chains function calls
+**Text concat:** \`"a" + "b"\` → \`"ab"\``,
+  },
+  {
+    title: 'Pipe Operator',
+    content: `Chain operations with \`|>\`:
+\`\`\`
+// Traditional
+forge doubled be each(nums, x -> x * 2)
+forge filtered be sift(doubled, x -> x > 5)
+
+// With pipes
+forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
+\`\`\``,
   },
   {
     title: 'Built-in Functions',
-    content: `**I/O:** \`print(value)\`
-**Type:** \`type(x)\`, \`int(x)\`, \`float(x)\`, \`str(x)\`, \`bool(x)\`
-**Collections:** \`len(x)\`, \`push(list, item)\`, \`pop(list)\`
-**Strings:** \`split(str, sep)\`, \`join(list, sep)\`
-**Math:** \`abs(x)\`, \`min(...)\`, \`max(...)\`, \`sqrt(x)\`, \`pow(x,y)\`, \`floor(x)\`, \`ceil(x)\`, \`round(x)\`
-**Range:** \`range(n)\`, \`range(start, end)\`, \`range(start, end, step)\`
-**Dict:** \`keys(dict)\`, \`values(dict)\`
-**Slice:** \`slice(list, start, end)\``,
+    content: `**Output:** \`speak()\`, \`whisper()\`, \`shout()\`
+**Type:** \`essence()\`, \`morph(value, "type")\`
+**Lists:** \`measure()\`, \`gather()\`, \`pluck()\`, \`portion()\`
+**Transform:** \`each()\`, \`sift()\`, \`fold()\`
+**Text:** \`upper()\`, \`lower()\`, \`trim()\`, \`shatter()\`, \`weave()\`
+**Math:** \`magnitude()\`, \`least()\`, \`greatest()\`, \`root()\`, \`ground()\`, \`elevate()\`, \`nearby()\`, \`chaos()\`
+**Sequence:** \`sequence(n)\`, \`sequence(start, end)\`
+**Tomes:** \`inscriptions()\`, \`contents()\`
+**Misc:** \`reverse()\`, \`contains()\``,
+  },
+  {
+    title: 'Unique Syntax',
+    content: `**Blocks:** \`::\` starts, \`;;\` ends (no braces!)
+**No semicolons** required at end of statements
+**Power operator:** \`2^10\` for exponentiation
+**yep/nope** instead of true/false
+**void** instead of null`,
   },
 ];
 
