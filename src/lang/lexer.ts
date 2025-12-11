@@ -31,18 +31,15 @@ export class Lexer {
     const singleTokens: Record<string, TokenType> = {
       '(': TokenType.LPAREN,
       ')': TokenType.RPAREN,
-      '{': TokenType.LBRACE,
-      '}': TokenType.RBRACE,
       '[': TokenType.LBRACKET,
       ']': TokenType.RBRACKET,
       ',': TokenType.COMMA,
-      ';': TokenType.SEMICOLON,
-      ':': TokenType.COLON,
       '.': TokenType.DOT,
       '+': TokenType.PLUS,
-      '-': TokenType.MINUS,
       '*': TokenType.STAR,
       '%': TokenType.PERCENT,
+      '^': TokenType.CARET,
+      '~': TokenType.TILDE,
     };
 
     if (singleTokens[char]) {
@@ -50,7 +47,47 @@ export class Lexer {
       return;
     }
 
-    // Two character tokens or single
+    // Two character tokens
+    if (char === '-') {
+      if (this.peek() === '>') {
+        this.advance();
+        this.addToken(TokenType.ARROW, '->', startColumn);
+      } else {
+        this.addToken(TokenType.MINUS, char, startColumn);
+      }
+      return;
+    }
+
+    if (char === '|') {
+      if (this.peek() === '>') {
+        this.advance();
+        this.addToken(TokenType.PIPE, '|>', startColumn);
+      } else {
+        throw new SdevError(`Unexpected character: '${char}'`, this.line, startColumn);
+      }
+      return;
+    }
+
+    if (char === ':') {
+      if (this.peek() === ':') {
+        this.advance();
+        this.addToken(TokenType.DOUBLE_COLON, '::', startColumn);
+      } else {
+        this.addToken(TokenType.COLON, ':', startColumn);
+      }
+      return;
+    }
+
+    if (char === ';') {
+      if (this.peek() === ';') {
+        this.advance();
+        this.addToken(TokenType.DOUBLE_SEMI, ';;', startColumn);
+      } else {
+        // Single semicolon is just ignored (optional statement terminator)
+      }
+      return;
+    }
+
     if (char === '/') {
       if (this.peek() === '/') {
         // Comment - skip to end of line
@@ -63,32 +100,15 @@ export class Lexer {
       return;
     }
 
-    if (char === '=') {
-      if (this.peek() === '=') {
-        this.advance();
-        this.addToken(TokenType.EQ, '==', startColumn);
-      } else {
-        this.addToken(TokenType.ASSIGN, '=', startColumn);
-      }
-      return;
-    }
-
-    if (char === '!') {
-      if (this.peek() === '=') {
-        this.advance();
-        this.addToken(TokenType.NEQ, '!=', startColumn);
-      } else {
-        this.addToken(TokenType.NOT, '!', startColumn);
-      }
-      return;
-    }
-
     if (char === '<') {
-      if (this.peek() === '=') {
+      if (this.peek() === '>') {
         this.advance();
-        this.addToken(TokenType.LTE, '<=', startColumn);
+        this.addToken(TokenType.DIFFERS, '<>', startColumn);
+      } else if (this.peek() === '=') {
+        this.advance();
+        this.addToken(TokenType.ATMOST, '<=', startColumn);
       } else {
-        this.addToken(TokenType.LT, '<', startColumn);
+        this.addToken(TokenType.LESS, '<', startColumn);
       }
       return;
     }
@@ -96,27 +116,15 @@ export class Lexer {
     if (char === '>') {
       if (this.peek() === '=') {
         this.advance();
-        this.addToken(TokenType.GTE, '>=', startColumn);
+        this.addToken(TokenType.ATLEAST, '>=', startColumn);
       } else {
-        this.addToken(TokenType.GT, '>', startColumn);
+        this.addToken(TokenType.MORE, '>', startColumn);
       }
       return;
     }
 
-    if (char === '&' && this.peek() === '&') {
-      this.advance();
-      this.addToken(TokenType.AND, '&&', startColumn);
-      return;
-    }
-
-    if (char === '|' && this.peek() === '|') {
-      this.advance();
-      this.addToken(TokenType.OR, '||', startColumn);
-      return;
-    }
-
-    // String literals
-    if (char === '"' || char === "'") {
+    // String literals with backticks or quotes
+    if (char === '"' || char === "'" || char === '`') {
       this.scanString(char, startColumn);
       return;
     }
@@ -140,6 +148,12 @@ export class Lexer {
     let value = '';
     while (!this.isAtEnd() && this.peek() !== quote) {
       if (this.peek() === '\n') {
+        if (quote === '`') {
+          value += this.advance();
+          this.line++;
+          this.column = 1;
+          continue;
+        }
         throw new SdevError('Unterminated string', this.line, startColumn);
       }
       if (this.peek() === '\\') {
@@ -152,6 +166,7 @@ export class Lexer {
           '\\': '\\',
           '"': '"',
           "'": "'",
+          '`': '`',
         };
         value += escapes[escaped] ?? escaped;
       } else {

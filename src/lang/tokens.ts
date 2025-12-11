@@ -4,16 +4,20 @@ export enum TokenType {
   STRING = 'STRING',
   IDENTIFIER = 'IDENTIFIER',
   
-  // Keywords
-  LET = 'LET',
-  FUNC = 'FUNC',
-  IF = 'IF',
-  ELSE = 'ELSE',
-  WHILE = 'WHILE',
-  RETURN = 'RETURN',
-  TRUE = 'TRUE',
-  FALSE = 'FALSE',
-  NULL = 'NULL',
+  // Unique sdev Keywords
+  FORGE = 'FORGE',         // variable declaration
+  CONJURE = 'CONJURE',     // function
+  PONDER = 'PONDER',       // if
+  OTHERWISE = 'OTHERWISE', // else
+  CYCLE = 'CYCLE',         // while
+  YIELD = 'YIELD',         // return
+  YEET = 'YEET',           // break
+  SKIP = 'SKIP',           // continue
+  YEP = 'YEP',             // true
+  NOPE = 'NOPE',           // false
+  VOID = 'VOID',           // null
+  WITHIN = 'WITHIN',       // for-in
+  BE = 'BE',               // assignment operator
   
   // Operators
   PLUS = 'PLUS',
@@ -21,36 +25,35 @@ export enum TokenType {
   STAR = 'STAR',
   SLASH = 'SLASH',
   PERCENT = 'PERCENT',
+  CARET = 'CARET',         // power operator
   
-  // Comparison
-  EQ = 'EQ',
-  NEQ = 'NEQ',
-  LT = 'LT',
-  GT = 'GT',
-  LTE = 'LTE',
-  GTE = 'GTE',
+  // Comparison (unique symbols)
+  EQUALS = 'EQUALS',       // ==
+  DIFFERS = 'DIFFERS',     // !=
+  LESS = 'LESS',           // <
+  MORE = 'MORE',           // >
+  ATMOST = 'ATMOST',       // <=
+  ATLEAST = 'ATLEAST',     // >=
   
-  // Logical
-  AND = 'AND',
-  OR = 'OR',
-  NOT = 'NOT',
+  // Logical (word-based)
+  ALSO = 'ALSO',           // and
+  EITHER = 'EITHER',       // or
+  ISNT = 'ISNT',           // not
   
-  // Assignment
-  ASSIGN = 'ASSIGN',
-  
-  // Delimiters
+  // Delimiters (unique block syntax)
   LPAREN = 'LPAREN',
   RPAREN = 'RPAREN',
-  LBRACE = 'LBRACE',
-  RBRACE = 'RBRACE',
   LBRACKET = 'LBRACKET',
   RBRACKET = 'RBRACKET',
   COMMA = 'COMMA',
-  SEMICOLON = 'SEMICOLON',
+  ARROW = 'ARROW',         // ->
+  PIPE = 'PIPE',           // |>
+  DOUBLE_COLON = 'DOUBLE_COLON', // :: block start
+  DOUBLE_SEMI = 'DOUBLE_SEMI',   // ;; block end
   COLON = 'COLON',
   DOT = 'DOT',
+  TILDE = 'TILDE',         // ~ for special ops
   
-  // Special
   EOF = 'EOF',
 }
 
@@ -62,16 +65,22 @@ export interface Token {
 }
 
 export const KEYWORDS: Record<string, TokenType> = {
-  'let': TokenType.LET,
-  'func': TokenType.FUNC,
-  'if': TokenType.IF,
-  'else': TokenType.ELSE,
-  'while': TokenType.WHILE,
-  'return': TokenType.RETURN,
-  'true': TokenType.TRUE,
-  'false': TokenType.FALSE,
-  'null': TokenType.NULL,
-  'and': TokenType.AND,
-  'or': TokenType.OR,
-  'not': TokenType.NOT,
+  'forge': TokenType.FORGE,
+  'conjure': TokenType.CONJURE,
+  'ponder': TokenType.PONDER,
+  'otherwise': TokenType.OTHERWISE,
+  'cycle': TokenType.CYCLE,
+  'yield': TokenType.YIELD,
+  'yeet': TokenType.YEET,
+  'skip': TokenType.SKIP,
+  'yep': TokenType.YEP,
+  'nope': TokenType.NOPE,
+  'void': TokenType.VOID,
+  'within': TokenType.WITHIN,
+  'be': TokenType.BE,
+  'also': TokenType.ALSO,
+  'either': TokenType.EITHER,
+  'isnt': TokenType.ISNT,
+  'equals': TokenType.EQUALS,
+  'differs': TokenType.DIFFERS,
 };
