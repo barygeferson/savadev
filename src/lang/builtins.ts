@@ -399,6 +399,61 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
+  // Advanced math
+  builtins.set('sin', { type: 'builtin', call: (args: unknown[]) => Math.sin(args[0] as number) });
+  builtins.set('cos', { type: 'builtin', call: (args: unknown[]) => Math.cos(args[0] as number) });
+  builtins.set('tan', { type: 'builtin', call: (args: unknown[]) => Math.tan(args[0] as number) });
+  builtins.set('log', { type: 'builtin', call: (args: unknown[]) => Math.log(args[0] as number) });
+  builtins.set('exp', { type: 'builtin', call: (args: unknown[]) => Math.exp(args[0] as number) });
+  builtins.set('PI', { type: 'builtin', call: () => Math.PI });
+  builtins.set('TAU', { type: 'builtin', call: () => Math.PI * 2 });
+  
+  // Random utilities
+  builtins.set('randint', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('randint() takes 2 arguments', line);
+      const min = Math.ceil(args[0] as number);
+      const max = Math.floor(args[1] as number);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+  });
+  
+  builtins.set('pick', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('pick() takes 1 argument', line);
+      const arr = args[0];
+      if (!Array.isArray(arr)) throw new SdevError('Argument must be a list', line);
+      return arr[Math.floor(Math.random() * arr.length)] ?? null;
+    },
+  });
+  
+  builtins.set('shuffle', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('shuffle() takes 1 argument', line);
+      const arr = args[0];
+      if (!Array.isArray(arr)) throw new SdevError('Argument must be a list', line);
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    },
+  });
+
+  // JSON
+  builtins.set('etch', { type: 'builtin', call: (args: unknown[]) => JSON.stringify(args[0]) });
+  builtins.set('unetch', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      try { return JSON.parse(args[0] as string); }
+      catch { throw new SdevError('Invalid JSON', line); }
+    },
+  });
+
   return builtins;
 }
 
