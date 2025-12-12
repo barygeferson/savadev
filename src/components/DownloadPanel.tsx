@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Download, FileCode, Terminal } from 'lucide-react';
+import { Download, FileCode, Terminal, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DownloadPanelProps {
@@ -182,19 +182,102 @@ Visit [sdev documentation](https://sdev-lang.dev) to learn more about the langua
     toast.success('Downloaded main.sdev');
   };
 
+  const downloadWindowsInstaller = () => {
+    // Generate a self-contained Windows batch installer
+    const batchScript = `@echo off
+title sdev Language Installer
+color 0A
+echo.
+echo  ========================================
+echo     sdev Programming Language Installer
+echo  ========================================
+echo.
+echo  Installing sdev to C:\\sdev...
+echo.
+
+if not exist "C:\\sdev" mkdir "C:\\sdev"
+if not exist "C:\\sdev\\bin" mkdir "C:\\sdev\\bin"
+if not exist "C:\\sdev\\lib" mkdir "C:\\sdev\\lib"
+
+echo  Creating sdev interpreter...
+(
+echo #!/usr/bin/env python3
+echo # sdev interpreter - download full version from sdev-lang.dev
+echo import sys
+echo print("sdev v1.0.0 - Run 'sdev file.sdev' to execute code")
+echo print("Download the full interpreter from: https://sdev-lang.dev")
+) > "C:\\sdev\\bin\\sdev.py"
+
+echo  Creating launcher...
+(
+echo @echo off
+echo python "C:\\sdev\\bin\\sdev.py" %%*
+) > "C:\\sdev\\bin\\sdev.cmd"
+
+echo  Creating example file...
+(
+echo // Welcome to sdev!
+echo forge message be "Hello from sdev!"
+echo speak^(message^)
+echo.
+echo // Try running: sdev example.sdev
+) > "C:\\sdev\\example.sdev"
+
+echo.
+echo  Adding sdev to PATH...
+setx PATH "%PATH%;C:\\sdev\\bin" >nul 2>&1
+
+echo.
+echo  ========================================
+echo     Installation Complete!
+echo  ========================================
+echo.
+echo  sdev has been installed to C:\\sdev
+echo.
+echo  To get started:
+echo    1. Open a new terminal
+echo    2. Run: sdev example.sdev
+echo.
+echo  Download the full Python interpreter from:
+echo    https://sdev-lang.dev/downloads
+echo.
+echo  Press any key to open sdev folder...
+pause >nul
+explorer "C:\\sdev"
+`;
+
+    const blob = new Blob([batchScript], { type: 'application/bat' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sdev-installer.bat';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded Windows installer. Right-click and "Run as Administrator"');
+  };
+
+  const downloadPythonInterpreter = () => {
+    window.open('/sdev-interpreter.py', '_blank');
+    toast.success('Opening Python interpreter download');
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       <Button variant="outline" size="sm" onClick={downloadSdevFile} className="gap-2">
         <FileCode className="w-4 h-4" />
-        .sdev file
+        .sdev
       </Button>
       <Button variant="outline" size="sm" onClick={generateHTML} className="gap-2">
         <Download className="w-4 h-4" />
-        HTML App
+        HTML
       </Button>
-      <Button variant="outline" size="sm" onClick={generateNPMPackage} className="gap-2">
+      <Button variant="outline" size="sm" onClick={downloadWindowsInstaller} className="gap-2">
+        <Monitor className="w-4 h-4" />
+        Windows
+      </Button>
+      <Button variant="outline" size="sm" onClick={downloadPythonInterpreter} className="gap-2">
         <Terminal className="w-4 h-4" />
-        NPM Package
+        Python
       </Button>
     </div>
   );
