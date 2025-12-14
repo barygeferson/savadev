@@ -55,6 +55,20 @@ class TokenType(Enum):
     ATTEMPT = auto()     # try
     RESCUE = auto()      # catch
     
+    # OOP Keywords
+    ESSENCE = auto()     # class declaration
+    EXTEND = auto()      # inheritance
+    SELF = auto()        # this reference
+    SUPER = auto()       # parent reference
+    NEW = auto()         # instantiation
+    STATIC = auto()      # static method
+    PRIVATE = auto()     # private member
+    
+    # Async Keywords
+    AWAIT = auto()       # await
+    ASYNC = auto()       # async function
+    SPAWN = auto()       # spawn parallel task
+    
     # Operators
     PLUS = auto()
     MINUS = auto()
@@ -115,6 +129,18 @@ KEYWORDS = {
     'summon': TokenType.SUMMON,
     'attempt': TokenType.ATTEMPT,
     'rescue': TokenType.RESCUE,
+    # OOP
+    'essence': TokenType.ESSENCE,
+    'extend': TokenType.EXTEND,
+    'self': TokenType.SELF,
+    'super': TokenType.SUPER,
+    'new': TokenType.NEW,
+    'static': TokenType.STATIC,
+    'private': TokenType.PRIVATE,
+    # Async
+    'await': TokenType.AWAIT,
+    'async': TokenType.ASYNC,
+    'spawn': TokenType.SPAWN,
 }
 
 # ============= Token =============
@@ -497,6 +523,58 @@ class BlockStatement(ASTNode):
 class ExpressionStatement(ASTNode):
     expression: ASTNode
 
+# ============= OOP AST Nodes =============
+
+@dataclass
+class ClassDeclaration(ASTNode):
+    name: str
+    parent: Optional[str]
+    methods: List['MethodDeclaration']
+    static_methods: List['MethodDeclaration']
+    constructor: Optional['MethodDeclaration']
+
+@dataclass
+class MethodDeclaration(ASTNode):
+    name: str
+    params: List[str]
+    body: 'BlockStatement'
+    is_private: bool = False
+
+@dataclass
+class NewExpr(ASTNode):
+    class_name: str
+    args: List[ASTNode]
+
+@dataclass
+class SelfExpr(ASTNode):
+    pass
+
+@dataclass
+class SuperExpr(ASTNode):
+    method: Optional[str] = None
+    args: Optional[List[ASTNode]] = None
+
+@dataclass
+class PropertyAccessExpr(ASTNode):
+    obj: ASTNode
+    property: str
+
+# ============= Async AST Nodes =============
+
+@dataclass
+class AsyncFuncDeclaration(ASTNode):
+    name: str
+    params: List[str]
+    body: 'BlockStatement'
+
+@dataclass
+class AwaitExpr(ASTNode):
+    expression: ASTNode
+
+@dataclass
+class SpawnExpr(ASTNode):
+    expressions: List[ASTNode]
+
 @dataclass
 class Program(ASTNode):
     statements: List[ASTNode]
@@ -521,6 +599,10 @@ class Parser:
             return self.parse_forge_statement()
         if self.check(TokenType.CONJURE):
             return self.parse_conjure_declaration()
+        if self.check(TokenType.ASYNC):
+            return self.parse_async_declaration()
+        if self.check(TokenType.ESSENCE):
+            return self.parse_class_declaration()
         if self.check(TokenType.PONDER):
             return self.parse_ponder_statement()
         if self.check(TokenType.CYCLE):
@@ -809,6 +891,49 @@ class Parser:
         if self.match(TokenType.VOID):
             return NullLiteral(token.line)
         
+        if self.match(TokenType.SELF):
+            return SelfExpr(token.line)
+        
+        if self.match(TokenType.SUPER):
+            # super.method() or super()
+            if self.match(TokenType.DOT):
+                method = self.consume(TokenType.IDENTIFIER, "Expected method name after 'super.'").value
+                if self.match(TokenType.LPAREN):
+                    args = []
+                    if not self.check(TokenType.RPAREN):
+                        args.append(self.parse_expression())
+                        while self.match(TokenType.COMMA):
+                            args.append(self.parse_expression())
+                    self.consume(TokenType.RPAREN, "Expected ')'")
+                    return SuperExpr(token.line, method, args)
+                return SuperExpr(token.line, method, None)
+            return SuperExpr(token.line, None, None)
+        
+        if self.match(TokenType.NEW):
+            class_name = self.consume(TokenType.IDENTIFIER, "Expected class name").value
+            self.consume(TokenType.LPAREN, "Expected '('")
+            args = []
+            if not self.check(TokenType.RPAREN):
+                args.append(self.parse_expression())
+                while self.match(TokenType.COMMA):
+                    args.append(self.parse_expression())
+            self.consume(TokenType.RPAREN, "Expected ')'")
+            return NewExpr(token.line, class_name, args)
+        
+        if self.match(TokenType.AWAIT):
+            expr = self.parse_unary()
+            return AwaitExpr(token.line, expr)
+        
+        if self.match(TokenType.SPAWN):
+            self.consume(TokenType.LPAREN, "Expected '('")
+            exprs = []
+            if not self.check(TokenType.RPAREN):
+                exprs.append(self.parse_expression())
+                while self.match(TokenType.COMMA):
+                    exprs.append(self.parse_expression())
+            self.consume(TokenType.RPAREN, "Expected ')'")
+            return SpawnExpr(token.line, exprs)
+        
         if self.match(TokenType.IDENTIFIER):
             return Identifier(token.line, token.value)
         
@@ -855,6 +980,67 @@ class Parser:
             return self.parse_dict_literal(token.line)
         
         raise SdevError(f"Unexpected token: '{token.value}'", token.line, token.column)
+    
+    def parse_class_declaration(self) -> ClassDeclaration:
+        """Parse: essence ClassName extend Parent :: methods ;; """
+        essence_token = self.consume(TokenType.ESSENCE, "Expected 'essence'")
+        name = self.consume(TokenType.IDENTIFIER, "Expected class name").value
+        
+        parent = None
+        if self.match(TokenType.EXTEND):
+            parent = self.consume(TokenType.IDENTIFIER, "Expected parent class name").value
+        
+        self.consume(TokenType.DOUBLE_COLON, "Expected '::'")
+        
+        methods = []
+        static_methods = []
+        constructor = None
+        
+        while not self.check(TokenType.DOUBLE_SEMI) and not self.is_at_end():
+            is_static = self.match(TokenType.STATIC)
+            is_private = self.match(TokenType.PRIVATE)
+            
+            if self.check(TokenType.CONJURE):
+                self.advance()
+                method_name = self.consume(TokenType.IDENTIFIER, "Expected method name").value
+                self.consume(TokenType.LPAREN, "Expected '('")
+                
+                params = []
+                if not self.check(TokenType.RPAREN):
+                    params.append(self.consume(TokenType.IDENTIFIER, "Expected parameter").value)
+                    while self.match(TokenType.COMMA):
+                        params.append(self.consume(TokenType.IDENTIFIER, "Expected parameter").value)
+                self.consume(TokenType.RPAREN, "Expected ')'")
+                
+                body = self.parse_block_statement()
+                method = MethodDeclaration(essence_token.line, method_name, params, body, is_private)
+                
+                if method_name == "init" and not is_static:
+                    constructor = method
+                elif is_static:
+                    static_methods.append(method)
+                else:
+                    methods.append(method)
+        
+        self.consume(TokenType.DOUBLE_SEMI, "Expected ';;'")
+        return ClassDeclaration(essence_token.line, name, parent, methods, static_methods, constructor)
+    
+    def parse_async_declaration(self) -> AsyncFuncDeclaration:
+        """Parse: async conjure name(params) :: body ;;"""
+        async_token = self.consume(TokenType.ASYNC, "Expected 'async'")
+        self.consume(TokenType.CONJURE, "Expected 'conjure' after 'async'")
+        name = self.consume(TokenType.IDENTIFIER, "Expected function name").value
+        self.consume(TokenType.LPAREN, "Expected '('")
+        
+        params = []
+        if not self.check(TokenType.RPAREN):
+            params.append(self.consume(TokenType.IDENTIFIER, "Expected parameter").value)
+            while self.match(TokenType.COMMA):
+                params.append(self.consume(TokenType.IDENTIFIER, "Expected parameter").value)
+        self.consume(TokenType.RPAREN, "Expected ')'")
+        
+        body = self.parse_block_statement()
+        return AsyncFuncDeclaration(async_token.line, name, params, body)
     
     def parse_array_literal(self, line: int) -> ArrayLiteral:
         elements = []
@@ -968,6 +1154,348 @@ class SdevLambda:
     params: List[str]
     body: ASTNode
     closure: Environment
+
+# ============= OOP Runtime Types =============
+
+@dataclass
+class SdevClass:
+    """Runtime representation of a class"""
+    name: str
+    parent: Optional['SdevClass']
+    methods: Dict[str, 'SdevMethod']
+    static_methods: Dict[str, 'SdevMethod']
+    constructor: Optional['SdevMethod']
+
+@dataclass
+class SdevMethod:
+    """Runtime representation of a method"""
+    name: str
+    params: List[str]
+    body: BlockStatement
+    is_private: bool
+    closure: Environment
+
+@dataclass
+class SdevInstance:
+    """Runtime instance of a class"""
+    sdev_class: SdevClass
+    fields: Dict[str, Any]
+
+@dataclass
+class SdevBoundMethod:
+    """A method bound to an instance"""
+    instance: SdevInstance
+    method: 'SdevMethod'
+
+# ============= Async Runtime Types =============
+
+@dataclass
+class SdevAsyncFunc:
+    """Async function"""
+    name: str
+    params: List[str]
+    body: BlockStatement
+    closure: Environment
+
+@dataclass
+class SdevPromise:
+    """Promise-like wrapper for async results"""
+    value: Any = None
+    resolved: bool = False
+    error: Optional[str] = None
+
+# ============= Data Structure Types =============
+
+class SdevSet:
+    """Set data structure"""
+    def __init__(self, items=None):
+        self._items = list(items) if items else []
+    
+    def add(self, item):
+        if item not in self._items:
+            self._items.append(item)
+    
+    def remove(self, item):
+        if item in self._items:
+            self._items.remove(item)
+    
+    def has(self, item):
+        return item in self._items
+    
+    def size(self):
+        return len(self._items)
+    
+    def values(self):
+        return self._items.copy()
+    
+    def union(self, other):
+        result = SdevSet(self._items)
+        for item in other._items:
+            result.add(item)
+        return result
+    
+    def intersect(self, other):
+        return SdevSet([x for x in self._items if x in other._items])
+    
+    def difference(self, other):
+        return SdevSet([x for x in self._items if x not in other._items])
+    
+    def __repr__(self):
+        return f"Set({self._items})"
+
+class SdevMap:
+    """Map/HashMap data structure"""
+    def __init__(self):
+        self._data = {}
+    
+    def set(self, key, value):
+        self._data[str(key)] = value
+    
+    def get(self, key, default=None):
+        return self._data.get(str(key), default)
+    
+    def has(self, key):
+        return str(key) in self._data
+    
+    def remove(self, key):
+        if str(key) in self._data:
+            del self._data[str(key)]
+    
+    def size(self):
+        return len(self._data)
+    
+    def keys(self):
+        return list(self._data.keys())
+    
+    def values(self):
+        return list(self._data.values())
+    
+    def entries(self):
+        return [[k, v] for k, v in self._data.items()]
+    
+    def __repr__(self):
+        return f"Map({self._data})"
+
+class SdevQueue:
+    """Queue (FIFO) data structure"""
+    def __init__(self):
+        self._items = []
+    
+    def enqueue(self, item):
+        self._items.append(item)
+    
+    def dequeue(self):
+        if not self._items:
+            return None
+        return self._items.pop(0)
+    
+    def peek(self):
+        if not self._items:
+            return None
+        return self._items[0]
+    
+    def isEmpty(self):
+        return len(self._items) == 0
+    
+    def size(self):
+        return len(self._items)
+    
+    def __repr__(self):
+        return f"Queue({self._items})"
+
+class SdevStack:
+    """Stack (LIFO) data structure"""
+    def __init__(self):
+        self._items = []
+    
+    def push(self, item):
+        self._items.append(item)
+    
+    def pop(self):
+        if not self._items:
+            return None
+        return self._items.pop()
+    
+    def peek(self):
+        if not self._items:
+            return None
+        return self._items[-1]
+    
+    def isEmpty(self):
+        return len(self._items) == 0
+    
+    def size(self):
+        return len(self._items)
+    
+    def __repr__(self):
+        return f"Stack({self._items})"
+
+class SdevLinkedListNode:
+    """Node for linked list"""
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+        self.prev = None
+
+class SdevLinkedList:
+    """Doubly linked list data structure"""
+    def __init__(self):
+        self.head = None
+        self.tail = None
+        self._size = 0
+    
+    def append(self, value):
+        node = SdevLinkedListNode(value)
+        if not self.head:
+            self.head = self.tail = node
+        else:
+            node.prev = self.tail
+            self.tail.next = node
+            self.tail = node
+        self._size += 1
+    
+    def prepend(self, value):
+        node = SdevLinkedListNode(value)
+        if not self.head:
+            self.head = self.tail = node
+        else:
+            node.next = self.head
+            self.head.prev = node
+            self.head = node
+        self._size += 1
+    
+    def remove(self, value):
+        current = self.head
+        while current:
+            if current.value == value:
+                if current.prev:
+                    current.prev.next = current.next
+                else:
+                    self.head = current.next
+                if current.next:
+                    current.next.prev = current.prev
+                else:
+                    self.tail = current.prev
+                self._size -= 1
+                return True
+            current = current.next
+        return False
+    
+    def toList(self):
+        result = []
+        current = self.head
+        while current:
+            result.append(current.value)
+            current = current.next
+        return result
+    
+    def size(self):
+        return self._size
+    
+    def __repr__(self):
+        return f"LinkedList({self.toList()})"
+
+# ============= Graphics Types =============
+
+class SdevSprite:
+    """Sprite for game development"""
+    def __init__(self, x=0, y=0, width=32, height=32, color="white"):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.color = color
+        self.velocity_x = 0
+        self.velocity_y = 0
+        self.visible = True
+        self.rotation = 0
+        self.scale = 1.0
+        self.tag = ""
+    
+    def move(self, dx, dy):
+        self.x += dx
+        self.y += dy
+    
+    def moveTo(self, x, y):
+        self.x = x
+        self.y = y
+    
+    def update(self):
+        self.x += self.velocity_x
+        self.y += self.velocity_y
+    
+    def collidesWith(self, other):
+        return (self.x < other.x + other.width and
+                self.x + self.width > other.x and
+                self.y < other.y + other.height and
+                self.y + self.height > other.y)
+    
+    def __repr__(self):
+        return f"Sprite(x={self.x}, y={self.y}, w={self.width}, h={self.height})"
+
+class SdevVector2:
+    """2D Vector for physics and math"""
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+    
+    def add(self, other):
+        return SdevVector2(self.x + other.x, self.y + other.y)
+    
+    def sub(self, other):
+        return SdevVector2(self.x - other.x, self.y - other.y)
+    
+    def scale(self, scalar):
+        return SdevVector2(self.x * scalar, self.y * scalar)
+    
+    def magnitude(self):
+        return math.sqrt(self.x**2 + self.y**2)
+    
+    def normalize(self):
+        mag = self.magnitude()
+        if mag == 0:
+            return SdevVector2(0, 0)
+        return SdevVector2(self.x / mag, self.y / mag)
+    
+    def dot(self, other):
+        return self.x * other.x + self.y * other.y
+    
+    def distance(self, other):
+        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+    
+    def angle(self):
+        return math.atan2(self.y, self.x)
+    
+    def rotate(self, angle):
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        return SdevVector2(
+            self.x * cos_a - self.y * sin_a,
+            self.x * sin_a + self.y * cos_a
+        )
+    
+    def __repr__(self):
+        return f"Vec2({self.x}, {self.y})"
+
+class SdevColor:
+    """Color utilities"""
+    @staticmethod
+    def rgb(r, g, b):
+        return f"rgb({int(r)},{int(g)},{int(b)})"
+    
+    @staticmethod
+    def rgba(r, g, b, a):
+        return f"rgba({int(r)},{int(g)},{int(b)},{a})"
+    
+    @staticmethod
+    def hsl(h, s, l):
+        return f"hsl({h},{s}%,{l}%)"
+    
+    @staticmethod
+    def hex(value):
+        if isinstance(value, str):
+            return value if value.startswith('#') else f"#{value}"
+        return f"#{value:06x}"
 
 # ============= Interpreter =============
 
@@ -1992,6 +2520,137 @@ class Interpreter:
             return args[1] if self._is_truthy(args[0]) else args[2]
         builtins['__ternary__'] = SdevBuiltin('__ternary__', ternary, 3, 3)
         
+        # ========== Data Structure Constructors ==========
+        def create_set(args, line):
+            items = args[0] if len(args) > 0 and isinstance(args[0], list) else []
+            return SdevSet(items)
+        builtins['Set'] = SdevBuiltin('Set', create_set, 0, 1)
+        
+        def create_map(args, line):
+            m = SdevMap()
+            if len(args) > 0 and isinstance(args[0], list):
+                for item in args[0]:
+                    if isinstance(item, list) and len(item) >= 2:
+                        m.set(item[0], item[1])
+            return m
+        builtins['Map'] = SdevBuiltin('Map', create_map, 0, 1)
+        
+        def create_queue(args, line):
+            q = SdevQueue()
+            if len(args) > 0 and isinstance(args[0], list):
+                for item in args[0]:
+                    q.enqueue(item)
+            return q
+        builtins['Queue'] = SdevBuiltin('Queue', create_queue, 0, 1)
+        
+        def create_stack(args, line):
+            s = SdevStack()
+            if len(args) > 0 and isinstance(args[0], list):
+                for item in args[0]:
+                    s.push(item)
+            return s
+        builtins['Stack'] = SdevBuiltin('Stack', create_stack, 0, 1)
+        
+        def create_linked_list(args, line):
+            ll = SdevLinkedList()
+            if len(args) > 0 and isinstance(args[0], list):
+                for item in args[0]:
+                    ll.append(item)
+            return ll
+        builtins['LinkedList'] = SdevBuiltin('LinkedList', create_linked_list, 0, 1)
+        
+        # ========== Graphics/Game Dev Functions ==========
+        def create_sprite(args, line):
+            x = args[0] if len(args) > 0 else 0
+            y = args[1] if len(args) > 1 else 0
+            w = args[2] if len(args) > 2 else 32
+            h = args[3] if len(args) > 3 else 32
+            color = args[4] if len(args) > 4 else "white"
+            return SdevSprite(x, y, w, h, color)
+        builtins['Sprite'] = SdevBuiltin('Sprite', create_sprite, 0, 5)
+        
+        def create_vector2(args, line):
+            x = args[0] if len(args) > 0 else 0
+            y = args[1] if len(args) > 1 else 0
+            return SdevVector2(x, y)
+        builtins['Vec2'] = SdevBuiltin('Vec2', create_vector2, 0, 2)
+        
+        def rgb(args, line):
+            if len(args) != 3:
+                raise SdevError('rgb() takes 3 arguments', line)
+            return SdevColor.rgb(args[0], args[1], args[2])
+        builtins['rgb'] = SdevBuiltin('rgb', rgb, 3, 3)
+        
+        def rgba(args, line):
+            if len(args) != 4:
+                raise SdevError('rgba() takes 4 arguments', line)
+            return SdevColor.rgba(args[0], args[1], args[2], args[3])
+        builtins['rgba'] = SdevBuiltin('rgba', rgba, 4, 4)
+        
+        def hsl(args, line):
+            if len(args) != 3:
+                raise SdevError('hsl() takes 3 arguments', line)
+            return SdevColor.hsl(args[0], args[1], args[2])
+        builtins['hsl'] = SdevBuiltin('hsl', hsl, 3, 3)
+        
+        def hex_color(args, line):
+            if len(args) != 1:
+                raise SdevError('hex() takes 1 argument', line)
+            return SdevColor.hex(args[0])
+        builtins['hex'] = SdevBuiltin('hex', hex_color, 1, 1)
+        
+        def collides(args, line):
+            if len(args) != 2:
+                raise SdevError('collides() takes 2 arguments', line)
+            a, b = args[0], args[1]
+            if isinstance(a, SdevSprite) and isinstance(b, SdevSprite):
+                return a.collidesWith(b)
+            raise SdevError('collides() requires two Sprites', line)
+        builtins['collides'] = SdevBuiltin('collides', collides, 2, 2)
+        
+        def distance(args, line):
+            if len(args) == 2:
+                a, b = args[0], args[1]
+                if isinstance(a, SdevVector2) and isinstance(b, SdevVector2):
+                    return a.distance(b)
+                if isinstance(a, SdevSprite) and isinstance(b, SdevSprite):
+                    return math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
+            if len(args) == 4:
+                return math.sqrt((args[2] - args[0])**2 + (args[3] - args[1])**2)
+            raise SdevError('distance() takes 2 vectors/sprites or 4 numbers', line)
+        builtins['distance'] = SdevBuiltin('distance', distance, 2, 4)
+        
+        def lerp(args, line):
+            if len(args) != 3:
+                raise SdevError('lerp() takes 3 arguments (a, b, t)', line)
+            a, b, t = args[0], args[1], args[2]
+            return a + (b - a) * t
+        builtins['lerp'] = SdevBuiltin('lerp', lerp, 3, 3)
+        
+        def clamp(args, line):
+            if len(args) != 3:
+                raise SdevError('clamp() takes 3 arguments (value, min, max)', line)
+            value, min_val, max_val = args[0], args[1], args[2]
+            return max(min_val, min(max_val, value))
+        builtins['clamp'] = SdevBuiltin('clamp', clamp, 3, 3)
+        
+        # ========== Async Helpers ==========
+        def delay(args, line):
+            if len(args) != 1:
+                raise SdevError('delay() takes 1 argument (milliseconds)', line)
+            import time
+            time.sleep(args[0] / 1000)
+            return None
+        builtins['delay'] = SdevBuiltin('delay', delay, 1, 1)
+        
+        def promise(args, line):
+            value = args[0] if len(args) > 0 else None
+            p = SdevPromise()
+            p.value = value
+            p.resolved = True
+            return p
+        builtins['Promise'] = SdevBuiltin('Promise', promise, 0, 1)
+        
         return builtins
     
     def _get_type(self, value: Any) -> str:
@@ -2007,8 +2666,28 @@ class Interpreter:
             return 'list'
         if isinstance(value, dict):
             return 'tome'
-        if isinstance(value, (SdevBuiltin, SdevUserFunc, SdevLambda)):
+        if isinstance(value, (SdevBuiltin, SdevUserFunc, SdevLambda, SdevBoundMethod)):
             return 'conjuration'
+        if isinstance(value, SdevClass):
+            return 'essence'
+        if isinstance(value, SdevInstance):
+            return value.sdev_class.name
+        if isinstance(value, SdevSet):
+            return 'set'
+        if isinstance(value, SdevMap):
+            return 'map'
+        if isinstance(value, SdevQueue):
+            return 'queue'
+        if isinstance(value, SdevStack):
+            return 'stack'
+        if isinstance(value, SdevLinkedList):
+            return 'linkedlist'
+        if isinstance(value, SdevSprite):
+            return 'sprite'
+        if isinstance(value, SdevVector2):
+            return 'vector2'
+        if isinstance(value, SdevPromise):
+            return 'promise'
         return 'mystery'
     
     def _call_function(self, func: Any, args: List[Any], line: int) -> Any:
@@ -2018,7 +2697,46 @@ class Interpreter:
             return self._call_user_func(func, args, line)
         if isinstance(func, SdevLambda):
             return self._call_lambda(func, args, line)
+        if isinstance(func, SdevBoundMethod):
+            return self._call_bound_method(func, args, line)
+        if isinstance(func, SdevAsyncFunc):
+            return self._call_async_func(func, args, line)
         raise SdevError('Cannot call non-function', line)
+    
+    def _call_bound_method(self, bound: SdevBoundMethod, args: List[Any], line: int) -> Any:
+        method = bound.method
+        instance = bound.instance
+        if len(args) != len(method.params):
+            raise SdevError(f"Method '{method.name}' expects {len(method.params)} args, got {len(args)}", line)
+        method_env = Environment(method.closure)
+        method_env.define('self', instance)
+        for i, param in enumerate(method.params):
+            method_env.define(param, args[i])
+        try:
+            self._execute(method.body, method_env)
+            return None
+        except ReturnException as e:
+            return e.value
+    
+    def _call_async_func(self, func: SdevAsyncFunc, args: List[Any], line: int) -> SdevPromise:
+        if len(args) != len(func.params):
+            raise SdevError(f"Async function '{func.name}' expects {len(func.params)} args, got {len(args)}", line)
+        func_env = Environment(func.closure)
+        for i, param in enumerate(func.params):
+            func_env.define(param, args[i])
+        promise = SdevPromise()
+        try:
+            result = None
+            try:
+                self._execute(func.body, func_env)
+            except ReturnException as e:
+                result = e.value
+            promise.value = result
+            promise.resolved = True
+        except SdevError as e:
+            promise.error = str(e)
+            promise.resolved = True
+        return promise
     
     def _call_user_func(self, func: SdevUserFunc, args: List[Any], line: int) -> Any:
         if len(args) != len(func.params):
@@ -2083,6 +2801,41 @@ class Interpreter:
         if isinstance(node, LambdaExpr):
             return SdevLambda(node.params, node.body, env)
         
+        # OOP Nodes
+        if isinstance(node, SelfExpr):
+            return env.get('self', node.line)
+        if isinstance(node, SuperExpr):
+            instance = env.get('self', node.line)
+            if not isinstance(instance, SdevInstance):
+                raise SdevError("'super' can only be used inside a class method", node.line)
+            parent = instance.sdev_class.parent
+            if not parent:
+                raise SdevError("Class has no parent", node.line)
+            if node.method and node.args is not None:
+                method = parent.methods.get(node.method)
+                if not method:
+                    raise SdevError(f"Parent has no method '{node.method}'", node.line)
+                args = [self._execute(a, env) for a in node.args]
+                bound = SdevBoundMethod(instance, method)
+                return self._call_bound_method(bound, args, node.line)
+            return parent
+        if isinstance(node, NewExpr):
+            return self._execute_new(node, env)
+        if isinstance(node, ClassDeclaration):
+            return self._execute_class_decl(node, env)
+        if isinstance(node, AsyncFuncDeclaration):
+            return self._execute_async_decl(node, env)
+        if isinstance(node, AwaitExpr):
+            result = self._execute(node.expression, env)
+            if isinstance(result, SdevPromise):
+                if result.error:
+                    raise SdevError(result.error, node.line)
+                return result.value
+            return result
+        if isinstance(node, SpawnExpr):
+            results = [self._execute(e, env) for e in node.expressions]
+            return results
+        
         if isinstance(node, LetStatement):
             value = self._execute(node.value, env)
             env.define(node.name, value)
@@ -2118,6 +2871,52 @@ class Interpreter:
             return self._execute(node.expression, env)
         
         raise SdevError(f"Unknown node type: {type(node).__name__}", getattr(node, 'line', 0))
+    
+    def _execute_class_decl(self, node: ClassDeclaration, env: Environment) -> None:
+        parent = None
+        if node.parent:
+            parent = env.get(node.parent, node.line)
+            if not isinstance(parent, SdevClass):
+                raise SdevError(f"'{node.parent}' is not a class", node.line)
+        
+        methods = {}
+        for m in node.methods:
+            methods[m.name] = SdevMethod(m.name, m.params, m.body, m.is_private, env)
+        
+        static_methods = {}
+        for m in node.static_methods:
+            static_methods[m.name] = SdevMethod(m.name, m.params, m.body, m.is_private, env)
+        
+        constructor = None
+        if node.constructor:
+            c = node.constructor
+            constructor = SdevMethod(c.name, c.params, c.body, c.is_private, env)
+        
+        sdev_class = SdevClass(node.name, parent, methods, static_methods, constructor)
+        env.define(node.name, sdev_class)
+    
+    def _execute_new(self, node: NewExpr, env: Environment) -> SdevInstance:
+        sdev_class = env.get(node.class_name, node.line)
+        if not isinstance(sdev_class, SdevClass):
+            raise SdevError(f"'{node.class_name}' is not a class", node.line)
+        
+        instance = SdevInstance(sdev_class, {})
+        
+        # Inherit parent fields
+        if sdev_class.parent and sdev_class.parent.constructor:
+            pass  # Parent init called via super
+        
+        # Call constructor
+        if sdev_class.constructor:
+            args = [self._execute(a, env) for a in node.args]
+            bound = SdevBoundMethod(instance, sdev_class.constructor)
+            self._call_bound_method(bound, args, node.line)
+        
+        return instance
+    
+    def _execute_async_decl(self, node: AsyncFuncDeclaration, env: Environment) -> None:
+        func = SdevAsyncFunc(node.name, node.params, node.body, env)
+        env.define(node.name, func)
     
     def _execute_binary(self, node: BinaryExpr, env: Environment) -> Any:
         # Short-circuit for also/either
@@ -2254,9 +3053,64 @@ class Interpreter:
     
     def _execute_member(self, node: MemberExpr, env: Environment) -> Any:
         obj = self._execute(node.obj, env)
+        prop = node.property
         
         if isinstance(obj, dict):
-            return obj.get(node.property)
+            return obj.get(prop)
+        
+        if isinstance(obj, SdevInstance):
+            if prop in obj.fields:
+                return obj.fields[prop]
+            method = obj.sdev_class.methods.get(prop)
+            if method:
+                return SdevBoundMethod(obj, method)
+            if obj.sdev_class.parent:
+                method = obj.sdev_class.parent.methods.get(prop)
+                if method:
+                    return SdevBoundMethod(obj, method)
+            raise SdevError(f"Instance has no property '{prop}'", node.line)
+        
+        # Data structure methods
+        if isinstance(obj, SdevSet):
+            if prop == 'add': return SdevBuiltin('add', lambda a,l: (obj.add(a[0]), obj)[1], 1, 1)
+            if prop == 'remove': return SdevBuiltin('remove', lambda a,l: (obj.remove(a[0]), obj)[1], 1, 1)
+            if prop == 'has': return SdevBuiltin('has', lambda a,l: obj.has(a[0]), 1, 1)
+            if prop == 'size': return SdevBuiltin('size', lambda a,l: obj.size(), 0, 0)
+            if prop == 'values': return SdevBuiltin('values', lambda a,l: obj.values(), 0, 0)
+        if isinstance(obj, SdevMap):
+            if prop == 'set': return SdevBuiltin('set', lambda a,l: (obj.set(a[0], a[1]), obj)[1], 2, 2)
+            if prop == 'get': return SdevBuiltin('get', lambda a,l: obj.get(a[0], a[1] if len(a)>1 else None), 1, 2)
+            if prop == 'has': return SdevBuiltin('has', lambda a,l: obj.has(a[0]), 1, 1)
+            if prop == 'keys': return SdevBuiltin('keys', lambda a,l: obj.keys(), 0, 0)
+            if prop == 'values': return SdevBuiltin('values', lambda a,l: obj.values(), 0, 0)
+            if prop == 'size': return SdevBuiltin('size', lambda a,l: obj.size(), 0, 0)
+        if isinstance(obj, SdevQueue):
+            if prop == 'enqueue': return SdevBuiltin('enqueue', lambda a,l: (obj.enqueue(a[0]), obj)[1], 1, 1)
+            if prop == 'dequeue': return SdevBuiltin('dequeue', lambda a,l: obj.dequeue(), 0, 0)
+            if prop == 'peek': return SdevBuiltin('peek', lambda a,l: obj.peek(), 0, 0)
+            if prop == 'size': return SdevBuiltin('size', lambda a,l: obj.size(), 0, 0)
+            if prop == 'isEmpty': return SdevBuiltin('isEmpty', lambda a,l: obj.isEmpty(), 0, 0)
+        if isinstance(obj, SdevStack):
+            if prop == 'push': return SdevBuiltin('push', lambda a,l: (obj.push(a[0]), obj)[1], 1, 1)
+            if prop == 'pop': return SdevBuiltin('pop', lambda a,l: obj.pop(), 0, 0)
+            if prop == 'peek': return SdevBuiltin('peek', lambda a,l: obj.peek(), 0, 0)
+            if prop == 'size': return SdevBuiltin('size', lambda a,l: obj.size(), 0, 0)
+        if isinstance(obj, SdevLinkedList):
+            if prop == 'append': return SdevBuiltin('append', lambda a,l: (obj.append(a[0]), obj)[1], 1, 1)
+            if prop == 'prepend': return SdevBuiltin('prepend', lambda a,l: (obj.prepend(a[0]), obj)[1], 1, 1)
+            if prop == 'toList': return SdevBuiltin('toList', lambda a,l: obj.toList(), 0, 0)
+            if prop == 'size': return SdevBuiltin('size', lambda a,l: obj.size(), 0, 0)
+        if isinstance(obj, SdevSprite):
+            if prop in ('x','y','width','height','color','velocity_x','velocity_y','visible','rotation','scale','tag'):
+                return getattr(obj, prop)
+            if prop == 'move': return SdevBuiltin('move', lambda a,l: (obj.move(a[0],a[1]), obj)[1], 2, 2)
+            if prop == 'moveTo': return SdevBuiltin('moveTo', lambda a,l: (obj.moveTo(a[0],a[1]), obj)[1], 2, 2)
+            if prop == 'update': return SdevBuiltin('update', lambda a,l: (obj.update(), obj)[1], 0, 0)
+        if isinstance(obj, SdevVector2):
+            if prop == 'x': return obj.x
+            if prop == 'y': return obj.y
+            if prop == 'magnitude': return SdevBuiltin('magnitude', lambda a,l: obj.magnitude(), 0, 0)
+            if prop == 'normalize': return SdevBuiltin('normalize', lambda a,l: obj.normalize(), 0, 0)
         
         raise SdevError('Cannot access property on this type', node.line)
     
@@ -2296,6 +3150,15 @@ class Interpreter:
         if isinstance(obj, dict):
             obj[node.property] = value
             return value
+        
+        if isinstance(obj, SdevInstance):
+            obj.fields[node.property] = value
+            return value
+        
+        if isinstance(obj, SdevSprite):
+            if hasattr(obj, node.property):
+                setattr(obj, node.property, value)
+                return value
         
         raise SdevError('Cannot assign property on this type', node.line)
     
