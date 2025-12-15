@@ -1522,6 +1522,14 @@ class Interpreter:
         """Create all built-in functions"""
         builtins = {}
         
+        # ========== Ternary Helper ==========
+        def ternary(args, line):
+            if len(args) != 3:
+                raise SdevError('__ternary__ takes 3 arguments', line)
+            condition, then_val, else_val = args
+            return then_val if self._is_truthy(condition) else else_val
+        builtins['__ternary__'] = SdevBuiltin('__ternary__', ternary, 3, 3)
+        
         # ========== Output Functions ==========
         def speak(args, line):
             msg = ' '.join(self._stringify(a) for a in args)
@@ -2706,12 +2714,15 @@ class Interpreter:
     def _call_bound_method(self, bound: SdevBoundMethod, args: List[Any], line: int) -> Any:
         method = bound.method
         instance = bound.instance
-        if len(args) != len(method.params):
-            raise SdevError(f"Method '{method.name}' expects {len(method.params)} args, got {len(args)}", line)
+        if len(args) > len(method.params):
+            raise SdevError(f"Method '{method.name}' expects at most {len(method.params)} args, got {len(args)}", line)
         method_env = Environment(method.closure)
         method_env.define('self', instance)
         for i, param in enumerate(method.params):
-            method_env.define(param, args[i])
+            if i < len(args):
+                method_env.define(param, args[i])
+            else:
+                method_env.define(param, None)
         try:
             self._execute(method.body, method_env)
             return None
@@ -2739,11 +2750,14 @@ class Interpreter:
         return promise
     
     def _call_user_func(self, func: SdevUserFunc, args: List[Any], line: int) -> Any:
-        if len(args) != len(func.params):
-            raise SdevError(f"Function '{func.name}' expects {len(func.params)} arguments, got {len(args)}", line)
+        if len(args) > len(func.params):
+            raise SdevError(f"Function '{func.name}' expects at most {len(func.params)} arguments, got {len(args)}", line)
         func_env = Environment(func.closure)
         for i, param in enumerate(func.params):
-            func_env.define(param, args[i])
+            if i < len(args):
+                func_env.define(param, args[i])
+            else:
+                func_env.define(param, None)  # Default to void for missing args
         try:
             self._execute(func.body, func_env)
             return None
@@ -2751,11 +2765,14 @@ class Interpreter:
             return e.value
     
     def _call_lambda(self, func: SdevLambda, args: List[Any], line: int) -> Any:
-        if len(args) != len(func.params):
-            raise SdevError(f"Lambda expects {len(func.params)} arguments, got {len(args)}", line)
+        if len(args) > len(func.params):
+            raise SdevError(f"Lambda expects at most {len(func.params)} arguments, got {len(args)}", line)
         lambda_env = Environment(func.closure)
         for i, param in enumerate(func.params):
-            lambda_env.define(param, args[i])
+            if i < len(args):
+                lambda_env.define(param, args[i])
+            else:
+                lambda_env.define(param, None)
         return self._execute(func.body, lambda_env)
     
     def interpret(self, program: Program) -> Any:
@@ -2972,13 +2989,25 @@ class Interpreter:
                 return left ** right
             raise SdevError("Cannot use '^' with non-numbers", node.line)
         if op == '<':
-            return left < right
+            try:
+                return left < right
+            except TypeError:
+                raise SdevError(f"Cannot compare {self._get_type(left)} with {self._get_type(right)}", node.line)
         if op == '>':
-            return left > right
+            try:
+                return left > right
+            except TypeError:
+                raise SdevError(f"Cannot compare {self._get_type(left)} with {self._get_type(right)}", node.line)
         if op == '<=':
-            return left <= right
+            try:
+                return left <= right
+            except TypeError:
+                raise SdevError(f"Cannot compare {self._get_type(left)} with {self._get_type(right)}", node.line)
         if op == '>=':
-            return left >= right
+            try:
+                return left >= right
+            except TypeError:
+                raise SdevError(f"Cannot compare {self._get_type(left)} with {self._get_type(right)}", node.line)
         if op == 'equals':
             return self._is_equal(left, right)
         if op == 'differs' or op == '<>':
@@ -3008,8 +3037,19 @@ class Interpreter:
             return self._call_user_func(callee, args, node.line)
         if isinstance(callee, SdevLambda):
             return self._call_lambda(callee, args, node.line)
+        if isinstance(callee, SdevBoundMethod):
+            return self._call_bound_method(callee, args, node.line)
+        if isinstance(callee, SdevAsyncFunc):
+            return self._call_async_func(callee, args, node.line)
+        if isinstance(callee, SdevClass):
+            # Calling a class as a constructor (alternative to 'new')
+            instance = SdevInstance(callee, {})
+            if callee.constructor:
+                bound = SdevBoundMethod(instance, callee.constructor)
+                self._call_bound_method(bound, args, node.line)
+            return instance
         
-        raise SdevError('Cannot call non-function', node.line)
+        raise SdevError(f'Cannot call {self._get_type(callee)} as a function', node.line)
     
     def _execute_index(self, node: IndexExpr, env: Environment) -> Any:
         obj = self._execute(node.obj, env)
@@ -3061,14 +3101,17 @@ class Interpreter:
         if isinstance(obj, SdevInstance):
             if prop in obj.fields:
                 return obj.fields[prop]
-            method = obj.sdev_class.methods.get(prop)
+            # Look for method in class hierarchy
+            method = self._find_method(obj.sdev_class, prop)
             if method:
                 return SdevBoundMethod(obj, method)
-            if obj.sdev_class.parent:
-                method = obj.sdev_class.parent.methods.get(prop)
-                if method:
-                    return SdevBoundMethod(obj, method)
             raise SdevError(f"Instance has no property '{prop}'", node.line)
+        
+        if isinstance(obj, SdevClass):
+            # Static method access
+            if prop in obj.static_methods:
+                return obj.static_methods[prop]
+            raise SdevError(f"Class '{obj.name}' has no static method '{prop}'", node.line)
         
         # Data structure methods
         if isinstance(obj, SdevSet):
@@ -3111,8 +3154,33 @@ class Interpreter:
             if prop == 'y': return obj.y
             if prop == 'magnitude': return SdevBuiltin('magnitude', lambda a,l: obj.magnitude(), 0, 0)
             if prop == 'normalize': return SdevBuiltin('normalize', lambda a,l: obj.normalize(), 0, 0)
+            if prop == 'add': return SdevBuiltin('add', lambda a,l: obj.add(a[0]), 1, 1)
+            if prop == 'sub': return SdevBuiltin('sub', lambda a,l: obj.sub(a[0]), 1, 1)
+            if prop == 'scale': return SdevBuiltin('scale', lambda a,l: obj.scale(a[0]), 1, 1)
+            if prop == 'dot': return SdevBuiltin('dot', lambda a,l: obj.dot(a[0]), 1, 1)
+            if prop == 'distance': return SdevBuiltin('distance', lambda a,l: obj.distance(a[0]), 1, 1)
+            if prop == 'angle': return SdevBuiltin('angle', lambda a,l: obj.angle(), 0, 0)
+            if prop == 'rotate': return SdevBuiltin('rotate', lambda a,l: obj.rotate(a[0]), 1, 1)
         
-        raise SdevError('Cannot access property on this type', node.line)
+        # List methods
+        if isinstance(obj, list):
+            if prop == 'length': return len(obj)
+            if prop == 'push': return SdevBuiltin('push', lambda a,l: (obj.append(a[0]), obj)[1], 1, 1)
+            if prop == 'pop': return SdevBuiltin('pop', lambda a,l: obj.pop() if obj else None, 0, 0)
+            if prop == 'first': return obj[0] if obj else None
+            if prop == 'last': return obj[-1] if obj else None
+            if prop == 'isEmpty': return len(obj) == 0
+        
+        # String methods
+        if isinstance(obj, str):
+            if prop == 'length': return len(obj)
+            if prop == 'upper': return SdevBuiltin('upper', lambda a,l: obj.upper(), 0, 0)
+            if prop == 'lower': return SdevBuiltin('lower', lambda a,l: obj.lower(), 0, 0)
+            if prop == 'trim': return SdevBuiltin('trim', lambda a,l: obj.strip(), 0, 0)
+            if prop == 'split': return SdevBuiltin('split', lambda a,l: obj.split(a[0] if a else None), 0, 1)
+            if prop == 'chars': return list(obj)
+        
+        raise SdevError(f'Cannot access property "{prop}" on {self._get_type(obj)}', node.line)
     
     def _execute_dict(self, node: DictLiteral, env: Environment) -> Dict[str, Any]:
         result = {}
@@ -3259,6 +3327,14 @@ class Interpreter:
             return all(self._is_equal(x, y) for x, y in zip(a, b))
         return a == b
     
+    def _find_method(self, sdev_class: SdevClass, name: str) -> Optional[SdevMethod]:
+        """Find a method in class hierarchy"""
+        if name in sdev_class.methods:
+            return sdev_class.methods[name]
+        if sdev_class.parent:
+            return self._find_method(sdev_class.parent, name)
+        return None
+    
     def _stringify(self, value: Any) -> str:
         if value is None:
             return 'void'
@@ -3268,8 +3344,20 @@ class Interpreter:
             if value == int(value):
                 return str(int(value))
             return str(value)
-        if isinstance(value, (SdevBuiltin, SdevUserFunc, SdevLambda)):
+        if isinstance(value, int):
+            return str(value)
+        if isinstance(value, (SdevBuiltin, SdevUserFunc, SdevLambda, SdevBoundMethod)):
             return '<conjuration>'
+        if isinstance(value, SdevClass):
+            return f'<essence {value.name}>'
+        if isinstance(value, SdevInstance):
+            return f'<{value.sdev_class.name} instance>'
+        if isinstance(value, SdevVector2):
+            return f'Vec2({value.x}, {value.y})'
+        if isinstance(value, SdevSprite):
+            return f'Sprite(x={value.x}, y={value.y})'
+        if isinstance(value, (SdevSet, SdevMap, SdevQueue, SdevStack, SdevLinkedList)):
+            return repr(value)
         if isinstance(value, list):
             return '[' + ', '.join(self._stringify(v) for v in value) + ']'
         if isinstance(value, dict):
