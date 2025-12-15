@@ -14,15 +14,19 @@
 6. [Operators](#operators)
 7. [Control Flow](#control-flow)
 8. [Functions](#functions)
-9. [Built-in Functions](#built-in-functions)
-10. [Collections](#collections)
-11. [Higher-Order Functions](#higher-order-functions)
-12. [Matrix Operations](#matrix-operations)
-13. [File I/O](#file-io)
-14. [Networking](#networking)
-15. [Error Handling](#error-handling)
-16. [Examples](#examples)
-17. [Reference Card](#reference-card)
+9. [Object-Oriented Programming](#object-oriented-programming)
+10. [Async & Concurrency](#async--concurrency)
+11. [Built-in Functions](#built-in-functions)
+12. [Collections](#collections)
+13. [Data Structures](#data-structures)
+14. [Higher-Order Functions](#higher-order-functions)
+15. [Matrix Operations](#matrix-operations)
+16. [Graphics & Game Development](#graphics--game-development)
+17. [File I/O](#file-io)
+18. [Networking](#networking)
+19. [Error Handling](#error-handling)
+20. [Examples](#examples)
+21. [Reference Card](#reference-card)
 
 ---
 
@@ -379,6 +383,208 @@ speak(factorial(5))  // 120
 
 ---
 
+## Object-Oriented Programming
+
+sdev supports full object-oriented programming with classes, inheritance, and methods.
+
+### Defining Classes (essence)
+
+Use `essence` to define a class:
+
+```sdev
+essence Animal ::
+    conjure init(self, name) ::
+        self.name be name
+        self.energy be 100
+    ;;
+    
+    conjure speak(self) ::
+        speak(self.name + " makes a sound")
+    ;;
+    
+    conjure eat(self, food) ::
+        self.energy be self.energy + 10
+        speak(self.name + " eats " + food)
+    ;;
+;;
+```
+
+### Creating Instances (new)
+
+Use `new` to create instances:
+
+```sdev
+forge dog be new Animal("Buddy")
+dog.speak()         // Buddy makes a sound
+dog.eat("kibble")   // Buddy eats kibble
+speak(dog.energy)   // 110
+```
+
+### Inheritance (extend)
+
+Use `extend` to inherit from another class:
+
+```sdev
+essence Dog extend Animal ::
+    conjure init(self, name, breed) ::
+        super.init(name)
+        self.breed be breed
+    ;;
+    
+    conjure speak(self) ::
+        speak(self.name + " barks: Woof!")
+    ;;
+    
+    conjure fetch(self) ::
+        self.energy be self.energy - 20
+        speak(self.name + " fetches the ball")
+    ;;
+;;
+
+forge rex be new Dog("Rex", "German Shepherd")
+rex.speak()   // Rex barks: Woof!
+rex.fetch()   // Rex fetches the ball
+rex.eat("treat")  // Inherited: Rex eats treat
+```
+
+### Properties and Methods
+
+```sdev
+essence Rectangle ::
+    conjure init(self, width, height) ::
+        self.width be width
+        self.height be height
+    ;;
+    
+    conjure area(self) ::
+        yield self.width * self.height
+    ;;
+    
+    conjure perimeter(self) ::
+        yield 2 * (self.width + self.height)
+    ;;
+    
+    conjure scale(self, factor) ::
+        self.width be self.width * factor
+        self.height be self.height * factor
+    ;;
+    
+    conjure describe(self) ::
+        yield format("{}x{} rectangle", self.width, self.height)
+    ;;
+;;
+
+forge rect be new Rectangle(10, 5)
+speak(rect.area())       // 50
+speak(rect.perimeter())  // 30
+rect.scale(2)
+speak(rect.describe())   // 20x10 rectangle
+```
+
+### Static-like Pattern
+
+```sdev
+essence MathUtils ::
+    conjure init(self) ::
+        // No instance state needed
+    ;;
+;;
+
+// Add class-level functions
+MathUtils.square be x -> x * x
+MathUtils.cube be x -> x * x * x
+
+speak(MathUtils.square(4))  // 16
+speak(MathUtils.cube(3))    // 27
+```
+
+---
+
+## Async & Concurrency
+
+sdev supports asynchronous programming and concurrency.
+
+### Async Functions
+
+Use `async conjure` to define asynchronous functions:
+
+```sdev
+async conjure fetchUser(id) ::
+    forge response be await fetch("https://api.example.com/users/" + id)
+    yield response
+;;
+```
+
+### Await
+
+Use `await` to wait for async operations:
+
+```sdev
+async conjure loadData() ::
+    forge user be await fetchUser(1)
+    forge posts be await fetch("https://api.example.com/posts?userId=" + user.id)
+    
+    yield ::
+        "user": user,
+        "posts": posts
+    ;;
+;;
+```
+
+### Spawn (Concurrent Execution)
+
+Use `spawn` to run functions concurrently:
+
+```sdev
+conjure task1() ::
+    delay(2000)  // Simulate 2 second task
+    speak("Task 1 complete")
+    yield "result1"
+;;
+
+conjure task2() ::
+    delay(1000)  // Simulate 1 second task
+    speak("Task 2 complete")
+    yield "result2"
+;;
+
+// Run concurrently
+spawn task1()
+spawn task2()
+// Output: Task 2 complete (after 1s), Task 1 complete (after 2s)
+```
+
+### Delay
+
+Pause execution for a specified time:
+
+```sdev
+speak("Starting...")
+delay(1000)  // Wait 1 second
+speak("1 second passed")
+delay(2000)  // Wait 2 more seconds
+speak("Done!")
+```
+
+### Async Iteration Pattern
+
+```sdev
+async conjure fetchAllUsers(ids) ::
+    forge results be []
+    
+    within id be ids ::
+        forge user be await fetchUser(id)
+        gather(results, user)
+    ;;
+    
+    yield results
+;;
+
+forge users be await fetchAllUsers([1, 2, 3, 4, 5])
+```
+
+---
+
 ## Built-in Functions
 
 ### Output Functions
@@ -526,7 +732,157 @@ speak(contains(person, "name"))  // yep
 
 ---
 
-## Higher-Order Functions
+## Data Structures
+
+sdev includes built-in data structures for common use cases.
+
+### Set
+
+A collection with unique elements:
+
+```sdev
+forge s be Set()
+s.add(1)
+s.add(2)
+s.add(1)  // Duplicate ignored
+
+speak(s.size())    // 2
+speak(s.has(1))    // yep
+speak(s.values())  // [1, 2]
+s.remove(1)
+s.clear()
+```
+
+### Map
+
+Key-value pairs with any key type:
+
+```sdev
+forge m be Map()
+m.set("name", "Alice")
+m.set("age", 25)
+
+speak(m.get("name"))  // Alice
+speak(m.has("age"))   // yep
+speak(m.keys())       // ["name", "age"]
+speak(m.values())     // ["Alice", 25]
+speak(m.entries())    // [["name", "Alice"], ["age", 25]]
+m.delete("age")
+```
+
+### Queue (FIFO)
+
+First-In-First-Out:
+
+```sdev
+forge q be Queue()
+q.enqueue("first")
+q.enqueue("second")
+
+speak(q.dequeue())  // first
+speak(q.peek())     // second
+speak(q.size())     // 1
+speak(q.isEmpty())  // nope
+```
+
+### Stack (LIFO)
+
+Last-In-First-Out:
+
+```sdev
+forge s be Stack()
+s.push(1)
+s.push(2)
+s.push(3)
+
+speak(s.pop())      // 3
+speak(s.peek())     // 2
+speak(s.size())     // 2
+```
+
+### LinkedList
+
+Doubly-linked list:
+
+```sdev
+forge list be LinkedList()
+list.append(1)
+list.append(2)
+list.prepend(0)
+
+speak(list.toList())  // [0, 1, 2]
+speak(list.get(1))    // 1
+list.remove(1)
+speak(list.size())    // 2
+```
+
+---
+
+## Graphics & Game Development
+
+sdev includes built-in support for graphics and game development.
+
+### Sprites
+
+```sdev
+forge player be Sprite(100, 100, 50, 50, "blue")
+
+speak(player.x)       // 100
+speak(player.y)       // 100
+speak(player.width)   // 50
+speak(player.height)  // 50
+speak(player.color)   // blue
+
+player.vx be 5
+player.vy be 2
+player.update()  // Moves by velocity
+```
+
+### Collision Detection
+
+```sdev
+forge player be Sprite(100, 100, 50, 50, "blue")
+forge enemy be Sprite(120, 110, 50, 50, "red")
+
+ponder collides(player, enemy) ::
+    speak("Hit!")
+;;
+```
+
+### 2D Vectors (Vec2)
+
+```sdev
+forge v1 be Vec2(3, 4)
+forge v2 be Vec2(1, 2)
+
+forge sum be v1.add(v2)       // Vec2(4, 6)
+forge diff be v1.sub(v2)      // Vec2(2, 2)
+forge scaled be v1.mul(2)     // Vec2(6, 8)
+
+speak(v1.mag())               // 5
+forge unit be v1.normalize()  // Vec2(0.6, 0.8)
+speak(v1.dot(v2))             // 11
+speak(v1.distance(v2))        // 2.83
+```
+
+### Color Functions
+
+```sdev
+forge red be rgb(255, 0, 0)
+forge transparent be rgba(255, 0, 0, 0.5)
+forge blue be hsl(240, 100, 50)
+forge green be hex("#00FF00")
+```
+
+### Utility Functions
+
+```sdev
+forge value be lerp(0, 100, 0.5)   // 50 (linear interpolation)
+forge clamped be clamp(150, 0, 100) // 100
+forge dist be distance(0, 0, 3, 4)  // 5
+```
+
+---
 
 ### each (map)
 Transform each element:
