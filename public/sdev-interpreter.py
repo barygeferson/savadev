@@ -2568,14 +2568,579 @@ class Interpreter:
         builtins['LinkedList'] = SdevBuiltin('LinkedList', create_linked_list, 0, 1)
         
         # ========== Graphics/Game Dev Functions ==========
-        def create_sprite(args, line):
+        
+        # Graphics state tracking (for Python CLI - outputs commands)
+        graphics_state = {
+            'canvas_width': 800,
+            'canvas_height': 600,
+            'fill_color': 'white',
+            'stroke_color': 'black',
+            'stroke_width': 1,
+            'fill_enabled': True,
+            'stroke_enabled': True,
+            'alpha': 1.0,
+            'font_family': 'Arial',
+            'font_style': 'normal',
+            'font_size': 16,
+            'text_align_h': 'left',
+            'text_align_v': 'alphabetic',
+            'turtle': {
+                'x': 200, 'y': 200, 'angle': -90,
+                'pen_down': True, 'color': '#00ff88', 'width': 2
+            },
+            'sprites': {},
+            'sprite_id': 0,
+            'commands': []  # Store graphics commands for batch output
+        }
+        
+        def emit_gfx(cmd):
+            """Emit a graphics command (for integration with canvas)"""
+            graphics_state['commands'].append(cmd)
+            return cmd
+        
+        # Canvas Setup
+        def canvas(args, line):
+            if len(args) != 2:
+                raise SdevError('canvas() takes 2 arguments (width, height)', line)
+            graphics_state['canvas_width'] = args[0]
+            graphics_state['canvas_height'] = args[1]
+            return emit_gfx({'type': 'canvas', 'width': args[0], 'height': args[1]})
+        builtins['canvas'] = SdevBuiltin('canvas', canvas, 2, 2)
+        
+        def clear(args, line):
+            color = args[0] if len(args) > 0 else '#1a1a2e'
+            return emit_gfx({'type': 'clear', 'color': str(color)})
+        builtins['clear'] = SdevBuiltin('clear', clear, 0, 1)
+        
+        def background(args, line):
+            if len(args) < 1:
+                raise SdevError('background() takes at least 1 argument', line)
+            return emit_gfx({'type': 'background', 'color': str(args[0])})
+        builtins['background'] = SdevBuiltin('background', background, 1, 1)
+        
+        # Drawing State
+        def fill(args, line):
+            if len(args) != 1:
+                raise SdevError('fill() takes 1 argument (color)', line)
+            graphics_state['fill_color'] = str(args[0])
+            graphics_state['fill_enabled'] = True
+            return emit_gfx({'type': 'fill', 'color': str(args[0])})
+        builtins['fill'] = SdevBuiltin('fill', fill, 1, 1)
+        
+        def noFill(args, line):
+            graphics_state['fill_enabled'] = False
+            return emit_gfx({'type': 'noFill'})
+        builtins['noFill'] = SdevBuiltin('noFill', noFill, 0, 0)
+        
+        def stroke(args, line):
+            if len(args) < 1 or len(args) > 2:
+                raise SdevError('stroke() takes 1-2 arguments (color, width?)', line)
+            graphics_state['stroke_color'] = str(args[0])
+            graphics_state['stroke_width'] = args[1] if len(args) > 1 else 1
+            graphics_state['stroke_enabled'] = True
+            return emit_gfx({'type': 'stroke', 'color': str(args[0]), 'width': args[1] if len(args) > 1 else 1})
+        builtins['stroke'] = SdevBuiltin('stroke', stroke, 1, 2)
+        
+        def noStroke(args, line):
+            graphics_state['stroke_enabled'] = False
+            return emit_gfx({'type': 'noStroke'})
+        builtins['noStroke'] = SdevBuiltin('noStroke', noStroke, 0, 0)
+        
+        def lineWidth(args, line):
+            if len(args) != 1:
+                raise SdevError('lineWidth() takes 1 argument', line)
+            graphics_state['stroke_width'] = args[0]
+            return emit_gfx({'type': 'lineWidth', 'width': args[0]})
+        builtins['lineWidth'] = SdevBuiltin('lineWidth', lineWidth, 1, 1)
+        
+        def lineCap(args, line):
+            if len(args) != 1:
+                raise SdevError('lineCap() takes 1 argument (round, square, butt)', line)
+            return emit_gfx({'type': 'lineCap', 'cap': str(args[0])})
+        builtins['lineCap'] = SdevBuiltin('lineCap', lineCap, 1, 1)
+        
+        def lineJoin(args, line):
+            if len(args) != 1:
+                raise SdevError('lineJoin() takes 1 argument (round, bevel, miter)', line)
+            return emit_gfx({'type': 'lineJoin', 'join': str(args[0])})
+        builtins['lineJoin'] = SdevBuiltin('lineJoin', lineJoin, 1, 1)
+        
+        def alpha(args, line):
+            if len(args) != 1:
+                raise SdevError('alpha() takes 1 argument (0-1)', line)
+            graphics_state['alpha'] = args[0]
+            return emit_gfx({'type': 'alpha', 'value': args[0]})
+        builtins['alpha'] = SdevBuiltin('alpha', alpha, 1, 1)
+        
+        def shadow(args, line):
+            if len(args) < 3:
+                raise SdevError('shadow() takes 3-4 arguments (color, blur, offsetX, offsetY?)', line)
+            return emit_gfx({
+                'type': 'shadow', 
+                'color': str(args[0]), 
+                'blur': args[1],
+                'offsetX': args[2],
+                'offsetY': args[3] if len(args) > 3 else args[2]
+            })
+        builtins['shadow'] = SdevBuiltin('shadow', shadow, 3, 4)
+        
+        def noShadow(args, line):
+            return emit_gfx({'type': 'noShadow'})
+        builtins['noShadow'] = SdevBuiltin('noShadow', noShadow, 0, 0)
+        
+        # Basic Shapes
+        def rect(args, line):
+            if len(args) < 4:
+                raise SdevError('rect() takes 4-5 arguments (x, y, w, h, radius?)', line)
+            return emit_gfx({'type': 'rect', 'x': args[0], 'y': args[1], 'w': args[2], 'h': args[3], 'radius': args[4] if len(args) > 4 else 0})
+        builtins['rect'] = SdevBuiltin('rect', rect, 4, 5)
+        
+        def circle(args, line):
+            if len(args) != 3:
+                raise SdevError('circle() takes 3 arguments (x, y, radius)', line)
+            return emit_gfx({'type': 'circle', 'x': args[0], 'y': args[1], 'r': args[2]})
+        builtins['circle'] = SdevBuiltin('circle', circle, 3, 3)
+        
+        def ellipse(args, line):
+            if len(args) < 4:
+                raise SdevError('ellipse() takes 4-5 arguments (x, y, rx, ry, rotation?)', line)
+            return emit_gfx({'type': 'ellipse', 'x': args[0], 'y': args[1], 'rx': args[2], 'ry': args[3], 'rotation': args[4] if len(args) > 4 else 0})
+        builtins['ellipse'] = SdevBuiltin('ellipse', ellipse, 4, 5)
+        
+        def arc(args, line):
+            if len(args) < 5:
+                raise SdevError('arc() takes 5-6 arguments (x, y, radius, startAngle, endAngle, ccw?)', line)
+            return emit_gfx({
+                'type': 'arc', 
+                'x': args[0], 'y': args[1], 
+                'r': args[2], 
+                'start': args[3], 'end': args[4],
+                'ccw': args[5] if len(args) > 5 else False
+            })
+        builtins['arc'] = SdevBuiltin('arc', arc, 5, 6)
+        
+        def gfx_line(args, line):
+            if len(args) != 4:
+                raise SdevError('line() takes 4 arguments (x1, y1, x2, y2)', line)
+            return emit_gfx({'type': 'line', 'x1': args[0], 'y1': args[1], 'x2': args[2], 'y2': args[3]})
+        builtins['line'] = SdevBuiltin('line', gfx_line, 4, 4)
+        
+        def point(args, line):
+            if len(args) < 2:
+                raise SdevError('point() takes 2-3 arguments (x, y, size?)', line)
+            return emit_gfx({'type': 'point', 'x': args[0], 'y': args[1], 'size': args[2] if len(args) > 2 else 1})
+        builtins['point'] = SdevBuiltin('point', point, 2, 3)
+        
+        def triangle(args, line):
+            if len(args) != 6:
+                raise SdevError('triangle() takes 6 arguments (x1, y1, x2, y2, x3, y3)', line)
+            return emit_gfx({'type': 'triangle', 'x1': args[0], 'y1': args[1], 'x2': args[2], 'y2': args[3], 'x3': args[4], 'y3': args[5]})
+        builtins['triangle'] = SdevBuiltin('triangle', triangle, 6, 6)
+        
+        def polygon(args, line):
+            if len(args) < 1:
+                raise SdevError('polygon() takes points [[x,y], ...]', line)
+            points = args[0]
+            if not isinstance(points, list):
+                raise SdevError('polygon() argument must be a list of points', line)
+            return emit_gfx({'type': 'polygon', 'points': points})
+        builtins['polygon'] = SdevBuiltin('polygon', polygon, 1, 1)
+        
+        def star(args, line):
+            if len(args) < 4:
+                raise SdevError('star() takes 4-5 arguments (x, y, outerRadius, innerRadius, points?)', line)
+            return emit_gfx({
+                'type': 'star', 
+                'x': args[0], 'y': args[1], 
+                'outer': args[2], 'inner': args[3], 
+                'points': args[4] if len(args) > 4 else 5
+            })
+        builtins['star'] = SdevBuiltin('star', star, 4, 5)
+        
+        def heart(args, line):
+            if len(args) != 3:
+                raise SdevError('heart() takes 3 arguments (x, y, size)', line)
+            return emit_gfx({'type': 'heart', 'x': args[0], 'y': args[1], 'size': args[2]})
+        builtins['heart'] = SdevBuiltin('heart', heart, 3, 3)
+        
+        # Text
+        def text(args, line):
+            if len(args) < 3:
+                raise SdevError('text() takes 3-4 arguments (str, x, y, size?)', line)
+            return emit_gfx({'type': 'text', 'text': str(args[0]), 'x': args[1], 'y': args[2], 'size': args[3] if len(args) > 3 else 16})
+        builtins['text'] = SdevBuiltin('text', text, 3, 4)
+        
+        def textAlign(args, line):
+            if len(args) < 1:
+                raise SdevError('textAlign() takes 1-2 arguments (horizontal, vertical?)', line)
+            graphics_state['text_align_h'] = str(args[0])
+            graphics_state['text_align_v'] = str(args[1]) if len(args) > 1 else 'alphabetic'
+            return emit_gfx({'type': 'textAlign', 'horizontal': str(args[0]), 'vertical': args[1] if len(args) > 1 else 'alphabetic'})
+        builtins['textAlign'] = SdevBuiltin('textAlign', textAlign, 1, 2)
+        
+        def font(args, line):
+            if len(args) < 1:
+                raise SdevError('font() takes 1-2 arguments (fontFamily, style?)', line)
+            graphics_state['font_family'] = str(args[0])
+            graphics_state['font_style'] = str(args[1]) if len(args) > 1 else 'normal'
+            return emit_gfx({'type': 'font', 'family': str(args[0]), 'style': args[1] if len(args) > 1 else 'normal'})
+        builtins['font'] = SdevBuiltin('font', font, 1, 2)
+        
+        # Gradients
+        def linearGradient(args, line):
+            if len(args) < 5:
+                raise SdevError('linearGradient() takes 5+ arguments (x1, y1, x2, y2, ...colorStops)', line)
+            stops = args[4:]
+            return emit_gfx({'type': 'linearGradient', 'x1': args[0], 'y1': args[1], 'x2': args[2], 'y2': args[3], 'stops': stops})
+        builtins['linearGradient'] = SdevBuiltin('linearGradient', linearGradient, 5)
+        
+        def radialGradient(args, line):
+            if len(args) < 7:
+                raise SdevError('radialGradient() takes 7+ arguments (x1, y1, r1, x2, y2, r2, ...colorStops)', line)
+            stops = args[6:]
+            return emit_gfx({'type': 'radialGradient', 'x1': args[0], 'y1': args[1], 'r1': args[2], 'x2': args[3], 'y2': args[4], 'r2': args[5], 'stops': stops})
+        builtins['radialGradient'] = SdevBuiltin('radialGradient', radialGradient, 7)
+        
+        # Transformations
+        def translate(args, line):
+            if len(args) != 2:
+                raise SdevError('translate() takes 2 arguments (x, y)', line)
+            return emit_gfx({'type': 'translate', 'x': args[0], 'y': args[1]})
+        builtins['translate'] = SdevBuiltin('translate', translate, 2, 2)
+        
+        def rotate(args, line):
+            if len(args) != 1:
+                raise SdevError('rotate() takes 1 argument (angle in radians)', line)
+            return emit_gfx({'type': 'rotate', 'angle': args[0]})
+        builtins['rotate'] = SdevBuiltin('rotate', rotate, 1, 1)
+        
+        def scale(args, line):
+            if len(args) < 1:
+                raise SdevError('scale() takes 1-2 arguments (x, y?)', line)
+            return emit_gfx({'type': 'scale', 'x': args[0], 'y': args[1] if len(args) > 1 else args[0]})
+        builtins['scale'] = SdevBuiltin('scale', scale, 1, 2)
+        
+        def save(args, line):
+            return emit_gfx({'type': 'save'})
+        builtins['save'] = SdevBuiltin('save', save, 0, 0)
+        
+        def restore(args, line):
+            return emit_gfx({'type': 'restore'})
+        builtins['restore'] = SdevBuiltin('restore', restore, 0, 0)
+        
+        def resetTransform(args, line):
+            return emit_gfx({'type': 'resetTransform'})
+        builtins['resetTransform'] = SdevBuiltin('resetTransform', resetTransform, 0, 0)
+        
+        # Path Drawing
+        def beginPath(args, line):
+            return emit_gfx({'type': 'beginPath'})
+        builtins['beginPath'] = SdevBuiltin('beginPath', beginPath, 0, 0)
+        
+        def closePath(args, line):
+            return emit_gfx({'type': 'closePath'})
+        builtins['closePath'] = SdevBuiltin('closePath', closePath, 0, 0)
+        
+        def moveTo(args, line):
+            if len(args) != 2:
+                raise SdevError('moveTo() takes 2 arguments (x, y)', line)
+            return emit_gfx({'type': 'moveTo', 'x': args[0], 'y': args[1]})
+        builtins['moveTo'] = SdevBuiltin('moveTo', moveTo, 2, 2)
+        
+        def lineTo(args, line):
+            if len(args) != 2:
+                raise SdevError('lineTo() takes 2 arguments (x, y)', line)
+            return emit_gfx({'type': 'lineTo', 'x': args[0], 'y': args[1]})
+        builtins['lineTo'] = SdevBuiltin('lineTo', lineTo, 2, 2)
+        
+        def bezierTo(args, line):
+            if len(args) != 6:
+                raise SdevError('bezierTo() takes 6 arguments (cp1x, cp1y, cp2x, cp2y, x, y)', line)
+            return emit_gfx({'type': 'bezierTo', 'cp1x': args[0], 'cp1y': args[1], 'cp2x': args[2], 'cp2y': args[3], 'x': args[4], 'y': args[5]})
+        builtins['bezierTo'] = SdevBuiltin('bezierTo', bezierTo, 6, 6)
+        
+        def quadraticTo(args, line):
+            if len(args) != 4:
+                raise SdevError('quadraticTo() takes 4 arguments (cpx, cpy, x, y)', line)
+            return emit_gfx({'type': 'quadraticTo', 'cpx': args[0], 'cpy': args[1], 'x': args[2], 'y': args[3]})
+        builtins['quadraticTo'] = SdevBuiltin('quadraticTo', quadraticTo, 4, 4)
+        
+        def fillPath(args, line):
+            return emit_gfx({'type': 'fillPath'})
+        builtins['fillPath'] = SdevBuiltin('fillPath', fillPath, 0, 0)
+        
+        def strokePath(args, line):
+            return emit_gfx({'type': 'strokePath'})
+        builtins['strokePath'] = SdevBuiltin('strokePath', strokePath, 0, 0)
+        
+        # Sprite System
+        def createSprite(args, line):
+            if len(args) < 4:
+                raise SdevError('createSprite() takes 4-5 arguments (x, y, width, height, color?)', line)
+            sprite_id = graphics_state['sprite_id']
+            graphics_state['sprite_id'] += 1
+            sprite = SdevSprite(args[0], args[1], args[2], args[3], args[4] if len(args) > 4 else 'white')
+            sprite.id = sprite_id
+            graphics_state['sprites'][sprite_id] = sprite
+            emit_gfx({'type': 'createSprite', 'sprite': {'id': sprite_id, 'x': args[0], 'y': args[1], 'width': args[2], 'height': args[3], 'color': args[4] if len(args) > 4 else 'white'}})
+            return sprite
+        builtins['createSprite'] = SdevBuiltin('createSprite', createSprite, 4, 5)
+        
+        def drawSprite(args, line):
+            if len(args) != 1:
+                raise SdevError('drawSprite() takes 1 argument (sprite)', line)
+            sprite = args[0]
+            if not isinstance(sprite, SdevSprite):
+                raise SdevError('Invalid sprite', line)
+            return emit_gfx({'type': 'drawSprite', 'sprite': {'id': getattr(sprite, 'id', 0), 'x': sprite.x, 'y': sprite.y, 'width': sprite.width, 'height': sprite.height, 'color': sprite.color}})
+        builtins['drawSprite'] = SdevBuiltin('drawSprite', drawSprite, 1, 1)
+        
+        def moveSprite(args, line):
+            if len(args) != 3:
+                raise SdevError('moveSprite() takes 3 arguments (sprite, dx, dy)', line)
+            sprite = args[0]
+            if not isinstance(sprite, SdevSprite):
+                raise SdevError('Invalid sprite', line)
+            sprite.x += args[1]
+            sprite.y += args[2]
+            return sprite
+        builtins['moveSprite'] = SdevBuiltin('moveSprite', moveSprite, 3, 3)
+        
+        def updateSprite(args, line):
+            if len(args) != 1:
+                raise SdevError('updateSprite() takes 1 argument (sprite)', line)
+            sprite = args[0]
+            if not isinstance(sprite, SdevSprite):
+                raise SdevError('Invalid sprite', line)
+            sprite.x += sprite.vx
+            sprite.y += sprite.vy
+            return sprite
+        builtins['updateSprite'] = SdevBuiltin('updateSprite', updateSprite, 1, 1)
+        
+        def spriteCollides(args, line):
+            if len(args) != 2:
+                raise SdevError('spriteCollides() takes 2 arguments (sprite1, sprite2)', line)
+            a, b = args[0], args[1]
+            if not isinstance(a, SdevSprite) or not isinstance(b, SdevSprite):
+                raise SdevError('Invalid sprites', line)
+            return a.collidesWith(b)
+        builtins['spriteCollides'] = SdevBuiltin('spriteCollides', spriteCollides, 2, 2)
+        
+        # Turtle Graphics
+        def turtle_init(args, line):
+            t = graphics_state['turtle']
+            t['x'], t['y'], t['angle'] = 200, 200, -90
+            t['pen_down'], t['color'], t['width'] = True, '#00ff88', 2
+            return emit_gfx({'type': 'turtle_reset'})
+        builtins['turtle'] = SdevBuiltin('turtle', turtle_init, 0, 0)
+        
+        def forward(args, line):
+            if len(args) != 1:
+                raise SdevError('forward() takes 1 argument (distance)', line)
+            t = graphics_state['turtle']
+            dist = args[0]
+            rad = math.radians(t['angle'])
+            new_x = t['x'] + math.cos(rad) * dist
+            new_y = t['y'] + math.sin(rad) * dist
+            if t['pen_down']:
+                emit_gfx({'type': 'turtle_line', 'x1': t['x'], 'y1': t['y'], 'x2': new_x, 'y2': new_y, 'color': t['color'], 'width': t['width']})
+            t['x'], t['y'] = new_x, new_y
+            return emit_gfx({'type': 'turtle_move', 'x': new_x, 'y': new_y, 'angle': t['angle']})
+        builtins['forward'] = SdevBuiltin('forward', forward, 1, 1)
+        
+        def backward(args, line):
+            if len(args) != 1:
+                raise SdevError('backward() takes 1 argument (distance)', line)
+            t = graphics_state['turtle']
+            dist = -args[0]
+            rad = math.radians(t['angle'])
+            new_x = t['x'] + math.cos(rad) * dist
+            new_y = t['y'] + math.sin(rad) * dist
+            if t['pen_down']:
+                emit_gfx({'type': 'turtle_line', 'x1': t['x'], 'y1': t['y'], 'x2': new_x, 'y2': new_y, 'color': t['color'], 'width': t['width']})
+            t['x'], t['y'] = new_x, new_y
+            return emit_gfx({'type': 'turtle_move', 'x': new_x, 'y': new_y, 'angle': t['angle']})
+        builtins['backward'] = SdevBuiltin('backward', backward, 1, 1)
+        
+        def left(args, line):
+            if len(args) != 1:
+                raise SdevError('left() takes 1 argument (degrees)', line)
+            t = graphics_state['turtle']
+            t['angle'] -= args[0]
+            return emit_gfx({'type': 'turtle_move', 'x': t['x'], 'y': t['y'], 'angle': t['angle']})
+        builtins['left'] = SdevBuiltin('left', left, 1, 1)
+        
+        def right(args, line):
+            if len(args) != 1:
+                raise SdevError('right() takes 1 argument (degrees)', line)
+            t = graphics_state['turtle']
+            t['angle'] += args[0]
+            return emit_gfx({'type': 'turtle_move', 'x': t['x'], 'y': t['y'], 'angle': t['angle']})
+        builtins['right'] = SdevBuiltin('right', right, 1, 1)
+        
+        def penup(args, line):
+            graphics_state['turtle']['pen_down'] = False
+            return None
+        builtins['penup'] = SdevBuiltin('penup', penup, 0, 0)
+        
+        def pendown(args, line):
+            graphics_state['turtle']['pen_down'] = True
+            return None
+        builtins['pendown'] = SdevBuiltin('pendown', pendown, 0, 0)
+        
+        def pencolor(args, line):
+            if len(args) != 1:
+                raise SdevError('pencolor() takes 1 argument (color)', line)
+            graphics_state['turtle']['color'] = str(args[0])
+            return None
+        builtins['pencolor'] = SdevBuiltin('pencolor', pencolor, 1, 1)
+        
+        def penwidth(args, line):
+            if len(args) != 1:
+                raise SdevError('penwidth() takes 1 argument (width)', line)
+            graphics_state['turtle']['width'] = args[0]
+            return None
+        builtins['penwidth'] = SdevBuiltin('penwidth', penwidth, 1, 1)
+        
+        def goto(args, line):
+            if len(args) != 2:
+                raise SdevError('goto() takes 2 arguments (x, y)', line)
+            t = graphics_state['turtle']
+            new_x, new_y = args[0], args[1]
+            if t['pen_down']:
+                emit_gfx({'type': 'turtle_line', 'x1': t['x'], 'y1': t['y'], 'x2': new_x, 'y2': new_y, 'color': t['color'], 'width': t['width']})
+            t['x'], t['y'] = new_x, new_y
+            return emit_gfx({'type': 'turtle_move', 'x': new_x, 'y': new_y, 'angle': t['angle']})
+        builtins['goto'] = SdevBuiltin('goto', goto, 2, 2)
+        
+        def home(args, line):
+            t = graphics_state['turtle']
+            if t['pen_down']:
+                emit_gfx({'type': 'turtle_line', 'x1': t['x'], 'y1': t['y'], 'x2': 200, 'y2': 200, 'color': t['color'], 'width': t['width']})
+            t['x'], t['y'], t['angle'] = 200, 200, -90
+            return emit_gfx({'type': 'turtle_move', 'x': 200, 'y': 200, 'angle': -90})
+        builtins['home'] = SdevBuiltin('home', home, 0, 0)
+        
+        def setheading(args, line):
+            if len(args) != 1:
+                raise SdevError('setheading() takes 1 argument (angle)', line)
+            t = graphics_state['turtle']
+            t['angle'] = args[0] - 90
+            return emit_gfx({'type': 'turtle_move', 'x': t['x'], 'y': t['y'], 'angle': t['angle']})
+        builtins['setheading'] = SdevBuiltin('setheading', setheading, 1, 1)
+        
+        def heading(args, line):
+            return (graphics_state['turtle']['angle'] + 90) % 360
+        builtins['heading'] = SdevBuiltin('heading', heading, 0, 0)
+        
+        def pos(args, line):
+            t = graphics_state['turtle']
+            return [t['x'], t['y']]
+        builtins['pos'] = SdevBuiltin('pos', pos, 0, 0)
+        
+        def turtleCircle(args, line):
+            if len(args) < 1:
+                raise SdevError('turtleCircle() takes 1-2 arguments (radius, steps?)', line)
+            radius = args[0]
+            steps = int(args[1]) if len(args) > 1 else 36
+            t = graphics_state['turtle']
+            angle_step = 360 / steps
+            dist = (2 * math.pi * radius) / steps
+            for _ in range(steps):
+                rad = math.radians(t['angle'])
+                new_x = t['x'] + math.cos(rad) * dist
+                new_y = t['y'] + math.sin(rad) * dist
+                if t['pen_down']:
+                    emit_gfx({'type': 'turtle_line', 'x1': t['x'], 'y1': t['y'], 'x2': new_x, 'y2': new_y, 'color': t['color'], 'width': t['width']})
+                t['x'], t['y'] = new_x, new_y
+                t['angle'] += angle_step
+            return emit_gfx({'type': 'turtle_move', 'x': t['x'], 'y': t['y'], 'angle': t['angle']})
+        builtins['turtleCircle'] = SdevBuiltin('turtleCircle', turtleCircle, 1, 2)
+        
+        def dot(args, line):
+            size = args[0] if len(args) > 0 else 5
+            color = str(args[1]) if len(args) > 1 else graphics_state['turtle']['color']
+            t = graphics_state['turtle']
+            return emit_gfx({'type': 'turtle_dot', 'x': t['x'], 'y': t['y'], 'size': size, 'color': color})
+        builtins['dot'] = SdevBuiltin('dot', dot, 0, 2)
+        
+        def stamp(args, line):
+            t = graphics_state['turtle']
+            return emit_gfx({'type': 'turtle_stamp', 'x': t['x'], 'y': t['y'], 'angle': t['angle'], 'color': t['color']})
+        builtins['stamp'] = SdevBuiltin('stamp', stamp, 0, 0)
+        
+        # Color Helpers
+        def hue(args, line):
+            if len(args) < 1 or len(args) > 3:
+                raise SdevError('hue() takes 1-3 arguments (h, s?, l?)', line)
+            h = args[0]
+            s = args[1] if len(args) > 1 else 100
+            l = args[2] if len(args) > 2 else 50
+            return f'hsl({h}, {s}%, {l}%)'
+        builtins['hue'] = SdevBuiltin('hue', hue, 1, 3)
+        
+        def hsla(args, line):
+            if len(args) != 4:
+                raise SdevError('hsla() takes 4 arguments (h, s, l, a)', line)
+            return f'hsla({args[0]}, {args[1]}%, {args[2]}%, {args[3]})'
+        builtins['hsla'] = SdevBuiltin('hsla', hsla, 4, 4)
+        
+        def randomColor(args, line):
+            h = random.randint(0, 360)
+            return f'hsl({h}, 70%, 60%)'
+        builtins['randomColor'] = SdevBuiltin('randomColor', randomColor, 0, 0)
+        
+        # Graphics Math Utilities
+        def radians(args, line):
+            if len(args) != 1:
+                raise SdevError('radians() takes 1 argument (degrees)', line)
+            return math.radians(args[0])
+        builtins['radians'] = SdevBuiltin('radians', radians, 1, 1)
+        
+        def degrees(args, line):
+            if len(args) != 1:
+                raise SdevError('degrees() takes 1 argument (radians)', line)
+            return math.degrees(args[0])
+        builtins['degrees'] = SdevBuiltin('degrees', degrees, 1, 1)
+        
+        def mapRange(args, line):
+            if len(args) != 5:
+                raise SdevError('mapRange() takes 5 arguments (value, inMin, inMax, outMin, outMax)', line)
+            value, inMin, inMax, outMin, outMax = args
+            return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin))
+        builtins['mapRange'] = SdevBuiltin('mapRange', mapRange, 5, 5)
+        
+        def constrain(args, line):
+            if len(args) != 3:
+                raise SdevError('constrain() takes 3 arguments (value, min, max)', line)
+            value, min_val, max_val = args
+            return max(min_val, min(max_val, value))
+        builtins['constrain'] = SdevBuiltin('constrain', constrain, 3, 3)
+        
+        def dist(args, line):
+            if len(args) != 4:
+                raise SdevError('dist() takes 4 arguments (x1, y1, x2, y2)', line)
+            dx = args[2] - args[0]
+            dy = args[3] - args[1]
+            return math.sqrt(dx * dx + dy * dy)
+        builtins['dist'] = SdevBuiltin('dist', dist, 4, 4)
+        
+        # Get graphics commands (for integration)
+        def getGraphicsCommands(args, line):
+            cmds = graphics_state['commands'].copy()
+            graphics_state['commands'] = []
+            return cmds
+        builtins['getGraphicsCommands'] = SdevBuiltin('getGraphicsCommands', getGraphicsCommands, 0, 0)
+        
+        # Legacy Sprite constructor (backwards compatibility)
+        def create_sprite_legacy(args, line):
             x = args[0] if len(args) > 0 else 0
             y = args[1] if len(args) > 1 else 0
             w = args[2] if len(args) > 2 else 32
             h = args[3] if len(args) > 3 else 32
             color = args[4] if len(args) > 4 else "white"
             return SdevSprite(x, y, w, h, color)
-        builtins['Sprite'] = SdevBuiltin('Sprite', create_sprite, 0, 5)
+        builtins['Sprite'] = SdevBuiltin('Sprite', create_sprite_legacy, 0, 5)
         
         def create_vector2(args, line):
             x = args[0] if len(args) > 0 else 0
@@ -2595,11 +3160,11 @@ class Interpreter:
             return SdevColor.rgba(args[0], args[1], args[2], args[3])
         builtins['rgba'] = SdevBuiltin('rgba', rgba, 4, 4)
         
-        def hsl(args, line):
+        def hsl_color(args, line):
             if len(args) != 3:
                 raise SdevError('hsl() takes 3 arguments', line)
             return SdevColor.hsl(args[0], args[1], args[2])
-        builtins['hsl'] = SdevBuiltin('hsl', hsl, 3, 3)
+        builtins['hsl'] = SdevBuiltin('hsl', hsl_color, 3, 3)
         
         def hex_color(args, line):
             if len(args) != 1:
