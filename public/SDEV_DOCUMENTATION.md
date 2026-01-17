@@ -820,31 +820,207 @@ speak(list.size())    // 2
 
 ## Graphics & Game Development
 
-sdev includes built-in support for graphics and game development.
+sdev includes comprehensive built-in support for 2D graphics, canvas drawing, turtle graphics, and game development.
 
-### Sprites
+### Canvas Setup
 
 ```sdev
-forge player be Sprite(100, 100, 50, 50, "blue")
-
-speak(player.x)       // 100
-speak(player.y)       // 100
-speak(player.width)   // 50
-speak(player.height)  // 50
-speak(player.color)   // blue
-
-player.vx be 5
-player.vy be 2
-player.update()  // Moves by velocity
+canvas(800, 600)      // Set canvas size
+clear("#1a1a2e")      // Clear with background color
+background("#2d2d44") // Set background color
 ```
 
-### Collision Detection
+### Basic Shapes
 
 ```sdev
-forge player be Sprite(100, 100, 50, 50, "blue")
-forge enemy be Sprite(120, 110, 50, 50, "red")
+// Rectangle (x, y, width, height, radius?)
+fill("blue")
+rect(50, 50, 100, 80)
+rect(200, 50, 100, 80, 10)  // Rounded corners
 
-ponder collides(player, enemy) ::
+// Circle (x, y, radius)
+fill("red")
+circle(150, 200, 50)
+
+// Ellipse (x, y, radiusX, radiusY, rotation?)
+fill("green")
+ellipse(300, 200, 60, 40)
+ellipse(400, 200, 60, 40, 45)  // Rotated 45 degrees
+
+// Arc (x, y, radius, startAngle, endAngle, counterclockwise?)
+stroke("yellow", 3)
+arc(200, 350, 40, 0, 180)
+arc(300, 350, 40, 0, 270, yep)  // Counter-clockwise
+
+// Line (x1, y1, x2, y2)
+stroke("white", 2)
+line(50, 400, 200, 450)
+
+// Point (x, y, size?)
+fill("cyan")
+point(100, 100)
+point(120, 100, 5)  // Larger point
+
+// Triangle (x1, y1, x2, y2, x3, y3)
+fill("orange")
+triangle(400, 100, 450, 180, 350, 180)
+
+// Polygon (array of [x, y] points)
+fill("purple")
+polygon([[500, 100], [550, 150], [530, 200], [470, 200], [450, 150]])
+
+// Star (x, y, outerRadius, innerRadius, points?)
+fill("gold")
+star(600, 150, 50, 25)
+star(700, 150, 50, 25, 8)  // 8-pointed star
+
+// Heart (x, y, size)
+fill("red")
+heart(650, 300, 40)
+```
+
+### Drawing State
+
+```sdev
+// Fill and Stroke
+fill("blue")           // Set fill color
+noFill()               // Disable fill
+stroke("red", 2)       // Set stroke color and width
+noStroke()             // Disable stroke
+lineWidth(3)           // Set line width
+lineCap("round")       // Line cap: round, square, butt
+lineJoin("round")      // Line join: round, bevel, miter
+
+// Transparency and Shadows
+alpha(0.5)             // Set global alpha (0-1)
+shadow("black", 10, 5, 5)  // Shadow: color, blur, offsetX, offsetY
+noShadow()             // Disable shadow
+```
+
+### Text Drawing
+
+```sdev
+fill("white")
+text("Hello, World!", 100, 100)      // Basic text
+text("Large Text", 100, 150, 32)     // With font size
+
+font("Arial", "bold")                // Font family and style
+textAlign("center", "middle")        // Horizontal and vertical alignment
+```
+
+### Gradients
+
+```sdev
+// Linear Gradient (x1, y1, x2, y2, colorStops...)
+// colorStops are [position, color] pairs where position is 0-1
+linearGradient(0, 0, 400, 0, [0, "red"], [0.5, "yellow"], [1, "green"])
+rect(0, 0, 400, 100)
+
+// Radial Gradient (x1, y1, r1, x2, y2, r2, colorStops...)
+radialGradient(200, 200, 0, 200, 200, 100, [0, "white"], [1, "blue"])
+circle(200, 200, 100)
+```
+
+### Transformations
+
+```sdev
+save()                 // Save current state
+translate(100, 100)    // Move origin
+rotate(0.5)            // Rotate (radians)
+scale(2)               // Scale uniformly
+scale(2, 1.5)          // Scale x and y separately
+restore()              // Restore saved state
+resetTransform()       // Reset all transformations
+```
+
+### Path Drawing
+
+```sdev
+beginPath()
+moveTo(50, 50)
+lineTo(150, 50)
+lineTo(150, 150)
+lineTo(50, 150)
+closePath()
+fillPath()             // Fill the path
+strokePath()           // Stroke the path
+
+// Bezier Curves
+beginPath()
+moveTo(100, 100)
+bezierTo(150, 50, 200, 150, 250, 100)  // cp1x, cp1y, cp2x, cp2y, x, y
+strokePath()
+
+// Quadratic Curves
+beginPath()
+moveTo(100, 200)
+quadraticTo(150, 150, 200, 200)  // cpx, cpy, x, y
+strokePath()
+```
+
+### Turtle Graphics
+
+```sdev
+turtle()               // Initialize turtle at center
+forward(100)           // Move forward
+backward(50)           // Move backward
+left(90)               // Turn left (degrees)
+right(45)              // Turn right (degrees)
+penup()                // Stop drawing
+pendown()              // Start drawing
+pencolor("lime")       // Set pen color
+penwidth(3)            // Set pen width
+goto(200, 200)         // Go to coordinates
+home()                 // Return to center
+setheading(90)         // Set absolute heading
+heading()              // Get current heading
+pos()                  // Get current position [x, y]
+turtleCircle(50)       // Draw circle of radius
+turtleCircle(50, 72)   // Circle with specific steps
+dot(10)                // Draw dot at position
+dot(10, "red")         // Dot with color
+stamp()                // Stamp turtle shape
+
+// Example: Turtle Spiral
+turtle()
+clear("black")
+within i be sequence(1, 200) ::
+    pencolor(hue(i * 2))
+    forward(i * 2)
+    right(91)
+;;
+```
+
+### Sprites & Game Development
+
+```sdev
+// Create Sprite (x, y, width, height, color?)
+forge player be createSprite(100, 100, 50, 50, "blue")
+forge enemy be createSprite(200, 150, 40, 40, "red")
+
+// Access properties
+speak(player.x)        // 100
+speak(player.y)        // 100
+speak(player.width)    // 50
+speak(player.height)   // 50
+speak(player.color)    // blue
+
+// Set velocity
+player.velocityX be 5
+player.velocityY be 2
+
+// Update sprite (applies velocity)
+updateSprite(player)
+
+// Move sprite by delta
+moveSprite(player, 10, 5)
+
+// Draw sprite
+drawSprite(player)
+drawSprite(enemy)
+
+// Collision detection
+ponder spriteCollides(player, enemy) ::
     speak("Hit!")
 ;;
 ```
@@ -868,19 +1044,155 @@ speak(v1.distance(v2))        // 2.83
 ### Color Functions
 
 ```sdev
+// RGB and RGBA
 forge red be rgb(255, 0, 0)
 forge transparent be rgba(255, 0, 0, 0.5)
-forge blue be hsl(240, 100, 50)
-forge green be hex("#00FF00")
+
+// HSL and HSLA
+forge blue be hue(240)              // Just hue (auto s=100, l=50)
+forge purple be hue(280, 80, 60)    // hue, saturation, lightness
+forge faded be hsla(120, 100, 50, 0.5)
+
+// Random Color
+forge color be randomColor()
 ```
 
-### Utility Functions
+### Graphics Math Utilities
 
 ```sdev
-forge value be lerp(0, 100, 0.5)   // 50 (linear interpolation)
-forge clamped be clamp(150, 0, 100) // 100
-forge dist be distance(0, 0, 3, 4)  // 5
+// Angle conversion
+forge rad be radians(180)     // Degrees to radians -> PI
+forge deg be degrees(3.14159) // Radians to degrees -> 180
+
+// Interpolation
+forge value be lerp(0, 100, 0.5)    // Linear interpolation -> 50
+
+// Range mapping
+forge mapped be mapRange(50, 0, 100, 0, 1)  // Map value to new range -> 0.5
+
+// Constraining
+forge clamped be constrain(150, 0, 100)  // Clamp to range -> 100
+
+// Distance
+forge d be dist(0, 0, 3, 4)  // Distance between points -> 5
 ```
+
+### Complete Graphics Example
+
+```sdev
+// Starfield Animation
+canvas(800, 600)
+
+forge stars be []
+within i be sequence(1, 100) ::
+    stars.push(::
+        "x": random(0, 800),
+        "y": random(0, 600),
+        "size": random(1, 4),
+        "speed": random(1, 5)
+    ;;)
+;;
+
+conjure drawFrame() ::
+    clear("#000011")
+    
+    within star be stars ::
+        // Update position
+        star.y be star.y + star.speed
+        ponder star.y > 600 ::
+            star.y be 0
+            star.x be random(0, 800)
+        ;;
+        
+        // Draw star
+        fill(rgba(255, 255, 255, star.size / 4))
+        circle(star.x, star.y, star.size)
+    ;;
+;;
+
+// Call drawFrame in a game loop
+drawFrame()
+```
+
+### Graphics Function Reference
+
+| Function | Description |
+|----------|-------------|
+| `canvas(w, h)` | Set canvas size |
+| `clear(color?)` | Clear canvas |
+| `background(color)` | Set background |
+| `fill(color)` | Set fill color |
+| `noFill()` | Disable fill |
+| `stroke(color, width?)` | Set stroke |
+| `noStroke()` | Disable stroke |
+| `lineWidth(w)` | Set line width |
+| `lineCap(style)` | Line cap style |
+| `lineJoin(style)` | Line join style |
+| `alpha(a)` | Set global alpha |
+| `shadow(color, blur, x, y?)` | Add shadow |
+| `noShadow()` | Remove shadow |
+| `rect(x, y, w, h, r?)` | Draw rectangle |
+| `circle(x, y, r)` | Draw circle |
+| `ellipse(x, y, rx, ry, rot?)` | Draw ellipse |
+| `arc(x, y, r, start, end, ccw?)` | Draw arc |
+| `line(x1, y1, x2, y2)` | Draw line |
+| `point(x, y, size?)` | Draw point |
+| `triangle(x1, y1, x2, y2, x3, y3)` | Draw triangle |
+| `polygon(points)` | Draw polygon |
+| `star(x, y, outer, inner, pts?)` | Draw star |
+| `heart(x, y, size)` | Draw heart |
+| `text(str, x, y, size?)` | Draw text |
+| `textAlign(h, v?)` | Set text alignment |
+| `font(family, style?)` | Set font |
+| `linearGradient(...)` | Create linear gradient |
+| `radialGradient(...)` | Create radial gradient |
+| `translate(x, y)` | Translate origin |
+| `rotate(angle)` | Rotate canvas |
+| `scale(x, y?)` | Scale canvas |
+| `save()` | Save state |
+| `restore()` | Restore state |
+| `resetTransform()` | Reset transforms |
+| `beginPath()` | Start new path |
+| `closePath()` | Close path |
+| `moveTo(x, y)` | Move to point |
+| `lineTo(x, y)` | Line to point |
+| `bezierTo(...)` | Bezier curve |
+| `quadraticTo(...)` | Quadratic curve |
+| `fillPath()` | Fill current path |
+| `strokePath()` | Stroke current path |
+| `turtle()` | Initialize turtle |
+| `forward(d)` | Move forward |
+| `backward(d)` | Move backward |
+| `left(deg)` | Turn left |
+| `right(deg)` | Turn right |
+| `penup()` | Pen up |
+| `pendown()` | Pen down |
+| `pencolor(c)` | Set pen color |
+| `penwidth(w)` | Set pen width |
+| `goto(x, y)` | Go to position |
+| `home()` | Return home |
+| `setheading(deg)` | Set heading |
+| `heading()` | Get heading |
+| `pos()` | Get position |
+| `turtleCircle(r, steps?)` | Draw circle |
+| `dot(size?, color?)` | Draw dot |
+| `stamp()` | Stamp turtle |
+| `createSprite(...)` | Create sprite |
+| `drawSprite(s)` | Draw sprite |
+| `moveSprite(s, dx, dy)` | Move sprite |
+| `updateSprite(s)` | Update sprite |
+| `spriteCollides(a, b)` | Check collision |
+| `rgb(r, g, b)` | RGB color |
+| `rgba(r, g, b, a)` | RGBA color |
+| `hue(h, s?, l?)` | HSL color |
+| `hsla(h, s, l, a)` | HSLA color |
+| `randomColor()` | Random color |
+| `radians(deg)` | Convert to radians |
+| `degrees(rad)` | Convert to degrees |
+| `lerp(a, b, t)` | Linear interpolation |
+| `mapRange(...)` | Map value to range |
+| `constrain(v, min, max)` | Clamp value |
+| `dist(x1, y1, x2, y2)` | Calculate distance |
 
 ---
 
