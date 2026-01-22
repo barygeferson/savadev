@@ -621,6 +621,644 @@ invalidateSize(map)
 
 ---
 
+## Navigation & Animation
+
+### panTo(map, lat, lng, options?)
+
+Smoothly pans the map to a new center.
+
+```sdev
+panTo(map, 48.8566, 2.3522)
+```
+
+### panBy(map, x, y)
+
+Pans the map by a given number of pixels.
+
+```sdev
+panBy(map, 100, 50)  // Pan right 100px, down 50px
+```
+
+### flyTo(map, lat, lng, zoom, options?)
+
+Animates the map to a new position with a smooth flying effect.
+
+```sdev
+flyTo(map, 40.7128, -74.0060, 14)  // Fly to New York
+```
+
+### flyToBounds(map, lat1, lng1, lat2, lng2, options?)
+
+Animates to fit the given bounds.
+
+```sdev
+flyToBounds(map, 51.49, -0.12, 51.52, -0.05)
+```
+
+### zoomIn(map, delta?)
+
+Increases the zoom level by delta (default 1).
+
+```sdev
+zoomIn(map)        // Zoom in by 1
+zoomIn(map, 2)     // Zoom in by 2
+```
+
+### zoomOut(map, delta?)
+
+Decreases the zoom level by delta (default 1).
+
+```sdev
+zoomOut(map)
+```
+
+### setZoom(map, zoom)
+
+Sets the zoom level directly.
+
+```sdev
+setZoom(map, 15)
+```
+
+### setMinZoom(map, zoom) / setMaxZoom(map, zoom)
+
+Sets zoom constraints.
+
+```sdev
+setMinZoom(map, 5)
+setMaxZoom(map, 18)
+```
+
+### getMinZoom(map) / getMaxZoom(map)
+
+Gets the current zoom constraints.
+
+```sdev
+forge minZ be getMinZoom(map)
+forge maxZ be getMaxZoom(map)
+```
+
+### setMaxBounds(map, lat1, lng1, lat2, lng2)
+
+Restricts the map to a given geographical area.
+
+```sdev
+setMaxBounds(map, 51.0, -0.5, 52.0, 0.5)  // Lock to London area
+```
+
+---
+
+## Popup & Tooltip Control
+
+### closePopup(marker)
+
+Closes an open popup.
+
+```sdev
+closePopup(marker)
+```
+
+### openTooltip(marker) / closeTooltip(marker)
+
+Opens or closes a marker's tooltip.
+
+```sdev
+openTooltip(marker)
+closeTooltip(marker)
+```
+
+### setPopupContent(marker, content)
+
+Updates popup content dynamically.
+
+```sdev
+setPopupContent(marker, "Updated content!")
+```
+
+### setTooltipContent(marker, content)
+
+Updates tooltip content dynamically.
+
+```sdev
+setTooltipContent(marker, "New tooltip text")
+```
+
+---
+
+## Layer Styling
+
+### setMarkerIcon(marker, iconUrl, iconSize)
+
+Changes a marker's icon.
+
+```sdev
+setMarkerIcon(marker, "https://example.com/new-icon.png", [32, 32])
+```
+
+### setMarkerOpacity(marker, opacity)
+
+Sets marker transparency (0-1).
+
+```sdev
+setMarkerOpacity(marker, 0.5)
+```
+
+### setMarkerZIndex(marker, zIndex)
+
+Controls marker stacking order.
+
+```sdev
+setMarkerZIndex(marker, 1000)
+```
+
+### setCircleRadius(circle, radius)
+
+Updates a circle's radius in meters.
+
+```sdev
+setCircleRadius(myCircle, 750)
+```
+
+### setCircleStyle(circle, options) / setPolylineStyle / setPolygonStyle
+
+Updates styling of shapes.
+
+```sdev
+setCircleStyle(myCircle, :: "color": "#ff0000", "fillOpacity": 0.8 ;;)
+setPolylineStyle(myLine, :: "color": "#00ff00", "weight": 5 ;;)
+setPolygonStyle(myPoly, :: "fillColor": "#0000ff" ;;)
+```
+
+### getPolylineLatLngs(polyline)
+
+Gets all points of a polyline.
+
+```sdev
+forge points be getPolylineLatLngs(myRoute)
+```
+
+### setPolylineLatLngs(polyline, points)
+
+Replaces all points of a polyline.
+
+```sdev
+setPolylineLatLngs(myRoute, [[51.5, -0.1], [51.6, -0.05]])
+```
+
+### addLatLng(polyline, lat, lng)
+
+Adds a point to a polyline.
+
+```sdev
+addLatLng(myRoute, 51.52, -0.08)
+```
+
+### bringToFront(layer) / bringToBack(layer)
+
+Controls layer z-ordering.
+
+```sdev
+bringToFront(importantLayer)
+bringToBack(backgroundLayer)
+```
+
+---
+
+## Additional Events
+
+### onLayerClick(layer, callback)
+
+Handles click events on any layer.
+
+```sdev
+onLayerClick(myCircle, (e) -> ::
+    speak("Circle clicked at " + morph(e["lat"], "text"))
+;;)
+```
+
+### onLayerMouseover(layer, callback) / onLayerMouseout(layer, callback)
+
+Handles hover events.
+
+```sdev
+onLayerMouseover(myPolygon, (e) -> ::
+    setPolygonStyle(myPolygon, :: "fillOpacity": 0.8 ;;)
+;;)
+
+onLayerMouseout(myPolygon, (e) -> ::
+    setPolygonStyle(myPolygon, :: "fillOpacity": 0.4 ;;)
+;;)
+```
+
+### onMapDoubleClick(map, callback)
+
+Handles double-click events.
+
+```sdev
+onMapDoubleClick(map, (e) -> ::
+    setMapView(map, e["lat"], e["lng"], getMapZoom(map) + 1)
+;;)
+```
+
+### onMapRightClick(map, callback)
+
+Handles right-click (context menu) events.
+
+```sdev
+onMapRightClick(map, (e) -> ::
+    speak("Right click at " + morph(e["lat"], "text"))
+;;)
+```
+
+### onMapMousemove(map, callback)
+
+Tracks mouse movement over the map.
+
+```sdev
+onMapMousemove(map, (e) -> ::
+    updateCoordinateDisplay(e["lat"], e["lng"])
+;;)
+```
+
+---
+
+## Geolocation
+
+### locate(map, options?)
+
+Starts browser geolocation.
+
+```sdev
+locate(map, :: "setView": yep, "maxZoom": 16 ;;)
+```
+
+### onLocationFound(map, callback)
+
+Handles successful location.
+
+```sdev
+onLocationFound(map, (e) -> ::
+    speak("Found you at " + morph(e["lat"], "text") + ", " + morph(e["lng"], "text"))
+    addMarker(map, e["lat"], e["lng"], "You are here!")
+;;)
+```
+
+### onLocationError(map, callback)
+
+Handles geolocation errors.
+
+```sdev
+onLocationError(map, (e) -> ::
+    speak("Location error: " + e["message"])
+;;)
+```
+
+### stopLocate(map)
+
+Stops continuous location updates.
+
+```sdev
+stopLocate(map)
+```
+
+---
+
+## Overlays
+
+### addImageOverlay(map, imageUrl, lat1, lng1, lat2, lng2, options?)
+
+Adds an image overlay to the map.
+
+```sdev
+forge overlay be addImageOverlay(map, "historical-map.jpg", 51.4, -0.2, 51.6, 0.1)
+```
+
+### addVideoOverlay(map, videoUrl, lat1, lng1, lat2, lng2, options?)
+
+Adds a video overlay.
+
+```sdev
+forge video be addVideoOverlay(map, "timelapse.mp4", 51.4, -0.2, 51.6, 0.1)
+```
+
+### setImageOpacity(overlay, opacity)
+
+Sets overlay transparency.
+
+```sdev
+setImageOpacity(overlay, 0.7)
+```
+
+### setImageUrl(overlay, url)
+
+Changes the overlay image.
+
+```sdev
+setImageUrl(overlay, "new-image.jpg")
+```
+
+### setBounds(overlay, lat1, lng1, lat2, lng2)
+
+Repositions an overlay.
+
+```sdev
+setBounds(overlay, 51.3, -0.3, 51.7, 0.2)
+```
+
+---
+
+## Feature Groups
+
+### createFeatureGroup()
+
+Creates a feature group (like layer group but with bounds).
+
+```sdev
+forge group be createFeatureGroup()
+```
+
+### addToFeatureGroup(featureGroup, layer)
+
+Adds a layer to the feature group.
+
+```sdev
+addToFeatureGroup(group, myMarker)
+addToFeatureGroup(group, myCircle)
+```
+
+### removeFromFeatureGroup(featureGroup, layer)
+
+Removes a layer from the feature group.
+
+```sdev
+removeFromFeatureGroup(group, myMarker)
+```
+
+### getFeatureGroupBounds(featureGroup)
+
+Gets the combined bounds of all layers.
+
+```sdev
+forge bounds be getFeatureGroupBounds(group)
+```
+
+### fitFeatureGroup(map, featureGroup, options?)
+
+Zooms the map to fit all layers in the group.
+
+```sdev
+fitFeatureGroup(map, group)
+```
+
+### eachLayer(layerGroup, callback)
+
+Iterates over all layers in a group.
+
+```sdev
+eachLayer(group, (layer) -> ::
+    speak("Processing layer")
+;;)
+```
+
+### getLayers(layerGroup)
+
+Returns all layers as a list.
+
+```sdev
+forge layers be getLayers(group)
+```
+
+### hasLayer(layerGroup, layer)
+
+Checks if a layer exists in the group.
+
+```sdev
+ponder hasLayer(group, myMarker) ::
+    speak("Marker is in group")
+;;
+```
+
+---
+
+## Custom Markers
+
+### addDivIcon(map, lat, lng, html, className, size)
+
+Creates a marker with custom HTML content.
+
+```sdev
+forge customMarker be addDivIcon(map, 51.505, -0.09, "<div class='pulse'>🎯</div>", "custom-marker", [40, 40])
+```
+
+---
+
+## Coordinate Utilities
+
+### getSize(map)
+
+Gets map container size in pixels.
+
+```sdev
+forge size be getSize(map)
+speak("Width: " + morph(size["width"], "text") + ", Height: " + morph(size["height"], "text"))
+```
+
+### latLngToContainerPoint(map, lat, lng)
+
+Converts coordinates to pixel position.
+
+```sdev
+forge pixel be latLngToContainerPoint(map, 51.505, -0.09)
+speak("Pixel X: " + morph(pixel["x"], "text"))
+```
+
+### containerPointToLatLng(map, x, y)
+
+Converts pixel position to coordinates.
+
+```sdev
+forge coord be containerPointToLatLng(map, 200, 150)
+```
+
+### wrapLng(lng)
+
+Wraps longitude to -180 to 180.
+
+```sdev
+forge wrapped be wrapLng(370)  // Returns 10
+```
+
+### wrapLat(lat)
+
+Clamps latitude to -90 to 90.
+
+```sdev
+forge clamped be wrapLat(95)  // Returns 90
+```
+
+### degreesToDMS(degrees)
+
+Converts decimal degrees to DMS string.
+
+```sdev
+forge dms be degreesToDMS(51.5074)  // "51° 30' 26.64""
+```
+
+### DMSToDegrees(d, m, s)
+
+Converts DMS to decimal degrees.
+
+```sdev
+forge deg be DMSToDegrees(51, 30, 26.64)  // 51.5074
+```
+
+### metersToPixels(map, meters, lat)
+
+Converts meters to pixels at the current zoom.
+
+```sdev
+forge px be metersToPixels(map, 1000, 51.505)
+```
+
+### pixelsToMeters(map, pixels, lat)
+
+Converts pixels to meters at the current zoom.
+
+```sdev
+forge m be pixelsToMeters(map, 100, 51.505)
+```
+
+---
+
+## GIS Analysis Functions
+
+### bearing(lat1, lng1, lat2, lng2)
+
+Calculates bearing between two points (0-360 degrees).
+
+```sdev
+forge b be bearing(51.5, -0.1, 48.8, 2.3)  // London to Paris
+speak("Bearing: " + morph(b, "text") + "°")
+```
+
+### midpoint(lat1, lng1, lat2, lng2)
+
+Calculates the midpoint between two coordinates.
+
+```sdev
+forge mid be midpoint(51.5, -0.1, 48.8, 2.3)
+addMarker(map, mid["lat"], mid["lng"], "Midpoint")
+```
+
+### destination(lat, lng, bearing, distance)
+
+Calculates destination point given bearing and distance.
+
+```sdev
+forge dest be destination(51.5, -0.1, 90, 50000)  // 50km east of London
+addMarker(map, dest["lat"], dest["lng"], "Destination")
+```
+
+### area(points)
+
+Calculates polygon area in square meters.
+
+```sdev
+forge polygon be [[51.5, -0.1], [51.5, 0.0], [51.4, 0.0], [51.4, -0.1]]
+forge sqMeters be area(polygon)
+speak("Area: " + morph(ground(sqMeters / 1000000), "text") + " km²")
+```
+
+### length(points)
+
+Calculates polyline length in meters.
+
+```sdev
+forge route be [[51.5, -0.1], [51.52, -0.08], [51.55, -0.05]]
+forge len be length(route)
+speak("Route length: " + morph(ground(len), "text") + " meters")
+```
+
+### centroid(points)
+
+Calculates the center point of a polygon.
+
+```sdev
+forge center be centroid(polygon)
+addMarker(map, center["lat"], center["lng"], "Center")
+```
+
+### isPointInPolygon(lat, lng, points)
+
+Checks if a point is inside a polygon.
+
+```sdev
+ponder isPointInPolygon(51.45, -0.05, polygon) ::
+    speak("Point is inside the polygon")
+;; otherwise ::
+    speak("Point is outside")
+;;
+```
+
+### simplify(points, tolerance)
+
+Simplifies a polyline using Douglas-Peucker algorithm.
+
+```sdev
+forge simplified be simplify(complexRoute, 0.0001)
+```
+
+### interpolateAlong(points, fraction)
+
+Gets a point at a fraction (0-1) along a polyline.
+
+```sdev
+forge halfway be interpolateAlong(route, 0.5)
+addMarker(map, halfway["lat"], halfway["lng"], "Halfway point")
+```
+
+---
+
+## Layer Visibility
+
+### getLayerType(layer)
+
+Gets the type of a layer.
+
+```sdev
+forge type be getLayerType(myLayer)  // "marker", "circle", etc.
+```
+
+### isLayerVisible(layer)
+
+Checks if a layer is currently on the map.
+
+```sdev
+ponder isLayerVisible(myMarker) ::
+    speak("Marker is visible")
+;;
+```
+
+### showLayer(map, layer) / hideLayer(map, layer)
+
+Shows or hides a layer.
+
+```sdev
+hideLayer(map, secretMarker)
+// Later...
+showLayer(map, secretMarker)
+```
+
+### toggleLayer(map, layer)
+
+Toggles layer visibility.
+
+```sdev
+toggleLayer(map, myLayer)
+```
+
+---
+
 ## Complete Examples
 
 ### Interactive City Markers
