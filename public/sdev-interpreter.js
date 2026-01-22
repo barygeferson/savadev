@@ -2003,6 +2003,831 @@ class Interpreter {
       if (mapObj?._map) mapObj._map.invalidateSize();
       return null;
     }});
+
+    // ============= ADDITIONAL LEAFLET FUNCTIONS =============
+
+    // closePopup(marker)
+    builtins.set('closePopup', { type: 'builtin', call: (args) => {
+      const obj = args[0];
+      if (obj?._layer) obj._layer.closePopup();
+      return null;
+    }});
+
+    // openTooltip(marker)
+    builtins.set('openTooltip', { type: 'builtin', call: (args) => {
+      const obj = args[0];
+      if (obj?._layer) obj._layer.openTooltip();
+      return null;
+    }});
+
+    // closeTooltip(marker)
+    builtins.set('closeTooltip', { type: 'builtin', call: (args) => {
+      const obj = args[0];
+      if (obj?._layer) obj._layer.closeTooltip();
+      return null;
+    }});
+
+    // setPopupContent(marker, content)
+    builtins.set('setPopupContent', { type: 'builtin', call: (args) => {
+      const [obj, content] = args;
+      if (obj?._layer) obj._layer.setPopupContent(content);
+      return null;
+    }});
+
+    // setTooltipContent(marker, content)
+    builtins.set('setTooltipContent', { type: 'builtin', call: (args) => {
+      const [obj, content] = args;
+      if (obj?._layer) obj._layer.setTooltipContent(content);
+      return null;
+    }});
+
+    // setMarkerIcon(marker, iconUrl, iconSize)
+    builtins.set('setMarkerIcon', { type: 'builtin', call: (args) => {
+      const [markerObj, iconUrl, iconSize] = args;
+      if (markerObj?._layer && hasLeaflet()) {
+        const icon = L.icon({
+          iconUrl: iconUrl,
+          iconSize: Array.isArray(iconSize) ? iconSize : [32, 32]
+        });
+        markerObj._layer.setIcon(icon);
+      }
+      return null;
+    }});
+
+    // setMarkerOpacity(marker, opacity)
+    builtins.set('setMarkerOpacity', { type: 'builtin', call: (args) => {
+      const [markerObj, opacity] = args;
+      if (markerObj?._layer) markerObj._layer.setOpacity(opacity);
+      return null;
+    }});
+
+    // setMarkerZIndex(marker, zIndex)
+    builtins.set('setMarkerZIndex', { type: 'builtin', call: (args) => {
+      const [markerObj, zIndex] = args;
+      if (markerObj?._layer) markerObj._layer.setZIndexOffset(zIndex);
+      return null;
+    }});
+
+    // setCircleRadius(circle, radius)
+    builtins.set('setCircleRadius', { type: 'builtin', call: (args) => {
+      const [circleObj, radius] = args;
+      if (circleObj?._layer) circleObj._layer.setRadius(radius);
+      return null;
+    }});
+
+    // setCircleStyle(circle, options)
+    builtins.set('setCircleStyle', { type: 'builtin', call: (args) => {
+      const [circleObj, options] = args;
+      if (circleObj?._layer) circleObj._layer.setStyle(options);
+      return null;
+    }});
+
+    // setPolylineStyle(polyline, options)
+    builtins.set('setPolylineStyle', { type: 'builtin', call: (args) => {
+      const [polyObj, options] = args;
+      if (polyObj?._layer) polyObj._layer.setStyle(options);
+      return null;
+    }});
+
+    // setPolygonStyle(polygon, options)
+    builtins.set('setPolygonStyle', { type: 'builtin', call: (args) => {
+      const [polyObj, options] = args;
+      if (polyObj?._layer) polyObj._layer.setStyle(options);
+      return null;
+    }});
+
+    // getPolylineLatLngs(polyline)
+    builtins.set('getPolylineLatLngs', { type: 'builtin', call: (args) => {
+      const polyObj = args[0];
+      if (polyObj?._layer) {
+        return polyObj._layer.getLatLngs().map(ll => ({ lat: ll.lat, lng: ll.lng }));
+      }
+      return [];
+    }});
+
+    // setPolylineLatLngs(polyline, points)
+    builtins.set('setPolylineLatLngs', { type: 'builtin', call: (args) => {
+      const [polyObj, points] = args;
+      if (polyObj?._layer && Array.isArray(points)) {
+        polyObj._layer.setLatLngs(points);
+      }
+      return null;
+    }});
+
+    // addLatLng(polyline, lat, lng)
+    builtins.set('addLatLng', { type: 'builtin', call: (args) => {
+      const [polyObj, lat, lng] = args;
+      if (polyObj?._layer) polyObj._layer.addLatLng([lat, lng]);
+      return null;
+    }});
+
+    // bringToFront(layer)
+    builtins.set('bringToFront', { type: 'builtin', call: (args) => {
+      const layerObj = args[0];
+      if (layerObj?._layer && typeof layerObj._layer.bringToFront === 'function') {
+        layerObj._layer.bringToFront();
+      }
+      return null;
+    }});
+
+    // bringToBack(layer)
+    builtins.set('bringToBack', { type: 'builtin', call: (args) => {
+      const layerObj = args[0];
+      if (layerObj?._layer && typeof layerObj._layer.bringToBack === 'function') {
+        layerObj._layer.bringToBack();
+      }
+      return null;
+    }});
+
+    // onLayerClick(layer, callback)
+    builtins.set('onLayerClick', { type: 'builtin', call: (args) => {
+      const [layerObj, callback] = args;
+      if (layerObj?._layer && callback) {
+        layerObj._layer.on('click', (e) => {
+          const event = e.latlng ? { lat: e.latlng.lat, lng: e.latlng.lng } : {};
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onLayerMouseover(layer, callback)
+    builtins.set('onLayerMouseover', { type: 'builtin', call: (args) => {
+      const [layerObj, callback] = args;
+      if (layerObj?._layer && callback) {
+        layerObj._layer.on('mouseover', (e) => {
+          const event = e.latlng ? { lat: e.latlng.lat, lng: e.latlng.lng } : {};
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onLayerMouseout(layer, callback)
+    builtins.set('onLayerMouseout', { type: 'builtin', call: (args) => {
+      const [layerObj, callback] = args;
+      if (layerObj?._layer && callback) {
+        layerObj._layer.on('mouseout', () => {
+          self.callFunction(callback, [{}]);
+        });
+      }
+      return null;
+    }});
+
+    // onMapDoubleClick(map, callback)
+    builtins.set('onMapDoubleClick', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('dblclick', (e) => {
+          const event = { lat: e.latlng.lat, lng: e.latlng.lng };
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onMapRightClick(map, callback)
+    builtins.set('onMapRightClick', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('contextmenu', (e) => {
+          const event = { lat: e.latlng.lat, lng: e.latlng.lng };
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onMapMousemove(map, callback)
+    builtins.set('onMapMousemove', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('mousemove', (e) => {
+          const event = { lat: e.latlng.lat, lng: e.latlng.lng };
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // panTo(map, lat, lng, options?)
+    builtins.set('panTo', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, options] = args;
+      if (mapObj?._map) mapObj._map.panTo([lat, lng], options || {});
+      return null;
+    }});
+
+    // panBy(map, x, y)
+    builtins.set('panBy', { type: 'builtin', call: (args) => {
+      const [mapObj, x, y] = args;
+      if (mapObj?._map) mapObj._map.panBy([x, y]);
+      return null;
+    }});
+
+    // flyTo(map, lat, lng, zoom, options?)
+    builtins.set('flyTo', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, zoom, options] = args;
+      if (mapObj?._map) mapObj._map.flyTo([lat, lng], zoom, options || {});
+      return null;
+    }});
+
+    // flyToBounds(map, lat1, lng1, lat2, lng2, options?)
+    builtins.set('flyToBounds', { type: 'builtin', call: (args) => {
+      const [mapObj, lat1, lng1, lat2, lng2, options] = args;
+      if (mapObj?._map) mapObj._map.flyToBounds([[lat1, lng1], [lat2, lng2]], options || {});
+      return null;
+    }});
+
+    // setMinZoom(map, zoom)
+    builtins.set('setMinZoom', { type: 'builtin', call: (args) => {
+      const [mapObj, zoom] = args;
+      if (mapObj?._map) mapObj._map.setMinZoom(zoom);
+      return null;
+    }});
+
+    // setMaxZoom(map, zoom)
+    builtins.set('setMaxZoom', { type: 'builtin', call: (args) => {
+      const [mapObj, zoom] = args;
+      if (mapObj?._map) mapObj._map.setMaxZoom(zoom);
+      return null;
+    }});
+
+    // setMaxBounds(map, lat1, lng1, lat2, lng2)
+    builtins.set('setMaxBounds', { type: 'builtin', call: (args) => {
+      const [mapObj, lat1, lng1, lat2, lng2] = args;
+      if (mapObj?._map) mapObj._map.setMaxBounds([[lat1, lng1], [lat2, lng2]]);
+      return null;
+    }});
+
+    // zoomIn(map, delta?)
+    builtins.set('zoomIn', { type: 'builtin', call: (args) => {
+      const [mapObj, delta] = args;
+      if (mapObj?._map) mapObj._map.zoomIn(delta ?? 1);
+      return null;
+    }});
+
+    // zoomOut(map, delta?)
+    builtins.set('zoomOut', { type: 'builtin', call: (args) => {
+      const [mapObj, delta] = args;
+      if (mapObj?._map) mapObj._map.zoomOut(delta ?? 1);
+      return null;
+    }});
+
+    // setZoom(map, zoom)
+    builtins.set('setZoom', { type: 'builtin', call: (args) => {
+      const [mapObj, zoom] = args;
+      if (mapObj?._map) mapObj._map.setZoom(zoom);
+      return null;
+    }});
+
+    // getMinZoom(map)
+    builtins.set('getMinZoom', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      return mapObj?._map ? mapObj._map.getMinZoom() : 0;
+    }});
+
+    // getMaxZoom(map)
+    builtins.set('getMaxZoom', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      return mapObj?._map ? mapObj._map.getMaxZoom() : 18;
+    }});
+
+    // getSize(map)
+    builtins.set('getSize', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      if (mapObj?._map) {
+        const size = mapObj._map.getSize();
+        return { width: size.x, height: size.y };
+      }
+      return { width: 0, height: 0 };
+    }});
+
+    // latLngToContainerPoint(map, lat, lng)
+    builtins.set('latLngToContainerPoint', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng] = args;
+      if (mapObj?._map) {
+        const point = mapObj._map.latLngToContainerPoint([lat, lng]);
+        return { x: point.x, y: point.y };
+      }
+      return { x: 0, y: 0 };
+    }});
+
+    // containerPointToLatLng(map, x, y)
+    builtins.set('containerPointToLatLng', { type: 'builtin', call: (args) => {
+      const [mapObj, x, y] = args;
+      if (mapObj?._map) {
+        const ll = mapObj._map.containerPointToLatLng([x, y]);
+        return { lat: ll.lat, lng: ll.lng };
+      }
+      return { lat: 0, lng: 0 };
+    }});
+
+    // locate(map, options?)
+    builtins.set('locate', { type: 'builtin', call: (args) => {
+      const [mapObj, options] = args;
+      if (mapObj?._map) mapObj._map.locate(options || {});
+      return null;
+    }});
+
+    // onLocationFound(map, callback)
+    builtins.set('onLocationFound', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('locationfound', (e) => {
+          const event = {
+            lat: e.latlng.lat,
+            lng: e.latlng.lng,
+            accuracy: e.accuracy,
+            altitude: e.altitude,
+            speed: e.speed,
+            timestamp: e.timestamp
+          };
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onLocationError(map, callback)
+    builtins.set('onLocationError', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('locationerror', (e) => {
+          self.callFunction(callback, [{ message: e.message, code: e.code }]);
+        });
+      }
+      return null;
+    }});
+
+    // stopLocate(map)
+    builtins.set('stopLocate', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      if (mapObj?._map) mapObj._map.stopLocate();
+      return null;
+    }});
+
+    // addImageOverlay(map, imageUrl, lat1, lng1, lat2, lng2, options?)
+    builtins.set('addImageOverlay', { type: 'builtin', call: (args) => {
+      const [mapObj, imageUrl, lat1, lng1, lat2, lng2, options] = args;
+      if (mapObj?._map && hasLeaflet()) {
+        const overlay = L.imageOverlay(imageUrl, [[lat1, lng1], [lat2, lng2]], options || {}).addTo(mapObj._map);
+        const id = `imageOverlay_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, overlay);
+        return { _leafletType: 'imageOverlay', _id: id, _layer: overlay };
+      }
+      return null;
+    }});
+
+    // addVideoOverlay(map, videoUrl, lat1, lng1, lat2, lng2, options?)
+    builtins.set('addVideoOverlay', { type: 'builtin', call: (args) => {
+      const [mapObj, videoUrl, lat1, lng1, lat2, lng2, options] = args;
+      if (mapObj?._map && hasLeaflet()) {
+        const overlay = L.videoOverlay(videoUrl, [[lat1, lng1], [lat2, lng2]], options || {}).addTo(mapObj._map);
+        const id = `videoOverlay_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, overlay);
+        return { _leafletType: 'videoOverlay', _id: id, _layer: overlay };
+      }
+      return null;
+    }});
+
+    // setImageOpacity(overlay, opacity)
+    builtins.set('setImageOpacity', { type: 'builtin', call: (args) => {
+      const [overlayObj, opacity] = args;
+      if (overlayObj?._layer) overlayObj._layer.setOpacity(opacity);
+      return null;
+    }});
+
+    // setImageUrl(overlay, url)
+    builtins.set('setImageUrl', { type: 'builtin', call: (args) => {
+      const [overlayObj, url] = args;
+      if (overlayObj?._layer) overlayObj._layer.setUrl(url);
+      return null;
+    }});
+
+    // setBounds(overlay, lat1, lng1, lat2, lng2)
+    builtins.set('setBounds', { type: 'builtin', call: (args) => {
+      const [overlayObj, lat1, lng1, lat2, lng2] = args;
+      if (overlayObj?._layer && hasLeaflet()) {
+        overlayObj._layer.setBounds(L.latLngBounds([[lat1, lng1], [lat2, lng2]]));
+      }
+      return null;
+    }});
+
+    // createFeatureGroup()
+    builtins.set('createFeatureGroup', { type: 'builtin', call: () => {
+      if (!hasLeaflet()) throw new SdevError('Leaflet library not loaded', 0);
+      const group = L.featureGroup();
+      const id = `featureGroup_${self.leafletIdCounter++}`;
+      self.leafletLayers.set(id, group);
+      return { _leafletType: 'featureGroup', _id: id, _layer: group };
+    }});
+
+    // getFeatureGroupBounds(featureGroup)
+    builtins.set('getFeatureGroupBounds', { type: 'builtin', call: (args) => {
+      const groupObj = args[0];
+      if (groupObj?._layer) {
+        const bounds = groupObj._layer.getBounds();
+        if (bounds.isValid()) {
+          return {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+        }
+      }
+      return null;
+    }});
+
+    // fitFeatureGroup(map, featureGroup, options?)
+    builtins.set('fitFeatureGroup', { type: 'builtin', call: (args) => {
+      const [mapObj, groupObj, options] = args;
+      if (mapObj?._map && groupObj?._layer) {
+        const bounds = groupObj._layer.getBounds();
+        if (bounds.isValid()) {
+          mapObj._map.fitBounds(bounds, options || {});
+        }
+      }
+      return null;
+    }});
+
+    // addToFeatureGroup(featureGroup, layer)
+    builtins.set('addToFeatureGroup', { type: 'builtin', call: (args) => {
+      const [groupObj, layerObj] = args;
+      if (groupObj?._layer && layerObj?._layer) {
+        groupObj._layer.addLayer(layerObj._layer);
+      }
+      return null;
+    }});
+
+    // removeFromFeatureGroup(featureGroup, layer)
+    builtins.set('removeFromFeatureGroup', { type: 'builtin', call: (args) => {
+      const [groupObj, layerObj] = args;
+      if (groupObj?._layer && layerObj?._layer) {
+        groupObj._layer.removeLayer(layerObj._layer);
+      }
+      return null;
+    }});
+
+    // eachLayer(layerGroup, callback)
+    builtins.set('eachLayer', { type: 'builtin', call: (args) => {
+      const [groupObj, callback] = args;
+      if (groupObj?._layer && callback) {
+        groupObj._layer.eachLayer((layer) => {
+          self.callFunction(callback, [{ _layer: layer }]);
+        });
+      }
+      return null;
+    }});
+
+    // getLayers(layerGroup)
+    builtins.set('getLayers', { type: 'builtin', call: (args) => {
+      const groupObj = args[0];
+      if (groupObj?._layer && typeof groupObj._layer.getLayers === 'function') {
+        return groupObj._layer.getLayers().map(layer => ({ _layer: layer }));
+      }
+      return [];
+    }});
+
+    // hasLayer(layerGroup, layer)
+    builtins.set('hasLayer', { type: 'builtin', call: (args) => {
+      const [groupObj, layerObj] = args;
+      if (groupObj?._layer && layerObj?._layer) {
+        return groupObj._layer.hasLayer(layerObj._layer);
+      }
+      return false;
+    }});
+
+    // addDivIcon(map, lat, lng, html, className, size)
+    builtins.set('addDivIcon', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, html, className, size] = args;
+      if (mapObj?._map && hasLeaflet()) {
+        const icon = L.divIcon({
+          html: html || '',
+          className: className || '',
+          iconSize: Array.isArray(size) ? size : null
+        });
+        const marker = L.marker([lat, lng], { icon }).addTo(mapObj._map);
+        const id = `divMarker_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, marker);
+        return { _leafletType: 'marker', _id: id, _layer: marker };
+      }
+      return null;
+    }});
+
+    // bearing(lat1, lng1, lat2, lng2)
+    builtins.set('bearing', { type: 'builtin', call: (args) => {
+      const [lat1, lng1, lat2, lng2] = args;
+      const toRad = d => d * Math.PI / 180;
+      const toDeg = r => r * 180 / Math.PI;
+      const dLng = toRad(lng2 - lng1);
+      const lat1R = toRad(lat1);
+      const lat2R = toRad(lat2);
+      const y = Math.sin(dLng) * Math.cos(lat2R);
+      const x = Math.cos(lat1R) * Math.sin(lat2R) - Math.sin(lat1R) * Math.cos(lat2R) * Math.cos(dLng);
+      return (toDeg(Math.atan2(y, x)) + 360) % 360;
+    }});
+
+    // midpoint(lat1, lng1, lat2, lng2)
+    builtins.set('midpoint', { type: 'builtin', call: (args) => {
+      const [lat1, lng1, lat2, lng2] = args;
+      const toRad = d => d * Math.PI / 180;
+      const toDeg = r => r * 180 / Math.PI;
+      const dLng = toRad(lng2 - lng1);
+      const lat1R = toRad(lat1);
+      const lat2R = toRad(lat2);
+      const lng1R = toRad(lng1);
+      const Bx = Math.cos(lat2R) * Math.cos(dLng);
+      const By = Math.cos(lat2R) * Math.sin(dLng);
+      const lat3 = Math.atan2(Math.sin(lat1R) + Math.sin(lat2R), Math.sqrt((Math.cos(lat1R) + Bx) ** 2 + By ** 2));
+      const lng3 = lng1R + Math.atan2(By, Math.cos(lat1R) + Bx);
+      return { lat: toDeg(lat3), lng: toDeg(lng3) };
+    }});
+
+    // destination(lat, lng, bearing, distance)
+    builtins.set('destination', { type: 'builtin', call: (args) => {
+      const [lat, lng, bearing, distance] = args;
+      const R = 6371000;
+      const toRad = d => d * Math.PI / 180;
+      const toDeg = r => r * 180 / Math.PI;
+      const latR = toRad(lat);
+      const lngR = toRad(lng);
+      const bearingR = toRad(bearing);
+      const angularDist = distance / R;
+      const lat2 = Math.asin(Math.sin(latR) * Math.cos(angularDist) + Math.cos(latR) * Math.sin(angularDist) * Math.cos(bearingR));
+      const lng2 = lngR + Math.atan2(Math.sin(bearingR) * Math.sin(angularDist) * Math.cos(latR), Math.cos(angularDist) - Math.sin(latR) * Math.sin(lat2));
+      return { lat: toDeg(lat2), lng: toDeg(lng2) };
+    }});
+
+    // area(points) - calculates polygon area in square meters
+    builtins.set('area', { type: 'builtin', call: (args) => {
+      const points = args[0];
+      if (!Array.isArray(points) || points.length < 3) return 0;
+      const toRad = d => d * Math.PI / 180;
+      const R = 6371000;
+      let area = 0;
+      const n = points.length;
+      for (let i = 0; i < n; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+        const lat1 = Array.isArray(p1) ? p1[0] : p1.lat;
+        const lng1 = Array.isArray(p1) ? p1[1] : p1.lng;
+        const lat2 = Array.isArray(p2) ? p2[0] : p2.lat;
+        const lng2 = Array.isArray(p2) ? p2[1] : p2.lng;
+        area += toRad(lng2 - lng1) * (2 + Math.sin(toRad(lat1)) + Math.sin(toRad(lat2)));
+      }
+      return Math.abs(area * R * R / 2);
+    }});
+
+    // length(points) - calculates polyline length in meters
+    builtins.set('length', { type: 'builtin', call: (args) => {
+      const points = args[0];
+      if (!Array.isArray(points) || points.length < 2) return 0;
+      let total = 0;
+      for (let i = 1; i < points.length; i++) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+        const lat1 = Array.isArray(p1) ? p1[0] : p1.lat;
+        const lng1 = Array.isArray(p1) ? p1[1] : p1.lng;
+        const lat2 = Array.isArray(p2) ? p2[0] : p2.lat;
+        const lng2 = Array.isArray(p2) ? p2[1] : p2.lng;
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
+        total += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+      return total;
+    }});
+
+    // centroid(points) - calculates center of polygon
+    builtins.set('centroid', { type: 'builtin', call: (args) => {
+      const points = args[0];
+      if (!Array.isArray(points) || points.length === 0) return { lat: 0, lng: 0 };
+      let latSum = 0, lngSum = 0;
+      for (const p of points) {
+        const lat = Array.isArray(p) ? p[0] : p.lat;
+        const lng = Array.isArray(p) ? p[1] : p.lng;
+        latSum += lat;
+        lngSum += lng;
+      }
+      return { lat: latSum / points.length, lng: lngSum / points.length };
+    }});
+
+    // isPointInPolygon(lat, lng, points)
+    builtins.set('isPointInPolygon', { type: 'builtin', call: (args) => {
+      const [lat, lng, points] = args;
+      if (!Array.isArray(points) || points.length < 3) return false;
+      let inside = false;
+      const n = points.length;
+      for (let i = 0, j = n - 1; i < n; j = i++) {
+        const xi = Array.isArray(points[i]) ? points[i][1] : points[i].lng;
+        const yi = Array.isArray(points[i]) ? points[i][0] : points[i].lat;
+        const xj = Array.isArray(points[j]) ? points[j][1] : points[j].lng;
+        const yj = Array.isArray(points[j]) ? points[j][0] : points[j].lat;
+        if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    }});
+
+    // simplify(points, tolerance) - Douglas-Peucker simplification
+    builtins.set('simplify', { type: 'builtin', call: (args) => {
+      const [points, tolerance] = args;
+      if (!Array.isArray(points) || points.length < 3) return points;
+      const tol = tolerance || 0.00001;
+      
+      function sqDist(p1, p2) {
+        const dx = (Array.isArray(p1) ? p1[1] : p1.lng) - (Array.isArray(p2) ? p2[1] : p2.lng);
+        const dy = (Array.isArray(p1) ? p1[0] : p1.lat) - (Array.isArray(p2) ? p2[0] : p2.lat);
+        return dx * dx + dy * dy;
+      }
+      
+      function sqDistToSegment(p, p1, p2) {
+        let x = Array.isArray(p1) ? p1[1] : p1.lng;
+        let y = Array.isArray(p1) ? p1[0] : p1.lat;
+        let dx = (Array.isArray(p2) ? p2[1] : p2.lng) - x;
+        let dy = (Array.isArray(p2) ? p2[0] : p2.lat) - y;
+        if (dx !== 0 || dy !== 0) {
+          const t = Math.max(0, Math.min(1, (((Array.isArray(p) ? p[1] : p.lng) - x) * dx + ((Array.isArray(p) ? p[0] : p.lat) - y) * dy) / (dx * dx + dy * dy)));
+          x += dx * t;
+          y += dy * t;
+        }
+        dx = (Array.isArray(p) ? p[1] : p.lng) - x;
+        dy = (Array.isArray(p) ? p[0] : p.lat) - y;
+        return dx * dx + dy * dy;
+      }
+      
+      function simplifyDP(pts, sqTol, first, last, simplified) {
+        let maxSqDist = sqTol;
+        let index = 0;
+        for (let i = first + 1; i < last; i++) {
+          const sqDist = sqDistToSegment(pts[i], pts[first], pts[last]);
+          if (sqDist > maxSqDist) {
+            index = i;
+            maxSqDist = sqDist;
+          }
+        }
+        if (maxSqDist > sqTol) {
+          if (index - first > 1) simplifyDP(pts, sqTol, first, index, simplified);
+          simplified.push(pts[index]);
+          if (last - index > 1) simplifyDP(pts, sqTol, index, last, simplified);
+        }
+      }
+      
+      const sqTol = tol * tol;
+      const last = points.length - 1;
+      const simplified = [points[0]];
+      simplifyDP(points, sqTol, 0, last, simplified);
+      simplified.push(points[last]);
+      return simplified;
+    }});
+
+    // interpolateAlong(points, fraction) - get point at fraction along polyline
+    builtins.set('interpolateAlong', { type: 'builtin', call: (args) => {
+      const [points, fraction] = args;
+      if (!Array.isArray(points) || points.length < 2) return null;
+      if (fraction <= 0) {
+        const p = points[0];
+        return { lat: Array.isArray(p) ? p[0] : p.lat, lng: Array.isArray(p) ? p[1] : p.lng };
+      }
+      if (fraction >= 1) {
+        const p = points[points.length - 1];
+        return { lat: Array.isArray(p) ? p[0] : p.lat, lng: Array.isArray(p) ? p[1] : p.lng };
+      }
+      
+      // Calculate total length
+      const segments = [];
+      let totalLen = 0;
+      for (let i = 1; i < points.length; i++) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+        const lat1 = Array.isArray(p1) ? p1[0] : p1.lat;
+        const lng1 = Array.isArray(p1) ? p1[1] : p1.lng;
+        const lat2 = Array.isArray(p2) ? p2[0] : p2.lat;
+        const lng2 = Array.isArray(p2) ? p2[1] : p2.lng;
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
+        const len = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        segments.push({ p1: { lat: lat1, lng: lng1 }, p2: { lat: lat2, lng: lng2 }, len });
+        totalLen += len;
+      }
+      
+      const targetLen = fraction * totalLen;
+      let accLen = 0;
+      for (const seg of segments) {
+        if (accLen + seg.len >= targetLen) {
+          const segFrac = (targetLen - accLen) / seg.len;
+          return {
+            lat: seg.p1.lat + (seg.p2.lat - seg.p1.lat) * segFrac,
+            lng: seg.p1.lng + (seg.p2.lng - seg.p1.lng) * segFrac
+          };
+        }
+        accLen += seg.len;
+      }
+      
+      const last = points[points.length - 1];
+      return { lat: Array.isArray(last) ? last[0] : last.lat, lng: Array.isArray(last) ? last[1] : last.lng };
+    }});
+
+    // wrapLng(lng) - wraps longitude to -180 to 180
+    builtins.set('wrapLng', { type: 'builtin', call: (args) => {
+      let lng = args[0];
+      while (lng > 180) lng -= 360;
+      while (lng < -180) lng += 360;
+      return lng;
+    }});
+
+    // wrapLat(lat) - clamps latitude to -90 to 90
+    builtins.set('wrapLat', { type: 'builtin', call: (args) => {
+      return Math.max(-90, Math.min(90, args[0]));
+    }});
+
+    // degreesToDMS(degrees) - convert decimal degrees to DMS string
+    builtins.set('degreesToDMS', { type: 'builtin', call: (args) => {
+      const deg = args[0];
+      const d = Math.floor(Math.abs(deg));
+      const m = Math.floor((Math.abs(deg) - d) * 60);
+      const s = ((Math.abs(deg) - d - m / 60) * 3600).toFixed(2);
+      return `${d}° ${m}' ${s}"`;
+    }});
+
+    // DMSToDegrees(d, m, s) - convert DMS to decimal degrees
+    builtins.set('DMSToDegrees', { type: 'builtin', call: (args) => {
+      const [d, m, s] = args;
+      return d + m / 60 + s / 3600;
+    }});
+
+    // metersToPixels(map, meters, lat)
+    builtins.set('metersToPixels', { type: 'builtin', call: (args) => {
+      const [mapObj, meters, lat] = args;
+      if (mapObj?._map && hasLeaflet()) {
+        const zoom = mapObj._map.getZoom();
+        const metersPerPixel = 40075016.686 * Math.abs(Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom + 8);
+        return meters / metersPerPixel;
+      }
+      return 0;
+    }});
+
+    // pixelsToMeters(map, pixels, lat)
+    builtins.set('pixelsToMeters', { type: 'builtin', call: (args) => {
+      const [mapObj, pixels, lat] = args;
+      if (mapObj?._map && hasLeaflet()) {
+        const zoom = mapObj._map.getZoom();
+        const metersPerPixel = 40075016.686 * Math.abs(Math.cos(lat * Math.PI / 180)) / Math.pow(2, zoom + 8);
+        return pixels * metersPerPixel;
+      }
+      return 0;
+    }});
+
+    // getLayerType(layer)
+    builtins.set('getLayerType', { type: 'builtin', call: (args) => {
+      const layerObj = args[0];
+      return layerObj?._leafletType || 'unknown';
+    }});
+
+    // isLayerVisible(layer)
+    builtins.set('isLayerVisible', { type: 'builtin', call: (args) => {
+      const layerObj = args[0];
+      if (layerObj?._layer) {
+        return layerObj._layer._map != null;
+      }
+      return false;
+    }});
+
+    // showLayer(map, layer)
+    builtins.set('showLayer', { type: 'builtin', call: (args) => {
+      const [mapObj, layerObj] = args;
+      if (mapObj?._map && layerObj?._layer && !layerObj._layer._map) {
+        layerObj._layer.addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // hideLayer(map, layer)
+    builtins.set('hideLayer', { type: 'builtin', call: (args) => {
+      const [mapObj, layerObj] = args;
+      if (mapObj?._map && layerObj?._layer && layerObj._layer._map) {
+        mapObj._map.removeLayer(layerObj._layer);
+      }
+      return null;
+    }});
+
+    // toggleLayer(map, layer)
+    builtins.set('toggleLayer', { type: 'builtin', call: (args) => {
+      const [mapObj, layerObj] = args;
+      if (mapObj?._map && layerObj?._layer) {
+        if (layerObj._layer._map) {
+          mapObj._map.removeLayer(layerObj._layer);
+        } else {
+          layerObj._layer.addTo(mapObj._map);
+        }
+      }
+      return null;
+    }});
   }
 
   // Helper to call user functions from event handlers
