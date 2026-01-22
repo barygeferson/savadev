@@ -1570,6 +1570,459 @@ class Interpreter {
       });
       return null;
     }});
+
+    // ============= LEAFLET MAP FUNCTIONS =============
+    // Store maps and layers
+    self.leafletMaps = new Map();
+    self.leafletLayers = new Map();
+    self.leafletIdCounter = 0;
+
+    // Check if Leaflet is available
+    const hasLeaflet = () => typeof L !== 'undefined';
+
+    // createMap(containerId, lat, lng, zoom)
+    builtins.set('createMap', { type: 'builtin', call: (args) => {
+      if (!hasLeaflet()) throw new SdevError('Leaflet library not loaded', 0);
+      const [containerId, lat, lng, zoom] = args;
+      const map = L.map(containerId).setView([lat, lng], zoom);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      const id = `map_${self.leafletIdCounter++}`;
+      self.leafletMaps.set(id, map);
+      return { _leafletType: 'map', _id: id, _map: map };
+    }});
+
+    // setMapView(map, lat, lng, zoom)
+    builtins.set('setMapView', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, zoom] = args;
+      if (mapObj?._map) mapObj._map.setView([lat, lng], zoom);
+      return null;
+    }});
+
+    // getMapCenter(map)
+    builtins.set('getMapCenter', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      if (mapObj?._map) {
+        const center = mapObj._map.getCenter();
+        return { lat: center.lat, lng: center.lng };
+      }
+      return null;
+    }});
+
+    // getMapZoom(map)
+    builtins.set('getMapZoom', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      return mapObj?._map ? mapObj._map.getZoom() : 0;
+    }});
+
+    // getMapBounds(map)
+    builtins.set('getMapBounds', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      if (mapObj?._map) {
+        const bounds = mapObj._map.getBounds();
+        return {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest()
+        };
+      }
+      return null;
+    }});
+
+    // addMarker(map, lat, lng, popupText?)
+    builtins.set('addMarker', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, popupText] = args;
+      if (mapObj?._map) {
+        const marker = L.marker([lat, lng]).addTo(mapObj._map);
+        if (popupText) marker.bindPopup(popupText);
+        const id = `marker_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, marker);
+        return { _leafletType: 'marker', _id: id, _layer: marker };
+      }
+      return null;
+    }});
+
+    // addMarkerIcon(map, lat, lng, iconUrl, iconSize, popupText?)
+    builtins.set('addMarkerIcon', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, iconUrl, iconSize, popupText] = args;
+      if (mapObj?._map) {
+        const icon = L.icon({
+          iconUrl: iconUrl,
+          iconSize: Array.isArray(iconSize) ? iconSize : [32, 32]
+        });
+        const marker = L.marker([lat, lng], { icon }).addTo(mapObj._map);
+        if (popupText) marker.bindPopup(popupText);
+        const id = `marker_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, marker);
+        return { _leafletType: 'marker', _id: id, _layer: marker };
+      }
+      return null;
+    }});
+
+    // removeMarker(map, marker)
+    builtins.set('removeMarker', { type: 'builtin', call: (args) => {
+      const [mapObj, markerObj] = args;
+      if (mapObj?._map && markerObj?._layer) {
+        mapObj._map.removeLayer(markerObj._layer);
+      }
+      return null;
+    }});
+
+    // setMarkerPosition(marker, lat, lng)
+    builtins.set('setMarkerPosition', { type: 'builtin', call: (args) => {
+      const [markerObj, lat, lng] = args;
+      if (markerObj?._layer) markerObj._layer.setLatLng([lat, lng]);
+      return null;
+    }});
+
+    // getMarkerPosition(marker)
+    builtins.set('getMarkerPosition', { type: 'builtin', call: (args) => {
+      const markerObj = args[0];
+      if (markerObj?._layer) {
+        const pos = markerObj._layer.getLatLng();
+        return { lat: pos.lat, lng: pos.lng };
+      }
+      return null;
+    }});
+
+    // setMarkerDraggable(marker, draggable)
+    builtins.set('setMarkerDraggable', { type: 'builtin', call: (args) => {
+      const [markerObj, draggable] = args;
+      if (markerObj?._layer) {
+        if (draggable) markerObj._layer.dragging.enable();
+        else markerObj._layer.dragging.disable();
+      }
+      return null;
+    }});
+
+    // bindPopup(marker, content)
+    builtins.set('bindPopup', { type: 'builtin', call: (args) => {
+      const [obj, content] = args;
+      if (obj?._layer) obj._layer.bindPopup(content);
+      return null;
+    }});
+
+    // bindTooltip(marker, content)
+    builtins.set('bindTooltip', { type: 'builtin', call: (args) => {
+      const [obj, content] = args;
+      if (obj?._layer) obj._layer.bindTooltip(content);
+      return null;
+    }});
+
+    // openPopup(marker)
+    builtins.set('openPopup', { type: 'builtin', call: (args) => {
+      const obj = args[0];
+      if (obj?._layer) obj._layer.openPopup();
+      return null;
+    }});
+
+    // addCircle(map, lat, lng, radius, options?)
+    builtins.set('addCircle', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, radius, options] = args;
+      if (mapObj?._map) {
+        const circle = L.circle([lat, lng], { radius, ...options }).addTo(mapObj._map);
+        const id = `circle_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, circle);
+        return { _leafletType: 'circle', _id: id, _layer: circle };
+      }
+      return null;
+    }});
+
+    // addCircleMarker(map, lat, lng, radius, options?)
+    builtins.set('addCircleMarker', { type: 'builtin', call: (args) => {
+      const [mapObj, lat, lng, radius, options] = args;
+      if (mapObj?._map) {
+        const marker = L.circleMarker([lat, lng], { radius, ...options }).addTo(mapObj._map);
+        const id = `circleMarker_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, marker);
+        return { _leafletType: 'circleMarker', _id: id, _layer: marker };
+      }
+      return null;
+    }});
+
+    // addRectangle(map, lat1, lng1, lat2, lng2, options?)
+    builtins.set('addRectangle', { type: 'builtin', call: (args) => {
+      const [mapObj, lat1, lng1, lat2, lng2, options] = args;
+      if (mapObj?._map) {
+        const rect = L.rectangle([[lat1, lng1], [lat2, lng2]], options).addTo(mapObj._map);
+        const id = `rect_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, rect);
+        return { _leafletType: 'rectangle', _id: id, _layer: rect };
+      }
+      return null;
+    }});
+
+    // addPolyline(map, points, options?)
+    builtins.set('addPolyline', { type: 'builtin', call: (args) => {
+      const [mapObj, points, options] = args;
+      if (mapObj?._map && Array.isArray(points)) {
+        const line = L.polyline(points, options).addTo(mapObj._map);
+        const id = `polyline_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, line);
+        return { _leafletType: 'polyline', _id: id, _layer: line };
+      }
+      return null;
+    }});
+
+    // addPolygon(map, points, options?)
+    builtins.set('addPolygon', { type: 'builtin', call: (args) => {
+      const [mapObj, points, options] = args;
+      if (mapObj?._map && Array.isArray(points)) {
+        const poly = L.polygon(points, options).addTo(mapObj._map);
+        const id = `polygon_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, poly);
+        return { _leafletType: 'polygon', _id: id, _layer: poly };
+      }
+      return null;
+    }});
+
+    // addMultiPolygon(map, polygons, options?)
+    builtins.set('addMultiPolygon', { type: 'builtin', call: (args) => {
+      const [mapObj, polygons, options] = args;
+      if (mapObj?._map && Array.isArray(polygons)) {
+        const poly = L.polygon(polygons, options).addTo(mapObj._map);
+        const id = `multipolygon_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, poly);
+        return { _leafletType: 'multipolygon', _id: id, _layer: poly };
+      }
+      return null;
+    }});
+
+    // addTileLayer(map, urlTemplate, options?)
+    builtins.set('addTileLayer', { type: 'builtin', call: (args) => {
+      const [mapObj, urlTemplate, options] = args;
+      if (mapObj?._map) {
+        const layer = L.tileLayer(urlTemplate, options).addTo(mapObj._map);
+        const id = `tile_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, layer);
+        return { _leafletType: 'tileLayer', _id: id, _layer: layer };
+      }
+      return null;
+    }});
+
+    // createLayerGroup()
+    builtins.set('createLayerGroup', { type: 'builtin', call: () => {
+      if (!hasLeaflet()) throw new SdevError('Leaflet library not loaded', 0);
+      const group = L.layerGroup();
+      const id = `group_${self.leafletIdCounter++}`;
+      self.leafletLayers.set(id, group);
+      return { _leafletType: 'layerGroup', _id: id, _layer: group };
+    }});
+
+    // addLayerToMap(map, layer)
+    builtins.set('addLayerToMap', { type: 'builtin', call: (args) => {
+      const [mapObj, layerObj] = args;
+      if (mapObj?._map && layerObj?._layer) {
+        layerObj._layer.addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // removeLayerFromMap(map, layer)
+    builtins.set('removeLayerFromMap', { type: 'builtin', call: (args) => {
+      const [mapObj, layerObj] = args;
+      if (mapObj?._map && layerObj?._layer) {
+        mapObj._map.removeLayer(layerObj._layer);
+      }
+      return null;
+    }});
+
+    // clearLayer(layer)
+    builtins.set('clearLayer', { type: 'builtin', call: (args) => {
+      const layerObj = args[0];
+      if (layerObj?._layer && typeof layerObj._layer.clearLayers === 'function') {
+        layerObj._layer.clearLayers();
+      }
+      return null;
+    }});
+
+    // onMapClick(map, callback)
+    builtins.set('onMapClick', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('click', (e) => {
+          const event = { lat: e.latlng.lat, lng: e.latlng.lng };
+          self.callFunction(callback, [event]);
+        });
+      }
+      return null;
+    }});
+
+    // onMapZoom(map, callback)
+    builtins.set('onMapZoom', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('zoomend', () => {
+          self.callFunction(callback, [{}]);
+        });
+      }
+      return null;
+    }});
+
+    // onMapMove(map, callback)
+    builtins.set('onMapMove', { type: 'builtin', call: (args) => {
+      const [mapObj, callback] = args;
+      if (mapObj?._map && callback) {
+        mapObj._map.on('moveend', () => {
+          self.callFunction(callback, [{}]);
+        });
+      }
+      return null;
+    }});
+
+    // onMarkerClick(marker, callback)
+    builtins.set('onMarkerClick', { type: 'builtin', call: (args) => {
+      const [markerObj, callback] = args;
+      if (markerObj?._layer && callback) {
+        markerObj._layer.on('click', () => {
+          self.callFunction(callback, [{}]);
+        });
+      }
+      return null;
+    }});
+
+    // onMarkerDrag(marker, callback)
+    builtins.set('onMarkerDrag', { type: 'builtin', call: (args) => {
+      const [markerObj, callback] = args;
+      if (markerObj?._layer && callback) {
+        markerObj._layer.on('dragend', () => {
+          self.callFunction(callback, [{}]);
+        });
+      }
+      return null;
+    }});
+
+    // addZoomControl(map, position?)
+    builtins.set('addZoomControl', { type: 'builtin', call: (args) => {
+      const [mapObj, position] = args;
+      if (mapObj?._map) {
+        L.control.zoom({ position: position || 'topleft' }).addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // addScaleControl(map, options?)
+    builtins.set('addScaleControl', { type: 'builtin', call: (args) => {
+      const [mapObj, options] = args;
+      if (mapObj?._map) {
+        L.control.scale(options || {}).addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // addAttributionControl(map, prefix?)
+    builtins.set('addAttributionControl', { type: 'builtin', call: (args) => {
+      const [mapObj, prefix] = args;
+      if (mapObj?._map) {
+        L.control.attribution({ prefix: prefix || '' }).addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // addLayerControl(map, baseLayers, overlays)
+    builtins.set('addLayerControl', { type: 'builtin', call: (args) => {
+      const [mapObj, baseLayers, overlays] = args;
+      if (mapObj?._map) {
+        const bases = {};
+        const overs = {};
+        if (baseLayers && typeof baseLayers === 'object') {
+          for (const [k, v] of Object.entries(baseLayers)) {
+            if (v?._layer) bases[k] = v._layer;
+          }
+        }
+        if (overlays && typeof overlays === 'object') {
+          for (const [k, v] of Object.entries(overlays)) {
+            if (v?._layer) overs[k] = v._layer;
+          }
+        }
+        L.control.layers(bases, overs).addTo(mapObj._map);
+      }
+      return null;
+    }});
+
+    // addGeoJSON(map, geoJsonData, options?)
+    builtins.set('addGeoJSON', { type: 'builtin', call: (args) => {
+      const [mapObj, data, options] = args;
+      if (mapObj?._map) {
+        const layer = L.geoJSON(data, options).addTo(mapObj._map);
+        const id = `geojson_${self.leafletIdCounter++}`;
+        self.leafletLayers.set(id, layer);
+        return { _leafletType: 'geoJSON', _id: id, _layer: layer };
+      }
+      return null;
+    }});
+
+    // latLng(lat, lng)
+    builtins.set('latLng', { type: 'builtin', call: (args) => {
+      return { lat: args[0], lng: args[1] };
+    }});
+
+    // distance(lat1, lng1, lat2, lng2)
+    builtins.set('distance', { type: 'builtin', call: (args) => {
+      if (!hasLeaflet()) {
+        // Haversine formula fallback
+        const [lat1, lng1, lat2, lng2] = args;
+        const R = 6371000; // Earth radius in meters
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      }
+      const p1 = L.latLng(args[0], args[1]);
+      const p2 = L.latLng(args[2], args[3]);
+      return p1.distanceTo(p2);
+    }});
+
+    // boundsContains(bounds, lat, lng)
+    builtins.set('boundsContains', { type: 'builtin', call: (args) => {
+      const [bounds, lat, lng] = args;
+      if (bounds && typeof bounds === 'object') {
+        return lat >= bounds.south && lat <= bounds.north &&
+               lng >= bounds.west && lng <= bounds.east;
+      }
+      return false;
+    }});
+
+    // fitBounds(map, lat1, lng1, lat2, lng2)
+    builtins.set('fitBounds', { type: 'builtin', call: (args) => {
+      const [mapObj, lat1, lng1, lat2, lng2] = args;
+      if (mapObj?._map) {
+        mapObj._map.fitBounds([[lat1, lng1], [lat2, lng2]]);
+      }
+      return null;
+    }});
+
+    // invalidateSize(map)
+    builtins.set('invalidateSize', { type: 'builtin', call: (args) => {
+      const mapObj = args[0];
+      if (mapObj?._map) mapObj._map.invalidateSize();
+      return null;
+    }});
+  }
+
+  // Helper to call user functions from event handlers
+  callFunction(fn, args) {
+    if (fn.type === 'lambda' || fn.type === 'user') {
+      const funcEnv = new Environment(fn.closure || this.globalEnv);
+      const params = fn.params || [];
+      for (let i = 0; i < params.length; i++) {
+        funcEnv.define(params[i], args[i] ?? null);
+      }
+      try {
+        return this.execute(fn.body, funcEnv);
+      } catch (e) {
+        if (e instanceof ReturnException) return e.value;
+        throw e;
+      }
+    } else if (fn.type === 'builtin') {
+      return fn.call(args);
+    }
+    return null;
   }
 
   interpret(program) {
@@ -2374,4 +2827,19 @@ if (typeof window !== 'undefined') {
   window.SdevInterpreter = Interpreter;
   window.SdevLexer = Lexer;
   window.SdevParser = Parser;
+  
+  // Leaflet integration helper
+  window.SdevLeaflet = {
+    version: '1.0.0',
+    requiredLeafletVersion: '1.9.4',
+    isAvailable: () => typeof L !== 'undefined',
+    init: (containerId, lat, lng, zoom) => {
+      if (typeof L === 'undefined') {
+        console.error('Leaflet library not loaded. Include Leaflet CSS and JS before using sdev maps.');
+        return null;
+      }
+      const interpreter = new Interpreter();
+      return interpreter.run(`createMap("${containerId}", ${lat}, ${lng}, ${zoom})`);
+    }
+  };
 }
