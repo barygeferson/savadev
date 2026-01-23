@@ -26,7 +26,8 @@
 18. [Networking](#networking)
 19. [Error Handling](#error-handling)
 20. [Examples](#examples)
-21. [Reference Card](#reference-card)
+21. [JavaScript Interop](#javascript-interop-js-interpreter-only)
+22. [Reference Card](#reference-card)
 
 ---
 
@@ -1577,6 +1578,112 @@ forge double be x -> x * 2
 // Dict
 forge obj be :: "key": "value" ;;
 ```
+
+---
+
+## JavaScript Interop (JS Interpreter Only)
+
+The JavaScript interpreter includes a special `js` keyword for calling external JavaScript functions directly. This is powerful for integrating with browser APIs and libraries like Leaflet.
+
+### Syntax
+
+```sdev
+js <javascript expression>
+```
+
+The entire line after `js ` is executed as JavaScript and returns the result.
+
+### Basic Examples
+
+```sdev
+// Call a global function
+js alert("Hello from sdev!")
+
+// Access browser APIs  
+forge width be js window.innerWidth
+forge height be js window.innerHeight
+speak("Window size: " + width + "x" + height)
+
+// Create DOM elements
+js document.body.style.backgroundColor = "navy"
+
+// Use Math functions
+forge angle be js Math.PI / 4
+forge result be js Math.sin(0.5)
+```
+
+### Leaflet Integration
+
+The `js` keyword is especially useful with Leaflet:
+
+```sdev
+// Initialize a Leaflet map
+forge myMap be js L.map("map").setView([51.505, -0.09], 13)
+
+// Add a tile layer
+js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
+
+// Add a marker
+forge marker be js L.marker([51.5, -0.09]).addTo(myMap)
+
+// Bind a popup
+js marker.bindPopup("Hello World!").openPopup()
+
+// Add event listener
+js myMap.on("click", function(e) { console.log(e.latlng); })
+```
+
+### Variable Access
+
+sdev variables are accessible within `js` expressions:
+
+```sdev
+forge lat be 40.7128
+forge lng be -74.0060
+forge zoom be 12
+
+// Use sdev variables in JavaScript
+forge map be js L.map("map").setView([lat, lng], zoom)
+
+forge name be "New York"
+js console.log("Viewing: " + name)
+```
+
+### Complex Expressions
+
+```sdev
+// Inline object creation
+forge options be js { dragging: true, zoomControl: false }
+
+// Array operations
+forge coords be js [[40.7, -74], [34.0, -118], [41.8, -87]]
+
+// Function calls with callbacks
+js setTimeout(function() { alert("Timer!"); }, 1000)
+
+// Access localStorage
+js localStorage.setItem("lastVisit", new Date().toISOString())
+forge lastVisit be js localStorage.getItem("lastVisit")
+```
+
+### Error Handling
+
+JavaScript errors are caught and converted to sdev errors:
+
+```sdev
+attempt ::
+    js undefinedFunction()
+;; rescue err ::
+    speak("JS Error: " + err)
+;;
+```
+
+### Security Notes
+
+- The `js` keyword uses `new Function()` in browsers for sandboxed execution
+- Variables from sdev are passed into the JavaScript context
+- Global objects (window, document, L, etc.) remain accessible
+- Use with caution - arbitrary JavaScript execution can have side effects
 
 ---
 
