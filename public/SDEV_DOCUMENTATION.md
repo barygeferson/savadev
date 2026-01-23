@@ -1585,13 +1585,24 @@ forge obj be :: "key": "value" ;;
 
 The JavaScript interpreter includes a special `js` keyword for calling external JavaScript functions directly. This is powerful for integrating with browser APIs and libraries like Leaflet.
 
-### Syntax
+### Syntax Forms
+
+sdev supports **three forms** of the `js` keyword:
 
 ```sdev
+// 1. Single-line (expression on same line)
 js <javascript expression>
-```
 
-The entire line after `js ` is executed as JavaScript and returns the result.
+// 2. Parenthesized form (multiline expressions)
+js (
+  <multiline javascript code>
+)
+
+// 3. Block form (multiline statements)
+js {
+  <multiline javascript statements>
+}
+```
 
 ### Basic Examples
 
@@ -1612,6 +1623,116 @@ forge angle be js Math.PI / 4
 forge result be js Math.sin(0.5)
 ```
 
+### Object Literals and Arrays
+
+The `js` keyword fully supports object literals `{}` and arrays `[]`:
+
+```sdev
+// Create object literals using parenthesized form
+forge options be js ({
+  dragging: true,
+  zoomControl: false,
+  center: [51.5, -0.09]
+})
+
+// Or inline (parenthesized for objects)
+forge point be js ({ x: 100, y: 200, label: "Start" })
+
+// Arrays work directly
+forge coords be js [[40.7, -74], [34.0, -118], [41.8, -87]]
+
+// Nested objects
+forge config be js ({
+  map: { zoom: 12, animate: true },
+  markers: [
+    { lat: 51.5, lng: -0.09, title: "London" },
+    { lat: 48.8, lng: 2.35, title: "Paris" }
+  ]
+})
+```
+
+### Arrow Functions
+
+Arrow functions are fully supported:
+
+```sdev
+// Arrow function in callback
+js myArray.map(x => x * 2)
+
+// Arrow function with body
+js myArray.filter(item => {
+  return item.active && item.score > 50;
+})
+
+// Event handlers with arrows
+js button.addEventListener("click", (e) => {
+  console.log("Clicked at", e.clientX, e.clientY);
+})
+
+// Using sdev variables in arrows
+forge multiplier be 3
+forge result be js [1, 2, 3].map(x => x * multiplier)
+```
+
+### Multiline JavaScript Blocks
+
+Use `js { ... }` for complex multiline JavaScript:
+
+```sdev
+// Multiline statement block
+js {
+  const data = [1, 2, 3, 4, 5];
+  let sum = 0;
+  for (const num of data) {
+    sum += num;
+  }
+  console.log("Sum:", sum);
+}
+
+// Define and call a function
+js {
+  function greet(name) {
+    return "Hello, " + name + "!";
+  }
+  alert(greet("World"));
+}
+
+// Complex DOM manipulation
+js {
+  const div = document.createElement("div");
+  div.className = "notification";
+  div.innerHTML = "<strong>Alert!</strong> Something happened.";
+  div.style.cssText = "padding: 10px; background: yellow;";
+  document.body.appendChild(div);
+}
+```
+
+### Multiline Expressions with Parentheses
+
+Use `js ( ... )` for multiline expressions that return a value:
+
+```sdev
+// Multiline object literal
+forge settings be js (
+  {
+    theme: "dark",
+    fontSize: 14,
+    features: {
+      autoSave: true,
+      spellCheck: false
+    }
+  }
+)
+
+// Complex expression
+forge result be js (
+  [1, 2, 3, 4, 5]
+    .map(x => x * x)
+    .filter(x => x > 5)
+    .reduce((a, b) => a + b, 0)
+)
+```
+
 ### Leaflet Integration
 
 The `js` keyword is especially useful with Leaflet:
@@ -1623,14 +1744,34 @@ forge myMap be js L.map("map").setView([51.505, -0.09], 13)
 // Add a tile layer
 js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
 
-// Add a marker
-forge marker be js L.marker([51.5, -0.09]).addTo(myMap)
+// Add a marker with options
+forge marker be js (
+  L.marker([51.5, -0.09], {
+    draggable: true,
+    title: "Click me!"
+  }).addTo(myMap)
+)
 
 // Bind a popup
 js marker.bindPopup("Hello World!").openPopup()
 
-// Add event listener
-js myMap.on("click", function(e) { console.log(e.latlng); })
+// Add event listener with arrow function
+js myMap.on("click", (e) => {
+  console.log("Clicked at:", e.latlng.lat, e.latlng.lng);
+  L.marker(e.latlng).addTo(myMap);
+})
+
+// Complex Leaflet setup
+js {
+  const circle = L.circle([51.508, -0.11], {
+    color: 'red',
+    fillColor: '#f03',
+    fillOpacity: 0.5,
+    radius: 500
+  }).addTo(myMap);
+  
+  circle.bindPopup("I am a circle.");
+}
 ```
 
 ### Variable Access
@@ -1647,23 +1788,40 @@ forge map be js L.map("map").setView([lat, lng], zoom)
 
 forge name be "New York"
 js console.log("Viewing: " + name)
+
+// Variables in arrow functions
+forge items be ["a", "b", "c"]
+forge prefix be "item_"
+js items.map(x => prefix + x)
 ```
 
 ### Complex Expressions
 
 ```sdev
-// Inline object creation
-forge options be js { dragging: true, zoomControl: false }
+// Inline object creation (use parentheses)
+forge options be js ({ dragging: true, zoomControl: false })
 
-// Array operations
-forge coords be js [[40.7, -74], [34.0, -118], [41.8, -87]]
+// Array operations with chaining
+forge processed be js (
+  coords
+    .filter(c => c[0] > 35)
+    .map(c => ({ lat: c[0], lng: c[1] }))
+)
 
 // Function calls with callbacks
-js setTimeout(function() { alert("Timer!"); }, 1000)
+js setTimeout(() => { alert("Timer!"); }, 1000)
 
 // Access localStorage
 js localStorage.setItem("lastVisit", new Date().toISOString())
 forge lastVisit be js localStorage.getItem("lastVisit")
+
+// Fetch API (async)
+js {
+  fetch("https://api.example.com/data")
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(err => console.error(err));
+}
 ```
 
 ### Error Handling
@@ -1684,6 +1842,7 @@ attempt ::
 - Variables from sdev are passed into the JavaScript context
 - Global objects (window, document, L, etc.) remain accessible
 - Use with caution - arbitrary JavaScript execution can have side effects
+
 
 ---
 
