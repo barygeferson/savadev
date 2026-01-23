@@ -48,6 +48,10 @@ const TokenType = {
   SPAWN: 'SPAWN',
   ATTEMPT: 'ATTEMPT',
   RESCUE: 'RESCUE',
+  JS: 'JS',
+  
+  // JS raw code (special token for js keyword)
+  JS_CODE: 'JS_CODE',
   
   // Operators
   PLUS: 'PLUS',
@@ -109,7 +113,8 @@ const KEYWORDS = {
   'await': TokenType.AWAIT,
   'spawn': TokenType.SPAWN,
   'attempt': TokenType.ATTEMPT,
-  'rescue': TokenType.RESCUE
+  'rescue': TokenType.RESCUE,
+  'js': TokenType.JS
 };
 
 // ============= ERRORS =============
@@ -317,6 +322,28 @@ class Lexer {
     }
     const type = KEYWORDS[value] ?? TokenType.IDENTIFIER;
     this.addToken(type, value, startColumn);
+    
+    // Special handling for 'js' keyword - capture rest of line as JS code
+    if (type === TokenType.JS) {
+      this.scanJsCode();
+    }
+  }
+
+  scanJsCode() {
+    // Skip whitespace (but not newline)
+    while (!this.isAtEnd() && (this.peek() === ' ' || this.peek() === '\t')) {
+      this.advance();
+    }
+    
+    const startColumn = this.column;
+    let code = '';
+    
+    // Capture everything until end of line or end of file
+    while (!this.isAtEnd() && this.peek() !== '\n') {
+      code += this.advance();
+    }
+    
+    this.addToken(TokenType.JS_CODE, code.trim(), startColumn);
   }
 
   skipWhitespace() {
@@ -381,8 +408,15 @@ class Parser {
     if (this.check(TokenType.SKIP)) return this.parseSkipStatement();
     if (this.check(TokenType.ESSENCE)) return this.parseEssenceDeclaration();
     if (this.check(TokenType.ATTEMPT)) return this.parseAttemptStatement();
+    if (this.check(TokenType.JS)) return this.parseJsStatement();
     if (this.check(TokenType.DOUBLE_COLON)) return this.parseBlockStatement();
     return this.parseExpressionStatement();
+  }
+
+  parseJsStatement() {
+    const jsToken = this.consume(TokenType.JS, "Expected 'js'");
+    const codeToken = this.consume(TokenType.JS_CODE, "Expected JavaScript code after 'js'");
+    return { type: 'JsExpr', code: codeToken.value, line: jsToken.line };
   }
 
   parseForgeStatement() {
@@ -2932,8 +2966,52 @@ class Interpreter {
         return this.executeBlock(node, env);
       case 'ExpressionStatement':
         return this.execute(node.expression, env);
+      case 'JsExpr':
+        return this.executeJs(node, env);
       default:
         throw new SdevError(`Unknown node type: ${node.type}`, node.line || 0);
+    }
+  }
+
+  executeJs(node, env) {
+    // Execute raw JavaScript code and return the result
+    // The code has access to all global variables and the current environment
+    try {
+      // Create a context object with sdev variables accessible
+      const context = {};
+      
+      // Copy all environment variables to context
+      let currentEnv = env;
+      while (currentEnv) {
+        for (const [name, value] of currentEnv.values) {
+          if (!(name in context)) {
+            context[name] = value;
+          }
+        }
+        currentEnv = currentEnv.parent;
+      }
+      
+      // In browser environment, we can use Function constructor
+      // This gives access to global objects like L (Leaflet), window, document, etc.
+      if (typeof window !== 'undefined') {
+        // Browser environment - create function with context variables
+        const varNames = Object.keys(context);
+        const varValues = Object.values(context);
+        
+        // Create a function that has access to both global scope and context
+        const fn = new Function(...varNames, `return (${node.code});`);
+        return fn(...varValues);
+      } else if (typeof global !== 'undefined') {
+        // Node.js environment
+        const vm = require('vm');
+        const sandbox = { ...global, ...context };
+        return vm.runInNewContext(node.code, sandbox);
+      } else {
+        // Fallback - direct eval (less safe but works)
+        return eval(node.code);
+      }
+    } catch (error) {
+      throw new SdevError(`JavaScript error: ${error.message}`, node.line);
     }
   }
 
