@@ -338,10 +338,108 @@ class Lexer {
     const startColumn = this.column;
     let code = '';
     
-    // SIMPLE: Read everything until end of line
-    // No parsing of {}, [], (), =>, etc. - just raw text
-    while (!this.isAtEnd() && this.peek() !== '\n') {
-      code += this.advance();
+    // Check if this is a block form: js { ... } or js ( ... )
+    const startChar = this.peek();
+    
+    if (startChar === '{') {
+      // Multi-line block form: js { ... }
+      this.advance(); // consume '{'
+      let braceCount = 1;
+      
+      while (!this.isAtEnd() && braceCount > 0) {
+        const char = this.peek();
+        
+        if (char === '{') {
+          braceCount++;
+          code += this.advance();
+        } else if (char === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            this.advance(); // consume final '}'
+            break;
+          }
+          code += this.advance();
+        } else if (char === '\n') {
+          code += this.advance();
+          this.line++;
+          this.column = 1;
+        } else if (char === '"' || char === "'" || char === '`') {
+          // Handle strings to avoid counting braces inside them
+          const quote = char;
+          code += this.advance();
+          while (!this.isAtEnd() && this.peek() !== quote) {
+            if (this.peek() === '\\' && !this.isAtEnd()) {
+              code += this.advance(); // escape char
+            }
+            if (this.peek() === '\n') {
+              this.line++;
+              this.column = 0;
+            }
+            code += this.advance();
+          }
+          if (!this.isAtEnd()) {
+            code += this.advance(); // closing quote
+          }
+        } else {
+          code += this.advance();
+        }
+      }
+      
+      if (braceCount > 0) {
+        throw new SdevError('Unterminated js block, missing }', this.line, startColumn);
+      }
+    } else if (startChar === '(') {
+      // Parenthesized form: js ( ... ) - can span multiple lines
+      this.advance(); // consume '('
+      let parenCount = 1;
+      
+      while (!this.isAtEnd() && parenCount > 0) {
+        const char = this.peek();
+        
+        if (char === '(') {
+          parenCount++;
+          code += this.advance();
+        } else if (char === ')') {
+          parenCount--;
+          if (parenCount === 0) {
+            this.advance(); // consume final ')'
+            break;
+          }
+          code += this.advance();
+        } else if (char === '\n') {
+          code += this.advance();
+          this.line++;
+          this.column = 1;
+        } else if (char === '"' || char === "'" || char === '`') {
+          // Handle strings to avoid counting parens inside them
+          const quote = char;
+          code += this.advance();
+          while (!this.isAtEnd() && this.peek() !== quote) {
+            if (this.peek() === '\\' && !this.isAtEnd()) {
+              code += this.advance(); // escape char
+            }
+            if (this.peek() === '\n') {
+              this.line++;
+              this.column = 0;
+            }
+            code += this.advance();
+          }
+          if (!this.isAtEnd()) {
+            code += this.advance(); // closing quote
+          }
+        } else {
+          code += this.advance();
+        }
+      }
+      
+      if (parenCount > 0) {
+        throw new SdevError('Unterminated js expression, missing )', this.line, startColumn);
+      }
+    } else {
+      // Single-line form: js expression (rest of line)
+      while (!this.isAtEnd() && this.peek() !== '\n') {
+        code += this.advance();
+      }
     }
     
     // Only add token if there's actual code
@@ -2987,7 +3085,7 @@ class Interpreter {
 
   executeJs(node, env) {
     // Execute raw JavaScript code and return the result
-    // SIMPLE: No parsing, just eval the raw JS code
+    // Supports full JS syntax: arrow functions, object literals, arrays, multiline code
     try {
       // Create a context object with sdev variables accessible
       const context = {};
@@ -3005,29 +3103,56 @@ class Interpreter {
       
       const code = node.code;
       
+      // Detect if this is a statement block or an expression
+      // Statement blocks typically start with keywords or contain multiple statements
+      const trimmedCode = code.trim();
+      const isStatementBlock = /^(let|const|var|if|for|while|function|class|try|switch|return)\s/.test(trimmedCode) ||
+                               (trimmedCode.includes(';') && !trimmedCode.startsWith('(') && !trimmedCode.startsWith('{'));
+      
       // In browser environment, use Function constructor
       if (typeof window !== 'undefined') {
         const varNames = Object.keys(context);
         const varValues = Object.values(context);
         
-        // Try as expression first, then as statement
-        try {
-          const fn = new Function(...varNames, `"use strict"; return (${code});`);
-          return fn(...varValues);
-        } catch (e) {
-          // If expression fails, try as statement
-          const fn = new Function(...varNames, `"use strict"; ${code}`);
-          return fn(...varValues);
+        let fn;
+        if (isStatementBlock) {
+          // For statement blocks, execute directly
+          fn = new Function(...varNames, `"use strict"; ${code}`);
+        } else {
+          // For expressions, try to return the value
+          // Handle object literals by wrapping in parentheses if needed
+          let wrappedCode = code;
+          if (trimmedCode.startsWith('{') && !trimmedCode.includes('=>')) {
+            // Likely an object literal, not a block - wrap in parens
+            wrappedCode = `(${code})`;
+          }
+          
+          try {
+            fn = new Function(...varNames, `"use strict"; return (${wrappedCode});`);
+          } catch (e) {
+            // If that fails, try as statement
+            fn = new Function(...varNames, `"use strict"; ${code}`);
+          }
         }
+        
+        return fn(...varValues);
       } else if (typeof global !== 'undefined') {
         // Node.js environment
         const vm = require('vm');
         const sandbox = { ...global, ...context, console, require };
         
-        try {
-          return vm.runInNewContext(`(${code})`, sandbox);
-        } catch (e) {
+        if (isStatementBlock) {
           return vm.runInNewContext(code, sandbox);
+        } else {
+          let wrappedCode = code;
+          if (trimmedCode.startsWith('{') && !trimmedCode.includes('=>')) {
+            wrappedCode = `(${code})`;
+          }
+          try {
+            return vm.runInNewContext(wrappedCode, sandbox);
+          } catch (e) {
+            return vm.runInNewContext(code, sandbox);
+          }
         }
       } else {
         // Fallback - direct eval
