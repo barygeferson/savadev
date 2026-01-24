@@ -1585,24 +1585,23 @@ forge obj be :: "key": "value" ;;
 
 The JavaScript interpreter includes a special `js` keyword for calling external JavaScript functions directly. This is powerful for integrating with browser APIs and libraries like Leaflet.
 
-### Syntax Forms
+### Syntax
 
-sdev supports **three forms** of the `js` keyword:
+The `js` keyword reads **everything until the end of the line** as raw JavaScript:
 
 ```sdev
-// 1. Single-line (expression on same line)
-js <javascript expression>
+// Basic syntax
+js <javascript code until end of line>
 
-// 2. Parenthesized form (multiline expressions)
-js (
-  <multiline javascript code>
-)
-
-// 3. Block form (multiline statements)
-js {
-  <multiline javascript statements>
-}
+// As expression in assignment
+forge <variable> be js <javascript expression>
 ```
+
+**Important:** The lexer does NOT parse JavaScript syntax - it simply captures the entire line as raw text and executes it. This means:
+- No issues with `{}`, `[]`, `=>`, or any JS syntax
+- **Single-line only** - each `js` statement is one line
+- Full access to global objects (window, document, L, etc.)
+- sdev variables are automatically available in JS context
 
 ### Basic Examples
 
@@ -1625,117 +1624,35 @@ forge result be js Math.sin(0.5)
 
 ### Object Literals and Arrays
 
-The `js` keyword fully supports object literals `{}` and arrays `[]`:
+For object literals, wrap them in parentheses:
 
 ```sdev
-// Create object literals using parenthesized form
-forge options be js ({
-  dragging: true,
-  zoomControl: false,
-  center: [51.5, -0.09]
-})
-
-// Or inline (parenthesized for objects)
+// Object literals need parentheses to be recognized as expressions
+forge options be js ({ dragging: true, zoomControl: false })
 forge point be js ({ x: 100, y: 200, label: "Start" })
 
 // Arrays work directly
-forge coords be js [[40.7, -74], [34.0, -118], [41.8, -87]]
-
-// Nested objects
-forge config be js ({
-  map: { zoom: 12, animate: true },
-  markers: [
-    { lat: 51.5, lng: -0.09, title: "London" },
-    { lat: 48.8, lng: 2.35, title: "Paris" }
-  ]
-})
+forge coords be js [[40.7, -74], [34.0, -118]]
+forge numbers be js [1, 2, 3, 4, 5].map(x => x * x)
 ```
 
 ### Arrow Functions
 
-Arrow functions are fully supported:
+Arrow functions work within a single line:
 
 ```sdev
 // Arrow function in callback
-js myArray.map(x => x * 2)
-
-// Arrow function with body
-js myArray.filter(item => {
-  return item.active && item.score > 50;
-})
+forge doubled be js myArray.map(x => x * 2)
 
 // Event handlers with arrows
-js button.addEventListener("click", (e) => {
-  console.log("Clicked at", e.clientX, e.clientY);
-})
+js button.addEventListener("click", (e) => console.log("Clicked!", e))
 
 // Using sdev variables in arrows
 forge multiplier be 3
 forge result be js [1, 2, 3].map(x => x * multiplier)
 ```
 
-### Multiline JavaScript Blocks
-
-Use `js { ... }` for complex multiline JavaScript:
-
-```sdev
-// Multiline statement block
-js {
-  const data = [1, 2, 3, 4, 5];
-  let sum = 0;
-  for (const num of data) {
-    sum += num;
-  }
-  console.log("Sum:", sum);
-}
-
-// Define and call a function
-js {
-  function greet(name) {
-    return "Hello, " + name + "!";
-  }
-  alert(greet("World"));
-}
-
-// Complex DOM manipulation
-js {
-  const div = document.createElement("div");
-  div.className = "notification";
-  div.innerHTML = "<strong>Alert!</strong> Something happened.";
-  div.style.cssText = "padding: 10px; background: yellow;";
-  document.body.appendChild(div);
-}
-```
-
-### Multiline Expressions with Parentheses
-
-Use `js ( ... )` for multiline expressions that return a value:
-
-```sdev
-// Multiline object literal
-forge settings be js (
-  {
-    theme: "dark",
-    fontSize: 14,
-    features: {
-      autoSave: true,
-      spellCheck: false
-    }
-  }
-)
-
-// Complex expression
-forge result be js (
-  [1, 2, 3, 4, 5]
-    .map(x => x * x)
-    .filter(x => x > 5)
-    .reduce((a, b) => a + b, 0)
-)
-```
-
 ### Leaflet Integration
-
-The `js` keyword is especially useful with Leaflet:
 
 ```sdev
 // Initialize a Leaflet map
@@ -1744,84 +1661,69 @@ forge myMap be js L.map("map").setView([51.505, -0.09], 13)
 // Add a tile layer
 js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
 
-// Add a marker with options
-forge marker be js (
-  L.marker([51.5, -0.09], {
-    draggable: true,
-    title: "Click me!"
-  }).addTo(myMap)
-)
+// Add a marker
+forge marker be js L.marker([51.5, -0.09]).addTo(myMap)
+js marker.bindPopup("Hello World!").openPopup()
+
+// Event listener
+js myMap.on("click", (e) => console.log("Clicked:", e.latlng))
+```
+
+
+
+```sdev
+// Simple function call
+js console.log("Hello from JS!")
+
+// Create a Leaflet map
+forge myMap be js L.map("map").setView([51.505, -0.09], 13)
+
+// Add a tile layer
+js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
+
+// Add a marker
+forge marker be js L.marker([51.5, -0.09]).addTo(myMap)
 
 // Bind a popup
 js marker.bindPopup("Hello World!").openPopup()
 
-// Add event listener with arrow function
-js myMap.on("click", (e) => {
-  console.log("Clicked at:", e.latlng.lat, e.latlng.lng);
-  L.marker(e.latlng).addTo(myMap);
-})
+// Access browser APIs
+js document.title = "My sdev App"
 
-// Complex Leaflet setup
-js {
-  const circle = L.circle([51.508, -0.11], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-  }).addTo(myMap);
-  
-  circle.bindPopup("I am a circle.");
-}
+// Create objects (wrap in parentheses for object literals)
+forge settings be js ({ theme: "dark", fontSize: 14 })
+
+// Array operations
+forge numbers be js [1, 2, 3, 4, 5].map(x => x * x)
+
+// DOM manipulation
+js document.getElementById("demo").innerHTML = "Changed by sdev!"
+
+// Event listeners
+js myMap.on("click", (e) => console.log("Clicked:", e.latlng))
+
+// Timer functions
+js setTimeout(() => alert("Hello!"), 1000)
 ```
 
-### Variable Access
+### Using sdev Variables in JavaScript
 
-sdev variables are accessible within `js` expressions:
+sdev variables are automatically accessible in `js` expressions:
 
 ```sdev
 forge lat be 40.7128
 forge lng be -74.0060
 forge zoom be 12
 
-// Use sdev variables in JavaScript
+// Use sdev variables directly
 forge map be js L.map("map").setView([lat, lng], zoom)
 
 forge name be "New York"
 js console.log("Viewing: " + name)
 
-// Variables in arrow functions
 forge items be ["a", "b", "c"]
 forge prefix be "item_"
-js items.map(x => prefix + x)
-```
-
-### Complex Expressions
-
-```sdev
-// Inline object creation (use parentheses)
-forge options be js ({ dragging: true, zoomControl: false })
-
-// Array operations with chaining
-forge processed be js (
-  coords
-    .filter(c => c[0] > 35)
-    .map(c => ({ lat: c[0], lng: c[1] }))
-)
-
-// Function calls with callbacks
-js setTimeout(() => { alert("Timer!"); }, 1000)
-
-// Access localStorage
-js localStorage.setItem("lastVisit", new Date().toISOString())
-forge lastVisit be js localStorage.getItem("lastVisit")
-
-// Fetch API (async)
-js {
-  fetch("https://api.example.com/data")
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch(err => console.error(err));
-}
+forge result be js items.map(x => prefix + x)
 ```
 
 ### Error Handling
@@ -1842,7 +1744,6 @@ attempt ::
 - Variables from sdev are passed into the JavaScript context
 - Global objects (window, document, L, etc.) remain accessible
 - Use with caution - arbitrary JavaScript execution can have side effects
-
 
 ---
 
