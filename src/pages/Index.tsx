@@ -6,8 +6,9 @@ import { ExampleCode } from '@/components/ExampleCode';
 import { LanguageReference } from '@/components/LanguageReference';
 import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
 import { DownloadPanel } from '@/components/DownloadPanel';
+import { CodeTranslator } from '@/components/CodeTranslator';
 import { Button } from '@/components/ui/button';
-import { Play, Sparkles } from 'lucide-react';
+import { Play, Sparkles, Wand2 } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
@@ -31,6 +32,7 @@ const Index = () => {
   const [error, setError] = useState<string>();
   const [graphicsCommands, setGraphicsCommands] = useState<GraphicsCommand[]>([]);
   const [showCanvas, setShowCanvas] = useState(false);
+  const [showTranslator, setShowTranslator] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
 
   const runCode = useCallback(() => {
@@ -80,6 +82,14 @@ const Index = () => {
     setGraphicsCommands([]);
   }, []);
 
+  const handleTranslatedCode = useCallback((translatedCode: string) => {
+    setCode(translatedCode);
+    setShowTranslator(false);
+    setOutput([]);
+    setError(undefined);
+    setGraphicsCommands([]);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -95,6 +105,15 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-3">
             <DownloadPanel code={code} />
+            <Button 
+              onClick={() => setShowTranslator(!showTranslator)} 
+              variant={showTranslator ? "secondary" : "outline"}
+              size="lg" 
+              className="gap-2"
+            >
+              <Wand2 className="w-4 h-4" />
+              Translate
+            </Button>
             <Button onClick={runCode} size="lg" className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white border-0">
               <Play className="w-4 h-4" />
               Run
@@ -117,6 +136,9 @@ const Index = () => {
 
           <div className="space-y-4">
             <LanguageReference />
+            {showTranslator && (
+              <CodeTranslator onTranslated={handleTranslatedCode} />
+            )}
             <div className="rounded-lg border border-border bg-card p-4">
               <h3 className="font-medium text-sm mb-3 text-foreground">Import Libraries</h3>
               <p className="text-xs text-muted-foreground mb-2">Use GitHub Gists to share code:</p>
