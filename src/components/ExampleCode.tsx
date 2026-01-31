@@ -1,23 +1,47 @@
+import { Sparkles, Code2, Palette, Cpu, Gamepad2 } from 'lucide-react';
+
 interface ExampleCodeProps {
   onSelect: (code: string) => void;
 }
 
 const EXAMPLES = [
-  { name: 'Hello World', code: `speak("Hello, World!")` },
-  { name: 'Variables', code: `forge name be "sdev"
+  { name: 'Hello World', icon: Sparkles, category: 'basics', code: `speak("Hello, World!")` },
+  { name: 'Variables', icon: Code2, category: 'basics', code: `forge name be "sdev"
 forge version be 1.0
 speak("Welcome to " + name + " v" + morph(version, "text"))` },
-  { name: 'Functions', code: `conjure greet(who) ::
+  { name: 'Functions', icon: Code2, category: 'basics', code: `conjure greet(who) ::
   yield "Hello, " + who + "!"
 ;;
 
 speak(greet("World"))` },
-  { name: 'Loops', code: `forge i be 1
+  { name: 'Loops', icon: Code2, category: 'basics', code: `forge i be 1
 cycle i <= 5 ::
   speak("Count: " + morph(i, "text"))
   i be i + 1
 ;;` },
-  { name: 'Turtle Spiral', code: `// Draw a colorful spiral!
+  { name: 'Fibonacci', icon: Cpu, category: 'algorithms', code: `conjure fib(n) ::
+  ponder n <= 1 :: yield n ;;
+  yield fib(n - 1) + fib(n - 2)
+;;
+
+forge i be 0
+cycle i < 10 ::
+  speak("fib(" + morph(i, "text") + ") = " + morph(fib(i), "text"))
+  i be i + 1
+;;` },
+  { name: 'FizzBuzz', icon: Cpu, category: 'algorithms', code: `conjure fizzbuzz(n) ::
+  ponder n % 15 equals 0 :: yield "FizzBuzz" ;;
+  otherwise ponder n % 3 equals 0 :: yield "Fizz" ;;
+  otherwise ponder n % 5 equals 0 :: yield "Buzz" ;;
+  otherwise :: yield morph(n, "text") ;;
+;;
+
+forge i be 1
+cycle i <= 20 ::
+  speak(fizzbuzz(i))
+  i be i + 1
+;;` },
+  { name: 'Turtle Spiral', icon: Palette, category: 'graphics', code: `// Draw a colorful spiral!
 canvas(400, 400)
 clear("#0d0d15")
 turtle()
@@ -29,7 +53,7 @@ cycle i < 200 ::
   right(25)
   i be i + 1
 ;;` },
-  { name: 'Turtle Flower', code: `// Draw a flower with turtle graphics
+  { name: 'Turtle Flower', icon: Palette, category: 'graphics', code: `// Draw a flower with turtle graphics
 canvas(400, 400)
 clear("#0d0d15")
 turtle()
@@ -57,7 +81,7 @@ cycle i < 12 ::
   right(30)
   i be i + 1
 ;;` },
-  { name: 'Shapes Gallery', code: `// Draw various shapes
+  { name: 'Shapes', icon: Gamepad2, category: 'graphics', code: `// Draw various shapes
 canvas(400, 400)
 clear("#0d0d15")
 
@@ -84,34 +108,9 @@ ellipse(80, 200, 50, 30)
 fill(hue(120, 70, 50))
 triangle(200, 160, 250, 240, 150, 240)
 
-// Concentric circles
-noFill()
-forge i be 0
-cycle i < 5 ::
-  stroke(hue(i * 60, 80, 60), 2)
-  circle(320, 200, 20 + i * 10)
-  i be i + 1
-;;
-
 fill("#ffffff")
 text("Shapes Gallery", 120, 380, 20)` },
-  { name: 'Gradient Art', code: `// Gradient bars with shadows
-canvas(400, 400)
-clear("#0d0d15")
-
-shadow("#000000", 10, 5, 5)
-forge i be 0
-cycle i < 10 ::
-  fill(hue(i * 36, 80, 50))
-  rect(20 + i * 38, 50, 30, 300, 5)
-  i be i + 1
-;;
-noShadow()
-
-fill("#ffffff")
-textAlign("center")
-text("Gradient Bars", 200, 380, 18)` },
-  { name: 'Starfield', code: `// Starfield effect
+  { name: 'Starfield', icon: Gamepad2, category: 'graphics', code: `// Starfield effect
 canvas(400, 400)
 clear("#0a0a12")
 
@@ -133,7 +132,7 @@ cycle j < 10 ::
   star(random() * 380 + 10, random() * 380 + 10, 8, 3, 4)
   j be j + 1
 ;;` },
-  { name: 'Spirograph', code: `// Spirograph pattern
+  { name: 'Spirograph', icon: Palette, category: 'graphics', code: `// Spirograph pattern
 canvas(400, 400)
 clear("#0d0d15")
 turtle()
@@ -160,7 +159,7 @@ cycle t < 3600 ::
   ;;
   t be t + 2
 ;;` },
-  { name: 'Wave Pattern', code: `// Animated wave pattern
+  { name: 'Wave Art', icon: Palette, category: 'graphics', code: `// Animated wave pattern
 canvas(400, 400)
 clear("#0d0d15")
 
@@ -176,58 +175,32 @@ cycle y < 400 ::
   ;;
   y be y + 4
 ;;` },
-  { name: 'Bezier Art', code: `// Custom bezier curves
-canvas(400, 400)
-clear("#0d0d15")
-
-forge i be 0
-cycle i < 20 ::
-  stroke(hue(i * 18, 80, 60), 2)
-  beginPath()
-  moveTo(50, 200 + i * 5)
-  bezierTo(100, 50, 300, 350, 350, 200 - i * 5)
-  strokePath()
-  i be i + 1
-;;
-
-fill("#ffffff")
-text("Bezier Curves", 130, 380, 18)` },
-  { name: 'Fibonacci', code: `conjure fib(n) ::
-  ponder n <= 1 :: yield n ;;
-  yield fib(n - 1) + fib(n - 2)
-;;
-
-forge i be 0
-cycle i < 10 ::
-  speak("fib(" + morph(i, "text") + ") = " + morph(fib(i), "text"))
-  i be i + 1
-;;` },
-  { name: 'FizzBuzz', code: `conjure fizzbuzz(n) ::
-  ponder n % 15 equals 0 :: yield "FizzBuzz" ;;
-  otherwise ponder n % 3 equals 0 :: yield "Fizz" ;;
-  otherwise ponder n % 5 equals 0 :: yield "Buzz" ;;
-  otherwise :: yield morph(n, "text") ;;
-;;
-
-forge i be 1
-cycle i <= 20 ::
-  speak(fizzbuzz(i))
-  i be i + 1
-;;` },
 ];
+
+const categoryColors: Record<string, string> = {
+  basics: 'border-neon-cyan/50 hover:border-neon-cyan hover:shadow-neon-cyan text-neon-cyan',
+  algorithms: 'border-neon-violet/50 hover:border-neon-violet hover:shadow-neon-violet text-neon-violet',
+  graphics: 'border-neon-magenta/50 hover:border-neon-magenta hover:shadow-neon-magenta text-neon-magenta',
+};
 
 export function ExampleCode({ onSelect }: ExampleCodeProps) {
   return (
     <div className="flex flex-wrap gap-2">
-      {EXAMPLES.map((example) => (
-        <button
-          key={example.name}
-          onClick={() => onSelect(example.code)}
-          className="px-3 py-1.5 text-sm rounded-full border border-border bg-card hover:bg-accent hover:text-accent-foreground transition-colors"
-        >
-          {example.name}
-        </button>
-      ))}
+      {EXAMPLES.map((example) => {
+        const Icon = example.icon;
+        const colorClass = categoryColors[example.category] || categoryColors.basics;
+        
+        return (
+          <button
+            key={example.name}
+            onClick={() => onSelect(example.code)}
+            className={`group flex items-center gap-2 px-3 py-2 text-sm rounded-lg border bg-card/50 backdrop-blur-sm transition-all hover:bg-card ${colorClass}`}
+          >
+            <Icon className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+            <span className="font-mono text-xs">{example.name}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
