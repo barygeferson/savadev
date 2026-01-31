@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Upload, Wand2, Copy, Check } from 'lucide-react';
+import { Loader2, Upload, Wand2, Copy, Check, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,6 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Auto-detect language from extension
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
     const detectedLang = LANGUAGES.find(lang => 
       lang.extensions.includes(extension)
@@ -121,14 +120,17 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
   }, [outputCode, onTranslated, toast]);
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-violet-400" />
-          <span className="text-sm font-medium text-foreground">AI Code Translator</span>
+    <div className="rounded-lg border border-border/50 glass overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center">
+            <Wand2 className="w-4 h-4 text-secondary" />
+          </div>
+          <span className="text-sm font-semibold text-foreground">AI Translator</span>
         </div>
         <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
-          <SelectTrigger className="w-[140px] h-8 text-xs">
+          <SelectTrigger className="w-[130px] h-8 text-xs border-border/50 bg-background/50">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
@@ -143,27 +145,31 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
 
       <div className="p-4 space-y-4">
         <Tabs value={inputMethod} onValueChange={(v) => setInputMethod(v as 'paste' | 'upload')}>
-          <TabsList className="grid w-full grid-cols-2 h-9">
-            <TabsTrigger value="paste" className="text-xs">Paste Code</TabsTrigger>
-            <TabsTrigger value="upload" className="text-xs">Upload File</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-9 bg-muted/30">
+            <TabsTrigger value="paste" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              Paste Code
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="text-xs data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              Upload File
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="paste" className="mt-3">
             <textarea
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value)}
-              placeholder={`Paste your ${LANGUAGES.find(l => l.value === sourceLanguage)?.label || ''} code here...`}
-              className="w-full h-40 p-3 font-mono text-sm bg-background border border-border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 text-foreground placeholder:text-muted-foreground"
+              placeholder={`// Paste your ${LANGUAGES.find(l => l.value === sourceLanguage)?.label || ''} code here...`}
+              className="w-full h-36 p-3 font-mono text-sm bg-background/50 border border-border/50 rounded-lg resize-none focus:outline-none focus:border-primary/50 focus:shadow-neon-cyan text-foreground placeholder:text-muted-foreground transition-all"
               spellCheck={false}
             />
           </TabsContent>
 
           <TabsContent value="upload" className="mt-3">
-            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:border-violet-500/50 transition-colors bg-background/50">
-              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-              <span className="text-sm text-muted-foreground">Click to upload a file</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                Supports: {LANGUAGES.flatMap(l => l.extensions).join(', ')}
+            <label className="flex flex-col items-center justify-center w-full h-36 border border-dashed border-border/50 rounded-lg cursor-pointer hover:border-primary/50 transition-all bg-background/30 group">
+              <Upload className="w-8 h-8 text-muted-foreground mb-2 group-hover:text-primary transition-colors" />
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Click to upload</span>
+              <span className="text-xs text-muted-foreground/50 mt-1 font-mono">
+                .py .js .ts .java .go .rs ...
               </span>
               <input
                 type="file"
@@ -173,9 +179,10 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
               />
             </label>
             {inputCode && inputMethod === 'upload' && (
-              <p className="text-xs text-muted-foreground mt-2">
-                ✓ File loaded ({inputCode.split('\n').length} lines)
-              </p>
+              <div className="flex items-center gap-2 mt-2 text-xs text-neon-green">
+                <Check className="w-3 h-3" />
+                <span className="font-mono">File loaded ({inputCode.split('\n').length} lines)</span>
+              </div>
             )}
           </TabsContent>
         </Tabs>
@@ -183,31 +190,31 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
         <Button
           onClick={handleTranslate}
           disabled={isTranslating || !inputCode.trim()}
-          className="w-full gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white border-0"
+          className="w-full gap-2 bg-gradient-to-r from-secondary to-neon-violet hover:shadow-neon-magenta transition-all border-0 font-semibold"
         >
           {isTranslating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Translating...
+              <span className="font-mono">Translating...</span>
             </>
           ) : (
             <>
-              <Wand2 className="w-4 h-4" />
-              Translate to sdev
+              <Zap className="w-4 h-4" />
+              <span className="font-mono">Translate to SDEV</span>
             </>
           )}
         </Button>
 
         {outputCode && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Translated sdev code:</span>
+              <span className="text-xs font-mono text-primary">{'>'} output.sdev</span>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleCopy}
-                  className="h-7 text-xs gap-1"
+                  className="h-7 text-xs gap-1 hover:bg-primary/10 hover:text-primary"
                 >
                   {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                   {copied ? 'Copied!' : 'Copy'}
@@ -217,14 +224,14 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
                     variant="outline"
                     size="sm"
                     onClick={handleUseInEditor}
-                    className="h-7 text-xs"
+                    className="h-7 text-xs border-primary/30 hover:border-primary hover:bg-primary/10"
                   >
                     Use in Editor
                   </Button>
                 )}
               </div>
             </div>
-            <pre className="w-full max-h-60 p-3 font-mono text-sm bg-muted/50 border border-border rounded-md overflow-auto text-foreground whitespace-pre-wrap">
+            <pre className="w-full max-h-48 p-3 font-mono text-sm bg-background/50 border border-border/50 rounded-lg overflow-auto text-foreground whitespace-pre-wrap">
               {outputCode}
             </pre>
           </div>
