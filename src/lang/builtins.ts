@@ -408,6 +408,12 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
   builtins.set('PI', { type: 'builtin', call: () => Math.PI });
   builtins.set('TAU', { type: 'builtin', call: () => Math.PI * 2 });
   
+  // random() alias for chaos()
+  builtins.set('random', {
+    type: 'builtin',
+    call: () => Math.random(),
+  });
+  
   // Random utilities
   builtins.set('randint', {
     type: 'builtin',
