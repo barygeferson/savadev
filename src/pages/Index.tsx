@@ -4,7 +4,7 @@ import { OutputPanel } from '@/components/OutputPanel';
 import { ExampleCode } from '@/components/ExampleCode';
 import { LanguageReference } from '@/components/LanguageReference';
 import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
-import { DownloadPanel } from '@/components/DownloadPanel';
+import { DownloadablesDropdown } from '@/components/DownloadablesDropdown';
 import { CodeTranslator } from '@/components/CodeTranslator';
 import { Button } from '@/components/ui/button';
 import { Play, Zap, Wand2, Terminal, ChevronDown } from 'lucide-react';
@@ -49,6 +49,11 @@ const Index = () => {
       const env = new Environment();
       const builtins = createBuiltins((msg) => outputLines.push(msg));
       builtins.forEach((fn, name) => env.define(name, fn));
+      
+      // Add math constants directly
+      env.define('PI', Math.PI);
+      env.define('TAU', Math.PI * 2);
+      env.define('E', Math.E);
 
       const gfxBuiltins = createGraphicsBuiltins(
         (cmd) => commands.push(cmd),
@@ -116,7 +121,7 @@ const Index = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <DownloadPanel code={code} />
+            <DownloadablesDropdown code={code} />
             <Button 
               onClick={() => setShowTranslator(!showTranslator)} 
               variant={showTranslator ? "secondary" : "outline"}
