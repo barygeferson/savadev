@@ -244,7 +244,7 @@ forge d be 80
 
 forge t be 0
 cycle t < 3600 ::
-  forge angle be t * PI() / 180
+  forge angle be t * PI / 180
   forge x be 200 + (R - r) * cos(angle) + d * cos((R - r) / r * angle)
   forge y be 200 + (R - r) * sin(angle) + d * sin((R - r) / r * angle)
   
@@ -429,7 +429,7 @@ cycle i < points ::
   // Fibonacci sphere algorithm
   forge y be 1 - (i / (points - 1)) * 2
   forge radiusAtY be root(1 - y * y)
-  forge theta be 2 * PI() * i / phi
+  forge theta be 2 * PI * i / phi
   
   forge x be cos(theta) * radiusAtY * radius
   forge z be sin(theta) * radiusAtY * radius
