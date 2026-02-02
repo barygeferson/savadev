@@ -6,97 +6,113 @@ const corsHeaders = {
 };
 
 const SDEV_SYNTAX_GUIDE = `
-SDEV Language Syntax Guide:
+SDEV Language Syntax Guide - CRITICAL: Follow these rules EXACTLY
 
-KEYWORDS:
-- forge <name> be <value> - Variable declaration (const)
-- conjure <name>(<params>) :: ... ;; - Function definition
-- ponder <condition> :: ... ;; - If statement
-- otherwise :: ... ;; - Else clause
-- cycle <condition> :: ... ;; - While loop
-- iterate <var> through <iterable> :: ... ;; - For-each loop
-- yield <value> - Return statement
-- speak(<value>) - Print to console
-- summon "<module>" - Import
+=== VARIABLES ===
+ALWAYS use "forge <name> be <value>" for variable declarations
+- "forge x be 5" NOT "let x = 5" or "const x = 5"
+- Variable reassignment: "x be x + 1" NOT "x = x + 1"
 
-BOOLEANS & NULL:
-- yep - true
-- nope - false  
-- void - null
+=== FUNCTIONS ===
+ALWAYS use "conjure <name>(<params>) :: ... ;;" for function definitions
+- "conjure greet(name) :: yield "Hello " + name ;;" 
+- Parameters have NO types
+- Use "yield" instead of "return"
 
-OPERATORS:
-- also - and (&&)
-- either - or (||)
-- isnt - not (!)
-- equals - equality (==)
-- differs - not equal (!=)
-- plus, minus, times, over - arithmetic
+=== CONDITIONALS ===
+ALWAYS use "ponder <condition> :: ... ;;" for if statements
+- "ponder x > 5 :: speak("big") ;;"
+- Use "otherwise ::" for else (NOT "else")
+- Use "otherwise ponder <condition> ::" for else-if
 
-BLOCKS:
-- Use :: to start a block and ;; to end it (instead of { })
+=== LOOPS ===
+ALWAYS use "cycle <condition> :: ... ;;" for while loops
+- "cycle i < 10 :: speak(i) ;; i be i + 1 ;;"
+- Use "iterate <var> through <iterable> :: ... ;;" for for-each loops
 
-OOP (Classes):
-- essence <ClassName> :: ... ;; - Class definition
-- birth(<params>) :: ... ;; - Constructor
-- self.<property> - Instance property access
-- craft <ClassName>(<args>) - Instantiate class
+=== BOOLEANS & NULL ===
+- "yep" for true (NOT "true")
+- "nope" for false (NOT "false")  
+- "void" for null (NOT "null" or "None")
 
-STRINGS:
-- Double quotes: "Hello"
-- Template literals: \`Hello \${name}\`
-- concat() for string concatenation
+=== OPERATORS ===
+- "also" for && (logical and)
+- "either" for || (logical or)
+- "isnt" for ! (logical not)
+- "equals" for == (equality check)
+- "differs" for != (not equal) - can also use "<>"
+- Use standard +, -, *, / for arithmetic
 
-ARRAYS:
-- [1, 2, 3] - Array literal
-- array.push(), array.pop(), array.len()
-- array.map(), array.filter(), array.each()
+=== BLOCKS ===
+CRITICAL: Use "::" to START a block and ";;" to END a block
+- NO curly braces { }
+- Every :: must have a matching ;;
 
-ASYNC:
-- async conjure <name>(<params>) :: ... ;;
-- await <promise>
-- slumber(<ms>) - Sleep function
+=== BUILT-IN FUNCTIONS ===
+- speak(<value>) - Print to console (NOT print, console.log)
+- morph(<value>, "text") - Convert to string
+- morph(<value>, "num") - Convert to number
+- measure(<list>) - Get length of list/string
+- weave(<list>, <separator>) - Join list to string
+- gather(<list>, <item>) - Push item to list
+- chaos() or random() - Random number 0-1
 
-GRAPHICS/TURTLE (if relevant):
-- forward(n), backward(n), left(deg), right(deg)
-- penUp(), penDown(), setColor(c), setWidth(n)
-- circle(r), rect(w,h), line(x1,y1,x2,y2)
+=== MATH CONSTANTS ===
+- PI - The value of pi (NOT PI(), just PI)
+- TAU - 2 * PI
+- E - Euler's number
+- cos(angle), sin(angle), tan(angle) - Trigonometry (radians)
+- root(n) - Square root
 
-JAVASCRIPT INTEROP:
-- js <single-line JS code>
-- js { <multi-line JS block> }
-- js ( <JS expression returning value> )
+=== COMMENTS ===
+- // single line comment
 
-EXAMPLE TRANSLATIONS:
+=== COMPLETE EXAMPLES ===
 
-Python: if x > 5:
-SDEV: ponder x > 5 ::
+Example 1 - Hello World:
+speak("Hello, World!")
 
-Python: def greet(name):
-SDEV: conjure greet(name) ::
+Example 2 - Variables and Math:
+forge radius be 5
+forge area be PI * radius * radius
+speak("Area: " + morph(area, "text"))
 
-Python: while count < 10:
-SDEV: cycle count < 10 ::
+Example 3 - Function:
+conjure factorial(n) ::
+  ponder n <= 1 :: yield 1 ;;
+  yield n * factorial(n - 1)
+;;
+speak(morph(factorial(5), "text"))
 
-Python: for item in items:
-SDEV: iterate item through items ::
+Example 4 - Loop with condition:
+forge i be 0
+cycle i < 5 ::
+  ponder i % 2 equals 0 ::
+    speak(morph(i, "text") + " is even")
+  ;;
+  otherwise ::
+    speak(morph(i, "text") + " is odd")
+  ;;
+  i be i + 1
+;;
 
-Python: return result
-SDEV: yield result
+Example 5 - List operations:
+forge numbers be [1, 2, 3, 4, 5]
+forge sum be 0
+forge idx be 0
+cycle idx < measure(numbers) ::
+  sum be sum + numbers[idx]
+  idx be idx + 1
+;;
+speak("Sum: " + morph(sum, "text"))
 
-Python: print("Hello")
-SDEV: speak("Hello")
-
-JavaScript: const x = 5;
-SDEV: forge x be 5
-
-JavaScript: function add(a, b) { return a + b; }
-SDEV: conjure add(a, b) :: yield a plus b ;;
-
-JavaScript: if (x && y) { }
-SDEV: ponder x also y :: ;;
-
-JavaScript: class Person { }
-SDEV: essence Person :: ;;
+IMPORTANT REMINDERS:
+1. NEVER use curly braces - use :: and ;;
+2. NEVER use return - use yield
+3. NEVER use true/false - use yep/nope
+4. NEVER use print or console.log - use speak
+5. Use "be" for assignment, NOT "="
+6. PI is a constant, NOT a function - use "PI" not "PI()"
 `;
 
 serve(async (req) => {
@@ -119,25 +135,29 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert code translator that converts code from various programming languages into SDEV, a unique programming language with its own syntax.
+    const systemPrompt = `You are an expert code translator specializing in SDEV, a unique programming language. Your ONLY task is to convert source code into valid, working SDEV code.
 
 ${SDEV_SYNTAX_GUIDE}
 
-IMPORTANT RULES:
-1. Translate ALL code constructs to their SDEV equivalents
-2. Keep comments but translate them to SDEV style (// for single line)
-3. Preserve the logic and structure of the original code
-4. Use SDEV keywords consistently (forge, conjure, ponder, cycle, yield, etc.)
-5. Use :: and ;; for blocks instead of { }
-6. Use 'also' for &&, 'either' for ||, 'isnt' for !
-7. Use 'yep' for true, 'nope' for false, 'void' for null
-8. For complex JS operations that can't be translated, use the js keyword
+CRITICAL TRANSLATION RULES:
+1. EVERY variable declaration MUST use "forge <name> be <value>"
+2. EVERY function MUST use "conjure <name>(<params>) :: ... ;;"  
+3. EVERY if statement MUST use "ponder <condition> :: ... ;;"
+4. EVERY while loop MUST use "cycle <condition> :: ... ;;"
+5. EVERY return MUST use "yield <value>"
+6. EVERY print/log MUST use "speak(<value>)"
+7. EVERY code block MUST start with "::" and end with ";;"
+8. NEVER use curly braces { } - they don't exist in SDEV
+9. NEVER use "=" for assignment - ALWAYS use "be"
+10. NEVER use true/false/null - use yep/nope/void
+11. PI, TAU, E are CONSTANTS not functions - use "PI" not "PI()"
 
 OUTPUT FORMAT:
-- Return ONLY the translated SDEV code
-- Do NOT include explanations or markdown code blocks
-- Do NOT include the original code
-- Add helpful comments in SDEV to explain non-obvious translations`;
+- Return ONLY valid SDEV code
+- NO markdown code blocks (\`\`\`)
+- NO explanations before or after
+- Include brief // comments only where helpful
+- The output must be immediately executable in the SDEV interpreter`;
 
     const userPrompt = `Translate this ${sourceLanguage} code to SDEV:
 
