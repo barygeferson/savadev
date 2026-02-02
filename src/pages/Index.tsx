@@ -6,6 +6,7 @@ import { LanguageReference } from '@/components/LanguageReference';
 import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
 import { DownloadablesDropdown } from '@/components/DownloadablesDropdown';
 import { CodeTranslator } from '@/components/CodeTranslator';
+import { SdevChatbot } from '@/components/SdevChatbot';
 import { Button } from '@/components/ui/button';
 import { Play, Zap, Wand2, Terminal, ChevronDown } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
@@ -245,6 +246,14 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* AI Chatbot */}
+      <SdevChatbot onInsertCode={(code) => {
+        setCode(code);
+        setOutput([]);
+        setError(undefined);
+        setGraphicsCommands([]);
+      }} />
     </div>
   );
 };
