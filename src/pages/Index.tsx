@@ -163,7 +163,7 @@ const Index = () => {
           <div className="lg:col-span-2 space-y-6">
             <CodeEditor value={code} onChange={setCode} onRun={runCode} placeholder="// Write your sdev code here..." />
             <OutputPanel lines={output} error={error} />
-            {showCanvas && <CanvasPanel ref={canvasRef} commands={graphicsCommands} />}
+            {showCanvas && <CanvasPanel ref={canvasRef} commands={graphicsCommands} onClose={() => setShowCanvas(false)} />}
           </div>
 
           {/* Sidebar */}

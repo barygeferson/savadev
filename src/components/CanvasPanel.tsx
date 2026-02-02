@@ -1,8 +1,10 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { GraphicsCommand, TurtleState, SpriteData } from '@/lang/graphics';
+import { X } from 'lucide-react';
 
 interface CanvasPanelProps {
   commands: GraphicsCommand[];
+  onClose?: () => void;
 }
 
 export interface CanvasHandle {
@@ -10,7 +12,7 @@ export interface CanvasHandle {
   getDataUrl: () => string;
 }
 
-export const CanvasPanel = forwardRef<CanvasHandle, CanvasPanelProps>(({ commands }, ref) => {
+export const CanvasPanel = forwardRef<CanvasHandle, CanvasPanelProps>(({ commands, onClose }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const turtleRef = useRef<TurtleState>({
@@ -511,9 +513,18 @@ export const CanvasPanel = forwardRef<CanvasHandle, CanvasPanelProps>(({ command
   }, [commands]);
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
-      <div className="px-4 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">Canvas</span>
+    <div className="rounded-lg border border-border/50 glass overflow-hidden">
+      <div className="px-4 py-2 bg-muted/30 border-b border-border/50 flex items-center justify-between">
+        <span className="text-sm font-medium text-muted-foreground font-mono">{'>'} canvas_output</span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="w-6 h-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-destructive/20 transition-colors"
+            aria-label="Close canvas"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
       <div className="p-4 flex items-center justify-center bg-[#0d0d15]">
         <canvas
