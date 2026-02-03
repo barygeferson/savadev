@@ -17,6 +17,7 @@ export type ASTNode =
   | IndexAssignStatement
   | IfStatement
   | WhileStatement
+  | ForEachStatement
   | FuncDeclaration
   | ReturnStatement
   | BlockStatement
@@ -140,6 +141,14 @@ export interface IfStatement {
 export interface WhileStatement {
   type: 'WhileStatement';
   condition: ASTNode;
+  body: BlockStatement;
+  line: number;
+}
+
+export interface ForEachStatement {
+  type: 'ForEachStatement';
+  variable: string;
+  iterable: ASTNode;
   body: BlockStatement;
   line: number;
 }

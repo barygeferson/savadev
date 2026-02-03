@@ -10,6 +10,8 @@ export enum TokenType {
   PONDER = 'PONDER',       // if
   OTHERWISE = 'OTHERWISE', // else
   CYCLE = 'CYCLE',         // while
+  ITERATE = 'ITERATE',     // for-each loop
+  THROUGH = 'THROUGH',     // for-each keyword
   YIELD = 'YIELD',         // return
   YEET = 'YEET',           // break
   SKIP = 'SKIP',           // continue
@@ -71,6 +73,8 @@ export const KEYWORDS: Record<string, TokenType> = {
   'ponder': TokenType.PONDER,
   'otherwise': TokenType.OTHERWISE,
   'cycle': TokenType.CYCLE,
+  'iterate': TokenType.ITERATE,
+  'through': TokenType.THROUGH,
   'yield': TokenType.YIELD,
   'yeet': TokenType.YEET,
   'skip': TokenType.SKIP,

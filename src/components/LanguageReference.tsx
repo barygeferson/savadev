@@ -64,6 +64,13 @@ ponder x > 10 ::
 cycle x < 10 ::
   x be x + 1
 ;;
+\`\`\`
+
+**Iterate (For-Each):**
+\`\`\`
+iterate item through myList ::
+  speak(item)
+;;
 \`\`\``,
   },
   {
