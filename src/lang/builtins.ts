@@ -460,6 +460,630 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
+  // ============= String Operations =============
+  builtins.set('replace', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 3) throw new SdevError('replace() takes 3 arguments (text, search, replacement)', line);
+      if (typeof args[0] !== 'string') throw new SdevError('First argument must be text', line);
+      if (typeof args[1] !== 'string') throw new SdevError('Second argument must be text', line);
+      if (typeof args[2] !== 'string') throw new SdevError('Third argument must be text', line);
+      return (args[0] as string).split(args[1] as string).join(args[2] as string);
+    },
+  });
+
+  builtins.set('startswith', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('startswith() takes 2 arguments', line);
+      if (typeof args[0] !== 'string' || typeof args[1] !== 'string') {
+        throw new SdevError('Arguments must be text', line);
+      }
+      return args[0].startsWith(args[1]);
+    },
+  });
+
+  builtins.set('endswith', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('endswith() takes 2 arguments', line);
+      if (typeof args[0] !== 'string' || typeof args[1] !== 'string') {
+        throw new SdevError('Arguments must be text', line);
+      }
+      return args[0].endsWith(args[1]);
+    },
+  });
+
+  builtins.set('repeat', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('repeat() takes 2 arguments (text, count)', line);
+      if (typeof args[0] !== 'string') throw new SdevError('First argument must be text', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      return args[0].repeat(Math.max(0, Math.floor(args[1])));
+    },
+  });
+
+  builtins.set('padleft', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2 || args.length > 3) throw new SdevError('padleft() takes 2-3 arguments', line);
+      if (typeof args[0] !== 'string') throw new SdevError('First argument must be text', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      const pad = args.length === 3 ? String(args[2]) : ' ';
+      return args[0].padStart(args[1], pad);
+    },
+  });
+
+  builtins.set('padright', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2 || args.length > 3) throw new SdevError('padright() takes 2-3 arguments', line);
+      if (typeof args[0] !== 'string') throw new SdevError('First argument must be text', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      const pad = args.length === 3 ? String(args[2]) : ' ';
+      return args[0].padEnd(args[1], pad);
+    },
+  });
+
+  builtins.set('charAt', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('charAt() takes 2 arguments (text, index)', line);
+      if (typeof args[0] !== 'string') throw new SdevError('First argument must be text', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      const str = args[0];
+      const idx = args[1] < 0 ? str.length + args[1] : args[1];
+      return str[idx] ?? '';
+    },
+  });
+
+  builtins.set('indexOf', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('indexOf() takes 2 arguments', line);
+      if (typeof args[0] === 'string' && typeof args[1] === 'string') {
+        return args[0].indexOf(args[1]);
+      }
+      if (Array.isArray(args[0])) {
+        return args[0].findIndex(item => 
+          JSON.stringify(item) === JSON.stringify(args[1])
+        );
+      }
+      throw new SdevError('First argument must be text or list', line);
+    },
+  });
+
+  builtins.set('lastIndexOf', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('lastIndexOf() takes 2 arguments', line);
+      if (typeof args[0] === 'string' && typeof args[1] === 'string') {
+        return args[0].lastIndexOf(args[1]);
+      }
+      if (Array.isArray(args[0])) {
+        for (let i = args[0].length - 1; i >= 0; i--) {
+          if (JSON.stringify(args[0][i]) === JSON.stringify(args[1])) return i;
+        }
+        return -1;
+      }
+      throw new SdevError('First argument must be text or list', line);
+    },
+  });
+
+  // ============= List Operations =============
+  builtins.set('insert', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 3) throw new SdevError('insert() takes 3 arguments (list, index, value)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      const arr = args[0];
+      arr.splice(args[1], 0, args[2]);
+      return arr;
+    },
+  });
+
+  builtins.set('remove', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('remove() takes 2 arguments (list, index)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      const arr = args[0];
+      const idx = args[1] < 0 ? arr.length + args[1] : args[1];
+      if (idx < 0 || idx >= arr.length) throw new SdevError('Index out of bounds', line);
+      return arr.splice(idx, 1)[0];
+    },
+  });
+
+  builtins.set('concat', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2) throw new SdevError('concat() takes at least 2 arguments', line);
+      if (Array.isArray(args[0])) {
+        return args.reduce((acc: unknown[], arr) => {
+          if (!Array.isArray(arr)) throw new SdevError('All arguments must be lists', line);
+          return [...acc, ...arr];
+        }, []);
+      }
+      if (typeof args[0] === 'string') {
+        return args.map(a => String(a)).join('');
+      }
+      throw new SdevError('First argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('flatten', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('flatten() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      return args[0].flat(Infinity);
+    },
+  });
+
+  builtins.set('zip', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2) throw new SdevError('zip() takes at least 2 arguments', line);
+      const arrays = args.map((a, i) => {
+        if (!Array.isArray(a)) throw new SdevError(`Argument ${i + 1} must be a list`, line);
+        return a;
+      });
+      const minLen = Math.min(...arrays.map(a => a.length));
+      const result: unknown[][] = [];
+      for (let i = 0; i < minLen; i++) {
+        result.push(arrays.map(arr => arr[i]));
+      }
+      return result;
+    },
+  });
+
+  builtins.set('unzip', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('unzip() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      if (args[0].length === 0) return [];
+      const first = args[0][0];
+      if (!Array.isArray(first)) throw new SdevError('Elements must be lists', line);
+      const numArrays = first.length;
+      const result: unknown[][] = Array.from({ length: numArrays }, () => []);
+      for (const tuple of args[0]) {
+        if (!Array.isArray(tuple)) throw new SdevError('Elements must be lists', line);
+        for (let i = 0; i < tuple.length; i++) {
+          result[i]?.push(tuple[i]);
+        }
+      }
+      return result;
+    },
+  });
+
+  builtins.set('first', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('first() takes 1 argument', line);
+      if (Array.isArray(args[0])) return args[0][0] ?? null;
+      if (typeof args[0] === 'string') return args[0][0] ?? '';
+      throw new SdevError('Argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('last', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('last() takes 1 argument', line);
+      if (Array.isArray(args[0])) return args[0][args[0].length - 1] ?? null;
+      if (typeof args[0] === 'string') return args[0][args[0].length - 1] ?? '';
+      throw new SdevError('Argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('rest', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('rest() takes 1 argument', line);
+      if (Array.isArray(args[0])) return args[0].slice(1);
+      if (typeof args[0] === 'string') return args[0].slice(1);
+      throw new SdevError('Argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('take', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('take() takes 2 arguments (list, count)', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      if (Array.isArray(args[0])) return args[0].slice(0, args[1]);
+      if (typeof args[0] === 'string') return args[0].slice(0, args[1]);
+      throw new SdevError('First argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('drop', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('drop() takes 2 arguments (list, count)', line);
+      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+      if (Array.isArray(args[0])) return args[0].slice(args[1]);
+      if (typeof args[0] === 'string') return args[0].slice(args[1]);
+      throw new SdevError('First argument must be a list or text', line);
+    },
+  });
+
+  builtins.set('sum', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('sum() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      return args[0].reduce((acc: number, val) => {
+        if (typeof val !== 'number') throw new SdevError('All elements must be numbers', line);
+        return acc + val;
+      }, 0);
+    },
+  });
+
+  builtins.set('product', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('product() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      return args[0].reduce((acc: number, val) => {
+        if (typeof val !== 'number') throw new SdevError('All elements must be numbers', line);
+        return acc * val;
+      }, 1);
+    },
+  });
+
+  builtins.set('average', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('average() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      if (args[0].length === 0) throw new SdevError('Cannot average empty list', line);
+      const total = args[0].reduce((acc: number, val) => {
+        if (typeof val !== 'number') throw new SdevError('All elements must be numbers', line);
+        return acc + val;
+      }, 0);
+      return total / args[0].length;
+    },
+  });
+
+  builtins.set('sort', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 1 || args.length > 2) throw new SdevError('sort() takes 1-2 arguments', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      const arr = [...args[0]];
+      if (args.length === 2) {
+        const fn = args[1] as SdevFunction;
+        if (!fn || typeof fn !== 'object' || !('call' in fn)) {
+          throw new SdevError('Second argument must be a function', line);
+        }
+        arr.sort((a, b) => fn.call([a, b], line) as number);
+      } else {
+        arr.sort((a, b) => {
+          if (typeof a === 'number' && typeof b === 'number') return a - b;
+          return String(a).localeCompare(String(b));
+        });
+      }
+      return arr;
+    },
+  });
+
+  builtins.set('unique', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('unique() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      const seen = new Set<string>();
+      return args[0].filter(item => {
+        const key = JSON.stringify(item);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    },
+  });
+
+  builtins.set('count', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('count() takes 2 arguments (list, value)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      const needle = JSON.stringify(args[1]);
+      return args[0].filter(item => JSON.stringify(item) === needle).length;
+    },
+  });
+
+  builtins.set('all', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('all() takes 2 arguments (list, predicate)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      const fn = args[1] as SdevFunction;
+      if (!fn || typeof fn !== 'object' || !('call' in fn)) {
+        throw new SdevError('Second argument must be a function', line);
+      }
+      return args[0].every(item => isTruthy(fn.call([item], line)));
+    },
+  });
+
+  builtins.set('any', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('any() takes 2 arguments (list, predicate)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      const fn = args[1] as SdevFunction;
+      if (!fn || typeof fn !== 'object' || !('call' in fn)) {
+        throw new SdevError('Second argument must be a function', line);
+      }
+      return args[0].some(item => isTruthy(fn.call([item], line)));
+    },
+  });
+
+  builtins.set('find', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('find() takes 2 arguments (list, predicate)', line);
+      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
+      const fn = args[1] as SdevFunction;
+      if (!fn || typeof fn !== 'object' || !('call' in fn)) {
+        throw new SdevError('Second argument must be a function', line);
+      }
+      for (const item of args[0]) {
+        if (isTruthy(fn.call([item], line))) return item;
+      }
+      return null;
+    },
+  });
+
+  // ============= Type Checking =============
+  builtins.set('isNum', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isNum() takes 1 argument', line);
+      return typeof args[0] === 'number';
+    },
+  });
+
+  builtins.set('isText', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isText() takes 1 argument', line);
+      return typeof args[0] === 'string';
+    },
+  });
+
+  builtins.set('isList', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isList() takes 1 argument', line);
+      return Array.isArray(args[0]);
+    },
+  });
+
+  builtins.set('isTome', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isTome() takes 1 argument', line);
+      return args[0] !== null && typeof args[0] === 'object' && !Array.isArray(args[0]);
+    },
+  });
+
+  builtins.set('isTruth', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isTruth() takes 1 argument', line);
+      return typeof args[0] === 'boolean';
+    },
+  });
+
+  builtins.set('isVoid', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isVoid() takes 1 argument', line);
+      return args[0] === null;
+    },
+  });
+
+  builtins.set('isFunc', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('isFunc() takes 1 argument', line);
+      const val = args[0];
+      if (val && typeof val === 'object' && 'type' in val) {
+        const t = (val as { type: string }).type;
+        return t === 'builtin' || t === 'user' || t === 'lambda';
+      }
+      return false;
+    },
+  });
+
+  // ============= Math Utilities =============
+  builtins.set('clamp', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 3) throw new SdevError('clamp() takes 3 arguments (value, min, max)', line);
+      const [val, min, max] = args.map(a => {
+        if (typeof a !== 'number') throw new SdevError('All arguments must be numbers', line);
+        return a;
+      });
+      return Math.min(Math.max(val, min), max);
+    },
+  });
+
+  builtins.set('lerp', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 3) throw new SdevError('lerp() takes 3 arguments (start, end, t)', line);
+      const [start, end, t] = args.map(a => {
+        if (typeof a !== 'number') throw new SdevError('All arguments must be numbers', line);
+        return a;
+      });
+      return start + (end - start) * t;
+    },
+  });
+
+  builtins.set('mapRange', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 5) throw new SdevError('mapRange() takes 5 arguments (value, inMin, inMax, outMin, outMax)', line);
+      const [value, inMin, inMax, outMin, outMax] = args.map(a => {
+        if (typeof a !== 'number') throw new SdevError('All arguments must be numbers', line);
+        return a;
+      });
+      return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
+    },
+  });
+
+  builtins.set('sign', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('sign() takes 1 argument', line);
+      if (typeof args[0] !== 'number') throw new SdevError('Argument must be a number', line);
+      return Math.sign(args[0]);
+    },
+  });
+
+  builtins.set('pow', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('pow() takes 2 arguments (base, exponent)', line);
+      if (typeof args[0] !== 'number' || typeof args[1] !== 'number') {
+        throw new SdevError('Arguments must be numbers', line);
+      }
+      return Math.pow(args[0], args[1]);
+    },
+  });
+
+  // More trig
+  builtins.set('asin', { type: 'builtin', call: (args: unknown[]) => Math.asin(args[0] as number) });
+  builtins.set('acos', { type: 'builtin', call: (args: unknown[]) => Math.acos(args[0] as number) });
+  builtins.set('atan', { type: 'builtin', call: (args: unknown[]) => Math.atan(args[0] as number) });
+  builtins.set('atan2', { 
+    type: 'builtin', 
+    call: (args: unknown[]) => Math.atan2(args[0] as number, args[1] as number) 
+  });
+  builtins.set('sinh', { type: 'builtin', call: (args: unknown[]) => Math.sinh(args[0] as number) });
+  builtins.set('cosh', { type: 'builtin', call: (args: unknown[]) => Math.cosh(args[0] as number) });
+  builtins.set('tanh', { type: 'builtin', call: (args: unknown[]) => Math.tanh(args[0] as number) });
+  builtins.set('log10', { type: 'builtin', call: (args: unknown[]) => Math.log10(args[0] as number) });
+  builtins.set('log2', { type: 'builtin', call: (args: unknown[]) => Math.log2(args[0] as number) });
+
+  // Constants
+  builtins.set('E', { type: 'builtin', call: () => Math.E });
+  builtins.set('INFINITY', { type: 'builtin', call: () => Infinity });
+
+  // ============= Time =============
+  builtins.set('now', {
+    type: 'builtin',
+    call: () => Date.now(),
+  });
+
+  builtins.set('timestamp', {
+    type: 'builtin',
+    call: () => new Date().toISOString(),
+  });
+
+  // ============= Tome (Dict) Operations =============
+  builtins.set('has', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('has() takes 2 arguments (tome, key)', line);
+      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
+        throw new SdevError('First argument must be a tome', line);
+      }
+      const key = String(args[1]);
+      return key in (args[0] as Record<string, unknown>);
+    },
+  });
+
+  builtins.set('get', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2 || args.length > 3) throw new SdevError('get() takes 2-3 arguments (tome, key, default?)', line);
+      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
+        throw new SdevError('First argument must be a tome', line);
+      }
+      const key = String(args[1]);
+      const obj = args[0] as Record<string, unknown>;
+      if (key in obj) return obj[key];
+      return args.length === 3 ? args[2] : null;
+    },
+  });
+
+  builtins.set('set', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 3) throw new SdevError('set() takes 3 arguments (tome, key, value)', line);
+      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
+        throw new SdevError('First argument must be a tome', line);
+      }
+      const key = String(args[1]);
+      (args[0] as Record<string, unknown>)[key] = args[2];
+      return args[0];
+    },
+  });
+
+  builtins.set('del', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 2) throw new SdevError('del() takes 2 arguments (tome, key)', line);
+      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
+        throw new SdevError('First argument must be a tome', line);
+      }
+      const key = String(args[1]);
+      const obj = args[0] as Record<string, unknown>;
+      const existed = key in obj;
+      delete obj[key];
+      return existed;
+    },
+  });
+
+  builtins.set('merge', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length < 2) throw new SdevError('merge() takes at least 2 arguments', line);
+      const result: Record<string, unknown> = {};
+      for (const arg of args) {
+        if (!arg || typeof arg !== 'object' || Array.isArray(arg)) {
+          throw new SdevError('All arguments must be tomes', line);
+        }
+        Object.assign(result, arg);
+      }
+      return result;
+    },
+  });
+
+  builtins.set('entries', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('entries() takes 1 argument', line);
+      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
+        throw new SdevError('Argument must be a tome', line);
+      }
+      return Object.entries(args[0] as Record<string, unknown>).map(([k, v]) => [k, v]);
+    },
+  });
+
+  builtins.set('fromEntries', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('fromEntries() takes 1 argument', line);
+      if (!Array.isArray(args[0])) throw new SdevError('Argument must be a list', line);
+      const result: Record<string, unknown> = {};
+      for (const entry of args[0]) {
+        if (!Array.isArray(entry) || entry.length !== 2) {
+          throw new SdevError('Each entry must be a [key, value] pair', line);
+        }
+        result[String(entry[0])] = entry[1];
+      }
+      return result;
+    },
+  });
+
   return builtins;
 }
 
