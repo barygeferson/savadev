@@ -15,7 +15,7 @@ const REFERENCE = [
 **truth** - Booleans: \`yep\`, \`nope\`
 **void** - Null value: \`void\`
 **list** - Arrays: \`[1, 2, 3]\`
-**tome** - Dictionaries: \`:: "key": value ;;\``,
+**tome** - Dictionaries: \`{"key": "value"}\``,
   },
   {
     title: 'Variables',
@@ -92,14 +92,18 @@ forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
     title: 'Built-in Functions',
     icon: Wrench,
     content: `**Output:** \`speak()\`, \`whisper()\`, \`shout()\`
-**Type:** \`essence()\`, \`morph(value, "type")\`
-**Lists:** \`measure()\`, \`gather()\`, \`pluck()\`, \`portion()\`
-**Transform:** \`each()\`, \`sift()\`, \`fold()\`
-**Text:** \`upper()\`, \`lower()\`, \`trim()\`, \`shatter()\`, \`weave()\`
-**Math:** \`magnitude()\`, \`least()\`, \`greatest()\`, \`root()\`, \`ground()\`, \`elevate()\`, \`nearby()\`, \`chaos()\`
+**Type:** \`essence()\`, \`morph(v, "type")\`, \`isNum()\`, \`isText()\`, \`isList()\`, \`isTome()\`
+**Lists:** \`measure()\`, \`gather()\`, \`pluck()\`, \`insert()\`, \`remove()\`, \`portion()\`, \`concat()\`, \`flatten()\`
+**Transform:** \`each()\`, \`sift()\`, \`fold()\`, \`find()\`, \`all()\`, \`any()\`
+**Text:** \`upper()\`, \`lower()\`, \`trim()\`, \`shatter()\`, \`weave()\`, \`replace()\`, \`startswith()\`, \`endswith()\`
+**Math:** \`magnitude()\`, \`least()\`, \`greatest()\`, \`root()\`, \`ground()\`, \`elevate()\`, \`nearby()\`
+**Advanced Math:** \`clamp()\`, \`lerp()\`, \`mapRange()\`, \`sum()\`, \`average()\`, \`sign()\`
 **Sequence:** \`sequence(n)\`, \`sequence(start, end)\`
-**Tomes:** \`inscriptions()\`, \`contents()\`
-**Misc:** \`reverse()\`, \`contains()\``,
+**Tomes:** \`inscriptions()\`, \`contents()\`, \`entries()\`, \`has()\`, \`get()\`, \`set()\`, \`merge()\`
+**Random:** \`chaos()\`, \`randint()\`, \`pick()\`, \`shuffle()\`
+**Utility:** \`reverse()\`, \`contains()\`, \`unique()\`, \`sort()\`, \`first()\`, \`last()\`
+**Time:** \`now()\`, \`timestamp()\`
+**JSON:** \`etch()\`, \`unetch()\``,
   },
   {
     title: 'Unique Syntax',
@@ -108,7 +112,8 @@ forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
 **No semicolons** required at end of statements
 **Power operator:** \`2^10\` for exponentiation
 **yep/nope** instead of true/false
-**void** instead of null`,
+**void** instead of null
+**Constants:** \`PI\`, \`TAU\`, \`E\`, \`INFINITY\``,
   },
 ];
 
