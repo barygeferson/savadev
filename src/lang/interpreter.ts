@@ -66,6 +66,8 @@ export class Interpreter {
         return this.executeIf(node, env);
       case 'WhileStatement':
         return this.executeWhile(node, env);
+      case 'ForEachStatement':
+        return this.executeForEach(node, env);
       case 'FuncDeclaration':
         return this.executeFuncDecl(node, env);
       case 'ReturnStatement':
@@ -312,6 +314,31 @@ export class Interpreter {
       }
     }
     
+    return result;
+  }
+
+  private executeForEach(node: AST.ForEachStatement, env: Environment): unknown {
+    const iterable = this.execute(node.iterable, env);
+    
+    if (!Array.isArray(iterable) && typeof iterable !== 'string') {
+      throw new SdevError('Can only iterate through lists or strings', node.line);
+    }
+
+    let result: unknown = null;
+    const items = Array.isArray(iterable) ? iterable : iterable.split('');
+    let iterations = 0;
+    const maxIterations = 100000;
+
+    for (const item of items) {
+      const loopEnv = new Environment(env);
+      loopEnv.define(node.variable, item);
+      result = this.execute(node.body, loopEnv);
+      iterations++;
+      if (iterations > maxIterations) {
+        throw new SdevError('Maximum loop iterations exceeded', node.line);
+      }
+    }
+
     return result;
   }
 

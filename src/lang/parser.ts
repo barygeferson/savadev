@@ -23,6 +23,7 @@ export class Parser {
     if (this.check(TokenType.CONJURE)) return this.parseConjureDeclaration();
     if (this.check(TokenType.PONDER)) return this.parsePonderStatement();
     if (this.check(TokenType.CYCLE)) return this.parseCycleStatement();
+    if (this.check(TokenType.ITERATE)) return this.parseIterateStatement();
     if (this.check(TokenType.YIELD)) return this.parseYieldStatement();
     if (this.check(TokenType.DOUBLE_COLON)) return this.parseBlockStatement();
     return this.parseExpressionStatement();
@@ -79,6 +80,16 @@ export class Parser {
     const condition = this.parseExpression();
     const body = this.parseBlockStatement();
     return { type: 'WhileStatement', condition, body, line: cycleToken.line };
+  }
+
+  // iterate item through list :: body ;;
+  private parseIterateStatement(): AST.ForEachStatement {
+    const iterateToken = this.consume(TokenType.ITERATE, "Expected 'iterate'");
+    const variable = this.consume(TokenType.IDENTIFIER, "Expected variable name").value;
+    this.consume(TokenType.THROUGH, "Expected 'through'");
+    const iterable = this.parseExpression();
+    const body = this.parseBlockStatement();
+    return { type: 'ForEachStatement', variable, iterable, body, line: iterateToken.line };
   }
 
   // yield value
