@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Send, X, Bot, User, Loader2, Copy, Check, Sparkles } from 'lucide-react';
+import { MessageCircle, Send, X, Bot, User, Loader2, Copy, Check, Sparkles, FlaskConical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { execute } from '@/lang';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -37,71 +38,135 @@ export function SdevChatbot({ onInsertCode }: SdevChatbotProps) {
     }
   }, [isOpen]);
 
+  const MAX_FIX_ATTEMPTS = 3;
+
+  const fetchStream = useCallback(async (messagesToSend: Message[]): Promise<string> => {
+    const resp = await fetch(CHAT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: messagesToSend }),
+    });
+
+    if (!resp.ok) {
+      const errorData = await resp.json().catch(() => ({}));
+      throw new Error(errorData.error || `Request failed: ${resp.status}`);
+    }
+    if (!resp.body) throw new Error('No response body');
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = '';
+    let assistantContent = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') break;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
+              return updated;
+            });
+          }
+        } catch {
+          textBuffer = line + '\n' + textBuffer;
+          break;
+        }
+      }
+    }
+    return assistantContent;
+  }, []);
+
+  const testCodeBlocks = (content: string): { code: string; error: string }[] => {
+    const blocks = extractCodeBlocks(content);
+    const errors: { code: string; error: string }[] = [];
+    for (const code of blocks) {
+      const result = execute(code);
+      if (!result.success && result.error) {
+        errors.push({ code, error: result.error });
+      }
+    }
+    return errors;
+  };
+
   const streamChat = useCallback(async (userMessage: string) => {
     const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }];
     setMessages(newMessages);
     setIsLoading(true);
 
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: newMessages }),
-      });
-
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.error || `Request failed: ${resp.status}`);
-      }
-
-      if (!resp.body) throw new Error('No response body');
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-      let assistantContent = '';
-
       // Add empty assistant message
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+      let conversationHistory = [...newMessages];
+      let assistantContent = await fetchStream(conversationHistory);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Self-test loop: check generated code and auto-fix
+      let fixAttempt = 0;
+      while (fixAttempt < MAX_FIX_ATTEMPTS) {
+        const errors = testCodeBlocks(assistantContent);
+        if (errors.length === 0) break;
 
-        textBuffer += decoder.decode(value, { stream: true });
+        fixAttempt++;
+        const errorReport = errors.map((e, i) =>
+          `Error ${i + 1} in code block:\n\`\`\`\n${e.code}\n\`\`\`\nError: ${e.error}`
+        ).join('\n\n');
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
+        const fixPrompt = `Your code has errors when I try to run it. Please fix ALL errors and give me the corrected complete code.\n\n${errorReport}`;
 
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
+        // Show testing status
+        const testingNote = `\n\n> 🧪 *Testing code... found ${errors.length} error(s). Auto-fixing (attempt ${fixAttempt}/${MAX_FIX_ATTEMPTS})...*\n`;
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'assistant', content: assistantContent + testingNote };
+          return updated;
+        });
 
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
+        conversationHistory = [
+          ...conversationHistory,
+          { role: 'assistant' as const, content: assistantContent },
+          { role: 'user' as const, content: fixPrompt },
+        ];
 
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
-                return updated;
-              });
-            }
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
+        // Replace assistant message for the fix
+        assistantContent = '';
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'assistant', content: '' };
+          return updated;
+        });
+        assistantContent = await fetchStream(conversationHistory);
       }
+
+      // Final validation badge
+      const finalErrors = testCodeBlocks(assistantContent);
+      const badge = finalErrors.length === 0
+        ? '\n\n> ✅ *Code tested and verified!*'
+        : '\n\n> ⚠️ *Code may still have issues — please review manually.*';
+
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: 'assistant', content: assistantContent + badge };
+        return updated;
+      });
+
     } catch (error) {
       console.error('Chat error:', error);
       toast({
@@ -109,12 +174,11 @@ export function SdevChatbot({ onInsertCode }: SdevChatbotProps) {
         description: error instanceof Error ? error.message : 'Failed to get response',
         variant: 'destructive',
       });
-      // Remove the empty assistant message on error
       setMessages(prev => prev.filter((_, i) => i !== prev.length - 1 || prev[i].content !== ''));
     } finally {
       setIsLoading(false);
     }
-  }, [messages, toast]);
+  }, [messages, toast, fetchStream]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading) return;
