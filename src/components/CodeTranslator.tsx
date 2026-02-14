@@ -2,9 +2,10 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Upload, Wand2, Copy, Check, Zap } from 'lucide-react';
+import { Loader2, Upload, Wand2, Copy, Check, Zap, FlaskConical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { execute } from '@/lang';
 
 const LANGUAGES = [
   { value: 'html-css-js', label: 'HTML/CSS/JS Website', extensions: ['.html', '.htm'] },
@@ -37,7 +38,10 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
   const [isTranslating, setIsTranslating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [inputMethod, setInputMethod] = useState<'paste' | 'upload'>('paste');
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'passed' | 'failed'>('idle');
   const { toast } = useToast();
+
+  const MAX_FIX_ATTEMPTS = 3;
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +64,25 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
     reader.readAsText(file);
   }, []);
 
+  const translateOnce = useCallback(async (code: string, lang: string): Promise<string> => {
+    const { data, error } = await supabase.functions.invoke('translate-code', {
+      body: { code, sourceLanguage: lang },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data?.translatedCode || '';
+  }, []);
+
+  const fixCode = useCallback(async (brokenCode: string, errorMsg: string): Promise<string> => {
+    const fixPrompt = `This sdev code has an error. Fix it and return ONLY the corrected sdev code with no markdown fences:\n\nCode:\n${brokenCode}\n\nError: ${errorMsg}`;
+    const { data, error } = await supabase.functions.invoke('translate-code', {
+      body: { code: fixPrompt, sourceLanguage: 'sdev-fix' },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data?.translatedCode || '';
+  }, []);
+
   const handleTranslate = useCallback(async () => {
     if (!inputCode.trim()) {
       toast({
@@ -72,28 +95,55 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
 
     setIsTranslating(true);
     setOutputCode('');
+    setTestStatus('idle');
 
     try {
-      const { data, error } = await supabase.functions.invoke('translate-code', {
-        body: { code: inputCode, sourceLanguage },
-      });
+      let translated = await translateOnce(inputCode, sourceLanguage);
+      setOutputCode(translated);
 
-      if (error) throw error;
+      // Self-test loop
+      for (let attempt = 0; attempt < MAX_FIX_ATTEMPTS; attempt++) {
+        setTestStatus('testing');
+        const result = execute(translated);
+        
+        if (result.success) {
+          setTestStatus('passed');
+          toast({
+            title: "✅ Translation complete & verified!",
+            description: "Code was tested and runs without errors.",
+          });
+          onTranslated?.(translated);
+          return;
+        }
 
-      if (data?.error) {
-        throw new Error(data.error);
+        // Error found — try to fix
+        if (attempt < MAX_FIX_ATTEMPTS - 1) {
+          toast({
+            title: `🧪 Test failed (attempt ${attempt + 1}/${MAX_FIX_ATTEMPTS})`,
+            description: `Fixing: ${result.error}`,
+          });
+          translated = await fixCode(translated, result.error || 'Unknown error');
+          setOutputCode(translated);
+        }
       }
 
-      const translated = data?.translatedCode || '';
-      setOutputCode(translated);
+      // Final check after all attempts
+      const finalResult = execute(translated);
+      if (finalResult.success) {
+        setTestStatus('passed');
+        toast({ title: "✅ Translation complete & verified!" });
+      } else {
+        setTestStatus('failed');
+        toast({
+          title: "⚠️ Translation complete with warnings",
+          description: "Code may still have issues. Please review manually.",
+          variant: "destructive",
+        });
+      }
       onTranslated?.(translated);
-
-      toast({
-        title: "Translation complete!",
-        description: "Your code has been translated to sdev.",
-      });
     } catch (error) {
       console.error('Translation error:', error);
+      setTestStatus('idle');
       toast({
         title: "Translation failed",
         description: error instanceof Error ? error.message : "An error occurred",
@@ -102,7 +152,7 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
     } finally {
       setIsTranslating(false);
     }
-  }, [inputCode, sourceLanguage, onTranslated, toast]);
+  }, [inputCode, sourceLanguage, onTranslated, toast, translateOnce, fixCode]);
 
   const handleCopy = useCallback(() => {
     if (outputCode) {
@@ -211,7 +261,24 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
         {outputCode && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-primary">{'>'} output.sdev</span>
+              <span className="text-xs font-mono text-primary flex items-center gap-2">
+                {'>'} output.sdev
+                {testStatus === 'passed' && (
+                  <span className="flex items-center gap-1 text-neon-green">
+                    <FlaskConical className="w-3 h-3" /> Verified
+                  </span>
+                )}
+                {testStatus === 'failed' && (
+                  <span className="flex items-center gap-1 text-destructive">
+                    <FlaskConical className="w-3 h-3" /> Review needed
+                  </span>
+                )}
+                {testStatus === 'testing' && (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Testing...
+                  </span>
+                )}
+              </span>
               <div className="flex gap-2">
                 <Button
                   variant="ghost"

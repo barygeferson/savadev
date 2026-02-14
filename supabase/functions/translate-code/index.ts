@@ -317,8 +317,20 @@ serve(async (req) => {
     }
 
     const isWebCode = sourceLanguage === 'html' || sourceLanguage === 'html-css-js';
+    const isFix = sourceLanguage === 'sdev-fix';
 
-    const systemPrompt = `You are an expert code translator specializing in SDEV, a unique programming language with its own canvas-based graphics system. Your ONLY task is to convert source code into valid, working SDEV code.
+    const systemPrompt = isFix 
+      ? `You are an SDEV code fixer. You receive broken sdev code with its error message. Fix the code and return ONLY the corrected sdev code. No explanations, no markdown fences.
+
+${SDEV_SYNTAX_GUIDE}
+
+ABSOLUTE RULES:
+- Return ONLY valid SDEV code
+- NO markdown code blocks
+- Fix the specific error mentioned
+- Ensure ALL sdev syntax rules are followed
+- The output MUST be immediately runnable`
+      : `You are an expert code translator specializing in SDEV, a unique programming language with its own canvas-based graphics system. Your ONLY task is to convert source code into valid, working SDEV code.
 
 ${SDEV_SYNTAX_GUIDE}
 
@@ -365,7 +377,9 @@ OUTPUT FORMAT:
 - The output MUST be immediately runnable in the SDEV interpreter
 - DOUBLE CHECK every line uses sdev syntax, not the source language`;
 
-    const userPrompt = isWebCode
+    const userPrompt = isFix
+      ? code
+      : isWebCode
       ? `Translate this complete HTML webpage (with embedded CSS and JavaScript) into an SDEV canvas-based visual program that recreates the look of the page. Convert all visual elements, colors, layout, text, and any JS logic.
 
 \`\`\`html
