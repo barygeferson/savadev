@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const LANGUAGES = [
+  { value: 'html-css-js', label: 'HTML/CSS/JS Website', extensions: ['.html', '.htm'] },
   { value: 'python', label: 'Python', extensions: ['.py'] },
   { value: 'javascript', label: 'JavaScript', extensions: ['.js', '.mjs'] },
   { value: 'typescript', label: 'TypeScript', extensions: ['.ts', '.tsx'] },
@@ -21,6 +22,8 @@ const LANGUAGES = [
   { value: 'swift', label: 'Swift', extensions: ['.swift'] },
   { value: 'kotlin', label: 'Kotlin', extensions: ['.kt', '.kts'] },
   { value: 'lua', label: 'Lua', extensions: ['.lua'] },
+  { value: 'html', label: 'HTML (markup only)', extensions: [] },
+  { value: 'css', label: 'CSS (standalone)', extensions: ['.css'] },
 ];
 
 interface CodeTranslatorProps {
@@ -158,7 +161,7 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
             <textarea
               value={inputCode}
               onChange={(e) => setInputCode(e.target.value)}
-              placeholder={`// Paste your ${LANGUAGES.find(l => l.value === sourceLanguage)?.label || ''} code here...`}
+              placeholder={sourceLanguage === 'html-css-js' ? '<!-- Paste your full HTML file here (with <style> and <script> tags) -->' : `// Paste your ${LANGUAGES.find(l => l.value === sourceLanguage)?.label || ''} code here...`}
               className="w-full h-36 p-3 font-mono text-sm bg-background/50 border border-border/50 rounded-lg resize-none focus:outline-none focus:border-primary/50 focus:shadow-neon-cyan text-foreground placeholder:text-muted-foreground transition-all"
               spellCheck={false}
             />
@@ -169,7 +172,7 @@ export function CodeTranslator({ onTranslated }: CodeTranslatorProps) {
               <Upload className="w-8 h-8 text-muted-foreground mb-2 group-hover:text-primary transition-colors" />
               <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Click to upload</span>
               <span className="text-xs text-muted-foreground/50 mt-1 font-mono">
-                .py .js .ts .java .go .rs ...
+                .html .py .js .ts .java .go .rs ...
               </span>
               <input
                 type="file"
