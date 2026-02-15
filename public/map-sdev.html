@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Историята около мен</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="sdev-interpreter.js"></script>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; }
+        #map { position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="map.js"></script>
+    <script>
+        try {
+            const interpreter = new SdevInterpreter();
+            const result = interpreter.run(`
+// Create map - note: createMap adds a default OSM tile layer
+forge myMap be createMap("map", 42.389370, 25.187702, 10)
+
+// We need js interop for: geocoder, custom base maps, custom icon markers on layer groups, and geolocation watch
+// Because sdev's addMarkerIcon only adds to map (not layer groups) and createMap already adds a default tile
+
+js {
+    // Get the actual Leaflet map object
+    var map = myMap._map;
+
+    // Add geocoder
+    new L.Control.Geocoder().addTo(map);
+
+    // Remove the default tile layer that createMap added
+    map.eachLayer(function(layer) {
+        if (layer instanceof L.TileLayer) {
+            map.removeLayer(layer);
+        }
+    });
+
+    // Create base map layers
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '\u00a9 OpenStreetMap'
+    }).addTo(map);
+
+    var satellite = L.tileLayer('https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=kRvg4tmeEPMhNYCMpHCf', {
+        maxZoom: 19,
+        attribution: '\u00a9 OpenStreetMap contributors'
+    });
+
+    // Define custom icons
+    var icons = {
+        historical: L.icon({
+            iconUrl: 'https://cdn-icons-png.freepik.com/256/7879/7879701.png?semt=ais_white_label',
+            iconSize: [46, 46]
+        }),
+        church: L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/291/291924.png',
+            iconSize: [45, 45]
+        }),
+        park: L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/5385/5385915.png',
+            iconSize: [45, 45]
+        })
+    };
+
+    // Create layer groups
+    var historicalGroup = L.layerGroup();
+    var churchGroup = L.layerGroup();
+    var parkGroup = L.layerGroup();
+
+    // Load data from map.js
+    if (typeof data !== 'undefined') {
+        for (var key in data) {
+            var place = data[key];
+            var marker = L.marker(place.coords, {
+                icon: icons[place.category]
+            }).bindPopup(
+                '<b>' + place.popupText + '</b><br><span>' + (place.info || '') + '</span>'
+            );
+
+            if (place.category === 'historical') historicalGroup.addLayer(marker);
+            if (place.category === 'church') churchGroup.addLayer(marker);
+            if (place.category === 'park') parkGroup.addLayer(marker);
+        }
+    }
+
+    // Base maps and overlay maps for layer control
+    var baseMaps = {
+        "Normal MAP": osm,
+        "Satelite MAP": satellite
+    };
+
+    var overlayMaps = {};
+    overlayMaps["\u0418\u0441\u0442\u043e\u0440\u0438\u0447\u0435\u0441\u043a\u0438 \u0437\u0430\u0431\u0435\u043b\u0435\u0436\u0438\u0442\u0435\u043b\u043d\u043e\u0441\u0442\u0438"] = historicalGroup;
+    overlayMaps["\u0426\u044a\u0440\u043a\u0432\u0438"] = churchGroup;
+    overlayMaps["\u041f\u0430\u0440\u043a\u043e\u0432\u0435"] = parkGroup;
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    historicalGroup.addTo(map);
+    churchGroup.addTo(map);
+    parkGroup.addTo(map);
+
+    // Geolocation
+    var geoMarker, geoCircle, zoomed;
+
+    navigator.geolocation.watchPosition(
+        function(pos) {
+            var lat = pos.coords.latitude;
+            var lng = pos.coords.longitude;
+            var accuracy = pos.coords.accuracy;
+
+            if (geoMarker) {
+                map.removeLayer(geoMarker);
+                map.removeLayer(geoCircle);
+            }
+
+            geoMarker = L.marker([lat, lng]).addTo(map);
+            geoCircle = L.circle([lat, lng], { radius: 800 }).addTo(map);
+
+            if (!zoomed) {
+                zoomed = map.fitBounds(geoCircle.getBounds());
+            }
+
+            map.setView([lat, lng]);
+        },
+        function(err) {
+            if (err.code === 1) {
+                alert("\u041c\u043e\u043b\u044f, \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u0442\u0435 \u0434\u043e\u0441\u0442\u044a\u043f \u0434\u043e \u043c\u0435\u0441\u0442\u043e\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435\u0442\u043e \u0441\u0438.");
+            } else {
+                alert("\u0413\u0440\u0435\u0448\u043a\u0430 \u043f\u0440\u0438 \u043f\u043e\u043b\u0443\u0447\u0430\u0432\u0430\u043d\u0435 \u043d\u0430 \u043c\u0435\u0441\u0442\u043e\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435\u0442\u043e.");
+            }
+        }
+    );
+}
+`);
+        } catch(e) {
+            console.error('sdev error:', e);
+        }
+    </script>
+</body>
+</html>
