@@ -179,11 +179,22 @@ const Index = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Translator Panel */}
+          {/* Translator Panel */}
             {showTranslator && (
               <div className="gradient-border">
                 <CodeTranslator onTranslated={handleTranslatedCode} />
               </div>
+            )}
+
+            {/* Compiler Panel */}
+            {showCompiler && (
+              <CompilerPanel
+                code={code}
+                onOutput={(lines, err) => {
+                  setOutput(lines);
+                  setError(err);
+                }}
+              />
             )}
 
             {/* Quick Reference Toggle */}
