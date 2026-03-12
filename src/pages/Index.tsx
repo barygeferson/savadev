@@ -126,6 +126,14 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <DownloadablesDropdown code={code} />
             <Button 
+              onClick={() => setShowCompiler(!showCompiler)} 
+              variant={showCompiler ? "secondary" : "outline"}
+              className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
+            >
+              <Cpu className="w-4 h-4" />
+              <span className="hidden sm:inline">Compiler</span>
+            </Button>
+            <Button 
               onClick={() => setShowTranslator(!showTranslator)} 
               variant={showTranslator ? "secondary" : "outline"}
               className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
