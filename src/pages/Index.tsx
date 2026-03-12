@@ -35,6 +35,7 @@ const Index = () => {
   const [showCanvas, setShowCanvas] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [showReference, setShowReference] = useState(false);
+  const [showCompiler, setShowCompiler] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
 
   const runCode = useCallback(() => {
