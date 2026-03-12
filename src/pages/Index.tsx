@@ -7,8 +7,9 @@ import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
 import { DownloadablesDropdown } from '@/components/DownloadablesDropdown';
 import { CodeTranslator } from '@/components/CodeTranslator';
 import { SdevChatbot } from '@/components/SdevChatbot';
+import { CompilerPanel } from '@/components/CompilerPanel';
 import { Button } from '@/components/ui/button';
-import { Play, Zap, Wand2, Terminal, ChevronDown } from 'lucide-react';
+import { Play, Zap, Wand2, Terminal, ChevronDown, Cpu } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
@@ -34,6 +35,7 @@ const Index = () => {
   const [showCanvas, setShowCanvas] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [showReference, setShowReference] = useState(false);
+  const [showCompiler, setShowCompiler] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
 
   const runCode = useCallback(() => {
@@ -124,6 +126,14 @@ const Index = () => {
           <div className="flex items-center gap-3">
             <DownloadablesDropdown code={code} />
             <Button 
+              onClick={() => setShowCompiler(!showCompiler)} 
+              variant={showCompiler ? "secondary" : "outline"}
+              className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
+            >
+              <Cpu className="w-4 h-4" />
+              <span className="hidden sm:inline">Compiler</span>
+            </Button>
+            <Button 
               onClick={() => setShowTranslator(!showTranslator)} 
               variant={showTranslator ? "secondary" : "outline"}
               className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
@@ -169,11 +179,22 @@ const Index = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Translator Panel */}
+          {/* Translator Panel */}
             {showTranslator && (
               <div className="gradient-border">
                 <CodeTranslator onTranslated={handleTranslatedCode} />
               </div>
+            )}
+
+            {/* Compiler Panel */}
+            {showCompiler && (
+              <CompilerPanel
+                code={code}
+                onOutput={(lines, err) => {
+                  setOutput(lines);
+                  setError(err);
+                }}
+              />
             )}
 
             {/* Quick Reference Toggle */}
