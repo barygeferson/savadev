@@ -29,6 +29,7 @@ speak(message)
 `;
 
 const Index = () => {
+  const navigate = useNavigate();
   const [code, setCode] = useState(DEFAULT_CODE);
   const [output, setOutput] = useState<string[]>([]);
   const [error, setError] = useState<string>();
