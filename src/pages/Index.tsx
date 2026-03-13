@@ -127,6 +127,14 @@ const Index = () => {
           {/* Actions */}
           <div className="flex items-center gap-3">
             <DownloadablesDropdown code={code} />
+            <Button
+              onClick={() => navigate('/ide')}
+              variant="outline"
+              className="gap-2 border-border/50 hover:border-neon-green/50 hover:shadow-[0_0_15px_rgba(0,255,136,0.2)] transition-all"
+            >
+              <MonitorDot className="w-4 h-4 text-neon-green" />
+              <span className="hidden sm:inline">Open IDE</span>
+            </Button>
             <Button 
               onClick={() => setShowCompiler(!showCompiler)} 
               variant={showCompiler ? "secondary" : "outline"}
