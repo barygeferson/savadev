@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CodeEditor } from '@/components/CodeEditor';
 import { OutputPanel } from '@/components/OutputPanel';
 import { ExampleCode } from '@/components/ExampleCode';
@@ -9,7 +10,7 @@ import { CodeTranslator } from '@/components/CodeTranslator';
 import { SdevChatbot } from '@/components/SdevChatbot';
 import { CompilerPanel } from '@/components/CompilerPanel';
 import { Button } from '@/components/ui/button';
-import { Play, Zap, Wand2, Terminal, ChevronDown, Cpu } from 'lucide-react';
+import { Play, Zap, Wand2, Terminal, ChevronDown, Cpu, MonitorDot } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
