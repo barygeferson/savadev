@@ -1203,21 +1203,7 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
-  // erase(tome, key) - delete key from dict
-  builtins.set('erase', {
-    type: 'builtin',
-    call: (args: unknown[], line: number) => {
-      if (args.length !== 2) throw new SdevError('erase() takes 2 arguments (tome, key)', line);
-      if (!args[0] || typeof args[0] !== 'object' || Array.isArray(args[0])) {
-        throw new SdevError('First argument must be a tome', line);
-      }
-      const key = String(args[1]);
-      const obj = args[0] as Record<string, unknown>;
-      const existed = key in obj;
-      delete obj[key];
-      return existed;
-    },
-  });
+  // erase is handled by advanced.ts (supports both tome and file FS)
 
   // difference(a, b) - set difference
   builtins.set('difference', {
