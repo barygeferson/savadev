@@ -6,9 +6,11 @@ export type ASTNode =
   | Identifier
   | BinaryExpr
   | UnaryExpr
+  | TernaryExpr
   | CallExpr
   | IndexExpr
   | MemberExpr
+  | MemberAssignStatement
   | ArrayLiteral
   | DictLiteral
   | LambdaExpr
@@ -18,8 +20,14 @@ export type ASTNode =
   | IfStatement
   | WhileStatement
   | ForEachStatement
+  | ForInStatement
   | FuncDeclaration
   | ReturnStatement
+  | BreakStatement
+  | ContinueStatement
+  | TryStatement
+  | ClassDeclaration
+  | NewExpr
   | BlockStatement
   | ExpressionStatement
   | Program;
@@ -68,6 +76,14 @@ export interface UnaryExpr {
   line: number;
 }
 
+export interface TernaryExpr {
+  type: 'TernaryExpr';
+  condition: ASTNode;
+  thenExpr: ASTNode;
+  elseExpr: ASTNode;
+  line: number;
+}
+
 export interface CallExpr {
   type: 'CallExpr';
   callee: ASTNode;
@@ -86,6 +102,14 @@ export interface MemberExpr {
   type: 'MemberExpr';
   object: ASTNode;
   property: string;
+  line: number;
+}
+
+export interface MemberAssignStatement {
+  type: 'MemberAssignStatement';
+  object: ASTNode;
+  property: string;
+  value: ASTNode;
   line: number;
 }
 
@@ -153,6 +177,14 @@ export interface ForEachStatement {
   line: number;
 }
 
+export interface ForInStatement {
+  type: 'ForInStatement';
+  variable: string;
+  iterable: ASTNode;
+  body: BlockStatement;
+  line: number;
+}
+
 export interface FuncDeclaration {
   type: 'FuncDeclaration';
   name: string;
@@ -164,6 +196,39 @@ export interface FuncDeclaration {
 export interface ReturnStatement {
   type: 'ReturnStatement';
   value?: ASTNode;
+  line: number;
+}
+
+export interface BreakStatement {
+  type: 'BreakStatement';
+  line: number;
+}
+
+export interface ContinueStatement {
+  type: 'ContinueStatement';
+  line: number;
+}
+
+export interface TryStatement {
+  type: 'TryStatement';
+  tryBlock: BlockStatement;
+  errorVar: string;
+  catchBlock: BlockStatement;
+  line: number;
+}
+
+export interface ClassDeclaration {
+  type: 'ClassDeclaration';
+  name: string;
+  superClass?: string;
+  methods: FuncDeclaration[];
+  line: number;
+}
+
+export interface NewExpr {
+  type: 'NewExpr';
+  className: ASTNode;
+  args: ASTNode[];
   line: number;
 }
 

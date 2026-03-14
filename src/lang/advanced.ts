@@ -55,13 +55,26 @@ export function createAdvancedBuiltins(
     },
   });
 
+  // erase: handles both tome key deletion and virtual file deletion
   builtins.set('erase', {
     type: 'builtin',
     call: (args: unknown[], line: number) => {
-      if (args.length !== 1) throw new SdevError('erase() takes 1 argument (path)', line);
-      const path = args[0] as string;
-      const existed = virtualFS.delete(path);
-      return existed;
+      if (args.length === 2) {
+        // erase(tome, key) - delete key from dict
+        if (args[0] && typeof args[0] === 'object' && !Array.isArray(args[0])) {
+          const key = String(args[1]);
+          const obj = args[0] as Record<string, unknown>;
+          const existed = key in obj;
+          delete obj[key];
+          return existed;
+        }
+      }
+      if (args.length === 1 && typeof args[0] === 'string') {
+        // erase(path) - delete virtual file
+        const existed = virtualFS.delete(args[0]);
+        return existed;
+      }
+      throw new SdevError('erase() takes 1 argument (path) or 2 arguments (tome, key)', line);
     },
   });
 

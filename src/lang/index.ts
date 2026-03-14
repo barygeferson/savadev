@@ -27,6 +27,9 @@ export function execute(source: string): ExecutionResult {
     if (e instanceof SdevError) {
       return { success: false, output, error: e.message };
     }
+    if (e instanceof Error) {
+      return { success: false, output, error: e.message };
+    }
     return { success: false, output, error: String(e) };
   }
 }
@@ -37,3 +40,4 @@ export { Interpreter } from './interpreter';
 export { SdevError } from './errors';
 export * from './tokens';
 export * from './ast';
+

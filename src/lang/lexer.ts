@@ -82,9 +82,8 @@ export class Lexer {
       if (this.peek() === ';') {
         this.advance();
         this.addToken(TokenType.DOUBLE_SEMI, ';;', startColumn);
-      } else {
-        // Single semicolon is just ignored (optional statement terminator)
       }
+      // Single semicolon is just ignored (optional statement terminator)
       return;
     }
 
@@ -97,6 +96,14 @@ export class Lexer {
         return;
       }
       this.addToken(TokenType.SLASH, char, startColumn);
+      return;
+    }
+
+    if (char === '#') {
+      // Python-style comment - skip to end of line
+      while (!this.isAtEnd() && this.peek() !== '\n') {
+        this.advance();
+      }
       return;
     }
 
@@ -185,8 +192,20 @@ export class Lexer {
     while (this.isDigit(this.peek())) {
       value += this.advance();
     }
+    // Handle decimal point
     if (this.peek() === '.' && this.isDigit(this.peekNext())) {
       value += this.advance(); // the dot
+      while (this.isDigit(this.peek())) {
+        value += this.advance();
+      }
+    }
+    // Handle scientific notation (e.g. 1.5e10)
+    if ((this.peek() === 'e' || this.peek() === 'E') && 
+        (this.isDigit(this.peekNext()) || this.peekNext() === '+' || this.peekNext() === '-')) {
+      value += this.advance(); // e
+      if (this.peek() === '+' || this.peek() === '-') {
+        value += this.advance();
+      }
       while (this.isDigit(this.peek())) {
         value += this.advance();
       }
