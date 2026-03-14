@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 /* Dark Futuristic / Cyberpunk Design System */
-
+#lovable-badge { display: none !important; }
 @layer base {
   :root {
     /* Deep space dark backgrounds */
