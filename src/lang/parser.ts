@@ -24,7 +24,12 @@ export class Parser {
     if (this.check(TokenType.PONDER)) return this.parsePonderStatement();
     if (this.check(TokenType.CYCLE)) return this.parseCycleStatement();
     if (this.check(TokenType.ITERATE)) return this.parseIterateStatement();
+    if (this.check(TokenType.WITHIN)) return this.parseWithinStatement();
     if (this.check(TokenType.YIELD)) return this.parseYieldStatement();
+    if (this.check(TokenType.YEET)) return this.parseYeetStatement();
+    if (this.check(TokenType.SKIP)) return this.parseSkipStatement();
+    if (this.check(TokenType.ATTEMPT)) return this.parseAttemptStatement();
+    if (this.check(TokenType.ESSENCE)) return this.parseEssenceDeclaration();
     if (this.check(TokenType.DOUBLE_COLON)) return this.parseBlockStatement();
     return this.parseExpressionStatement();
   }
@@ -47,13 +52,43 @@ export class Parser {
     const params: string[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        params.push(this.consume(TokenType.IDENTIFIER, "Expected parameter name").value);
+        // allow 'self' as parameter
+        if (this.check(TokenType.SELF)) {
+          this.advance();
+          params.push('self');
+        } else {
+          params.push(this.consume(TokenType.IDENTIFIER, "Expected parameter name").value);
+        }
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expected ')'");
     
     const body = this.parseBlockStatement();
     return { type: 'FuncDeclaration', name, params, body, line: conjureToken.line };
+  }
+
+  // essence ClassName (extend Parent)? :: methods ;;
+  private parseEssenceDeclaration(): AST.ClassDeclaration {
+    const essenceToken = this.consume(TokenType.ESSENCE, "Expected 'essence'");
+    const name = this.consume(TokenType.IDENTIFIER, "Expected class name").value;
+    
+    let superClass: string | undefined;
+    if (this.match(TokenType.EXTEND)) {
+      superClass = this.consume(TokenType.IDENTIFIER, "Expected superclass name").value;
+    }
+
+    this.consume(TokenType.DOUBLE_COLON, "Expected '::'");
+    const methods: AST.FuncDeclaration[] = [];
+    while (!this.check(TokenType.DOUBLE_SEMI) && !this.isAtEnd()) {
+      if (this.check(TokenType.CONJURE)) {
+        methods.push(this.parseConjureDeclaration());
+      } else {
+        // Skip unknown tokens inside class body
+        this.advance();
+      }
+    }
+    this.consume(TokenType.DOUBLE_SEMI, "Expected ';;'");
+    return { type: 'ClassDeclaration', name, superClass, methods, line: essenceToken.line };
   }
 
   // ponder condition :: body ;; otherwise :: body ;;
@@ -92,18 +127,49 @@ export class Parser {
     return { type: 'ForEachStatement', variable, iterable, body, line: iterateToken.line };
   }
 
+  // within item be iterable :: body ;;
+  private parseWithinStatement(): AST.ForInStatement {
+    const withinToken = this.consume(TokenType.WITHIN, "Expected 'within'");
+    const variable = this.consume(TokenType.IDENTIFIER, "Expected variable name").value;
+    this.consume(TokenType.BE, "Expected 'be'");
+    const iterable = this.parseExpression();
+    const body = this.parseBlockStatement();
+    return { type: 'ForInStatement', variable, iterable, body, line: withinToken.line };
+  }
+
   // yield value
   private parseYieldStatement(): AST.ReturnStatement {
     const yieldToken = this.consume(TokenType.YIELD, "Expected 'yield'");
     let value: AST.ASTNode | undefined;
     if (!this.check(TokenType.DOUBLE_SEMI) && !this.isAtEnd()) {
-      // Check if next token starts an expression
       if (!this.check(TokenType.FORGE) && !this.check(TokenType.CONJURE) && 
           !this.check(TokenType.PONDER) && !this.check(TokenType.CYCLE)) {
         value = this.parseExpression();
       }
     }
     return { type: 'ReturnStatement', value, line: yieldToken.line };
+  }
+
+  // yeet (break)
+  private parseYeetStatement(): AST.BreakStatement {
+    const t = this.consume(TokenType.YEET, "Expected 'yeet'");
+    return { type: 'BreakStatement', line: t.line };
+  }
+
+  // skip (continue)
+  private parseSkipStatement(): AST.ContinueStatement {
+    const t = this.consume(TokenType.SKIP, "Expected 'skip'");
+    return { type: 'ContinueStatement', line: t.line };
+  }
+
+  // attempt :: body ;; rescue err :: body ;;
+  private parseAttemptStatement(): AST.TryStatement {
+    const attemptToken = this.consume(TokenType.ATTEMPT, "Expected 'attempt'");
+    const tryBlock = this.parseBlockStatement();
+    this.consume(TokenType.RESCUE, "Expected 'rescue' after attempt block");
+    const errorVar = this.consume(TokenType.IDENTIFIER, "Expected error variable name").value;
+    const catchBlock = this.parseBlockStatement();
+    return { type: 'TryStatement', tryBlock, errorVar, catchBlock, line: attemptToken.line };
   }
 
   // :: statements ;;
@@ -117,7 +183,7 @@ export class Parser {
     return { type: 'BlockStatement', statements, line: colonToken.line };
   }
 
-  private parseExpressionStatement(): AST.ExpressionStatement | AST.AssignStatement | AST.IndexAssignStatement {
+  private parseExpressionStatement(): AST.ExpressionStatement | AST.AssignStatement | AST.IndexAssignStatement | AST.MemberAssignStatement {
     const expr = this.parseExpression();
     
     // Check for assignment with 'be'
@@ -130,6 +196,9 @@ export class Parser {
       if (expr.type === 'IndexExpr') {
         return { type: 'IndexAssignStatement', object: expr.object, index: expr.index, value, line: expr.line };
       }
+      if (expr.type === 'MemberExpr') {
+        return { type: 'MemberAssignStatement', object: expr.object, property: expr.property, value, line: expr.line };
+      }
       throw new SdevError('Invalid assignment target', expr.line);
     }
     
@@ -137,7 +206,19 @@ export class Parser {
   }
 
   private parseExpression(): AST.ASTNode {
-    return this.parsePipe();
+    return this.parseTernary();
+  }
+
+  // Ternary: condition ~ thenExpr : elseExpr
+  private parseTernary(): AST.ASTNode {
+    let left = this.parsePipe();
+    if (this.match(TokenType.TILDE)) {
+      const thenExpr = this.parsePipe();
+      this.consume(TokenType.COLON, "Expected ':' in ternary expression");
+      const elseExpr = this.parsePipe();
+      return { type: 'TernaryExpr', condition: left, thenExpr, elseExpr, line: left.line };
+    }
+    return left;
   }
 
   // Pipe operator |>
@@ -146,13 +227,10 @@ export class Parser {
     
     while (this.match(TokenType.PIPE)) {
       const right = this.parseOr();
-      // Transform a |> b into b(a)
       if (right.type === 'CallExpr') {
-        // Insert left as first argument
         right.args.unshift(left);
         left = right;
       } else if (right.type === 'Identifier') {
-        // Transform into call
         left = { type: 'CallExpr', callee: right, args: [left], line: left.line };
       } else {
         throw new SdevError('Pipe target must be a function or call', right.line);
@@ -231,7 +309,7 @@ export class Parser {
 
   private parseUnary(): AST.ASTNode {
     if (this.match(TokenType.MINUS, TokenType.ISNT)) {
-      const operator = this.previous().value;
+      const operator = this.previous().value === 'isnt' ? 'isnt' : '-';
       const operand = this.parseUnary();
       return { type: 'UnaryExpr', operator, operand, line: this.previous().line };
     }
@@ -252,7 +330,7 @@ export class Parser {
         const property = this.consume(TokenType.IDENTIFIER, "Expected property name").value;
         expr = { type: 'MemberExpr', object: expr, property, line: expr.line };
       } else if (this.match(TokenType.ARROW)) {
-        // Lambda: x -> expr becomes a lambda
+        // Lambda: x -> expr
         if (expr.type === 'Identifier') {
           const body = this.parseExpression();
           expr = { type: 'LambdaExpr', params: [expr.name], body, line: expr.line } as AST.LambdaExpr;
@@ -301,8 +379,26 @@ export class Parser {
       return { type: 'NullLiteral', line: token.line };
     }
 
+    // 'self' and 'super' as identifiers
+    if (this.match(TokenType.SELF)) {
+      return { type: 'Identifier', name: 'self', line: token.line };
+    }
+
+    if (this.match(TokenType.SUPER)) {
+      return { type: 'Identifier', name: 'super', line: token.line };
+    }
+
     if (this.match(TokenType.IDENTIFIER)) {
       return { type: 'Identifier', name: token.value, line: token.line };
+    }
+
+    // new ClassName(args)
+    if (this.match(TokenType.NEW)) {
+      const classExpr = this.parseCall();
+      if (classExpr.type === 'CallExpr') {
+        return { type: 'NewExpr', className: classExpr.callee, args: classExpr.args, line: token.line };
+      }
+      return { type: 'NewExpr', className: classExpr, args: [], line: token.line };
     }
 
     if (this.match(TokenType.LPAREN)) {
@@ -326,7 +422,13 @@ export class Parser {
         if (!isLambdaParams) {
           throw new SdevError('Invalid lambda parameters', token.line);
         }
-        const body = this.parseExpression();
+        // Lambda body may be a block or expression
+        let body: AST.ASTNode;
+        if (this.check(TokenType.DOUBLE_COLON)) {
+          body = this.parseBlockStatement();
+        } else {
+          body = this.parseExpression();
+        }
         return { type: 'LambdaExpr', params: names, body, line: token.line } as AST.LambdaExpr;
       }
       
@@ -340,7 +442,6 @@ export class Parser {
     }
 
     if (this.match(TokenType.DOUBLE_COLON)) {
-      // Inline dict with :: key: value, key: value ;;
       return this.parseDictLiteral(token.line);
     }
 
@@ -362,6 +463,7 @@ export class Parser {
     const entries: { key: AST.ASTNode; value: AST.ASTNode }[] = [];
     if (!this.check(TokenType.DOUBLE_SEMI)) {
       do {
+        if (this.check(TokenType.DOUBLE_SEMI)) break;
         const key = this.parseExpression();
         this.consume(TokenType.COLON, "Expected ':'");
         const value = this.parseExpression();
