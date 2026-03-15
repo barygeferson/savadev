@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileCode, FolderOpen, Plus, Trash2, Edit3, Check, X } from 'lucide-react';
+import { FileCode, FolderOpen, Plus, Trash2, Edit3, Check, X, Upload } from 'lucide-react';
 import type { IdeFile } from './types';
 
 interface Props {
@@ -9,9 +9,10 @@ interface Props {
   onNew: () => void;
   onDelete: (id: string) => void;
   onRename: (id: string, name: string) => void;
+  onUpload?: () => void;
 }
 
-export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRename }: Props) {
+export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRename, onUpload }: Props) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameVal, setRenameVal] = useState('');
 
@@ -33,13 +34,16 @@ export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRena
           <FolderOpen className="w-3.5 h-3.5 text-neon-cyan" />
           <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Explorer</span>
         </div>
-        <button
-          onClick={onNew}
-          className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-neon-cyan transition-colors"
-          title="New file"
-        >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onUpload && (
+            <button onClick={onUpload} className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-neon-cyan transition-colors" title="Open file">
+              <Upload className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button onClick={onNew} className="p-1 rounded hover:bg-muted/50 text-muted-foreground hover:text-neon-cyan transition-colors" title="New file">
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Project folder */}
@@ -47,6 +51,7 @@ export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRena
         <div className="flex items-center gap-1.5 px-1.5 py-1">
           <FolderOpen className="w-3.5 h-3.5 text-neon-orange" />
           <span className="text-xs font-mono text-muted-foreground">sdev-project</span>
+          <span className="ml-auto text-[10px] text-muted-foreground/40">{files.length}</span>
         </div>
       </div>
 
@@ -87,6 +92,9 @@ export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRena
             ) : (
               <>
                 <span className="flex-1 truncate">{file.name}</span>
+                {(file as IdeFile & { modified?: boolean }).modified && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-neon-orange flex-shrink-0" title="Unsaved changes" />
+                )}
                 <div className="hidden group-hover:flex items-center gap-1">
                   <button
                     onClick={e => { e.stopPropagation(); startRename(file); }}
@@ -109,6 +117,11 @@ export function IdeFileTree({ files, activeId, onSelect, onNew, onDelete, onRena
             )}
           </div>
         ))}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-border/20 px-3 py-1.5 flex items-center gap-2">
+        <span className="text-[10px] font-mono text-muted-foreground/40">{files.length} file{files.length !== 1 ? 's' : ''}</span>
       </div>
     </div>
   );

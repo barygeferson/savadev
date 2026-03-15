@@ -1,6 +1,6 @@
 # sdev Programming Language
 
-## Complete Documentation & Tutorial
+## Complete Documentation, Tutorial & Reference Guide
 
 ---
 
@@ -9,71 +9,87 @@
 1. [Introduction](#introduction)
 2. [Getting Started](#getting-started)
 3. [Syntax Overview](#syntax-overview)
-4. [Variables](#variables)
+4. [Variables & Constants](#variables--constants)
 5. [Data Types](#data-types)
 6. [Operators](#operators)
-7. [Control Flow](#control-flow)
-8. [Functions](#functions)
-9. [Object-Oriented Programming](#object-oriented-programming)
-10. [Async & Concurrency](#async--concurrency)
-11. [Built-in Functions](#built-in-functions)
-12. [Collections](#collections)
-13. [Data Structures](#data-structures)
-14. [Higher-Order Functions](#higher-order-functions)
-15. [Matrix Operations](#matrix-operations)
-16. [Graphics & Game Development](#graphics--game-development)
-17. [File I/O](#file-io)
-18. [Networking](#networking)
-19. [Error Handling](#error-handling)
-20. [Examples](#examples)
-21. [JavaScript Interop](#javascript-interop-js-interpreter-only)
-22. [Reference Card](#reference-card)
+7. [String Operations](#string-operations)
+8. [Control Flow](#control-flow)
+9. [Functions](#functions)
+10. [Object-Oriented Programming](#object-oriented-programming)
+11. [Error Handling](#error-handling)
+12. [Async & Concurrency](#async--concurrency)
+13. [Built-in Output Functions](#built-in-output-functions)
+14. [Built-in Math Functions](#built-in-math-functions)
+15. [Built-in String Functions](#built-in-string-functions)
+16. [Built-in List Functions](#built-in-list-functions)
+17. [Built-in Tome (Dict) Functions](#built-in-tome-dict-functions)
+18. [Higher-Order Functions](#higher-order-functions)
+19. [Type System & Conversion](#type-system--conversion)
+20. [Collections: Set, Map, Queue, Stack, LinkedList](#collections)
+21. [Matrix Operations](#matrix-operations)
+22. [Graphics & Game Development](#graphics--game-development)
+23. [File I/O](#file-io)
+24. [Networking](#networking)
+25. [Examples & Recipes](#examples--recipes)
+26. [JavaScript Interop](#javascript-interop-js-interpreter-only)
+27. [Complete Reference Card](#complete-reference-card)
 
 ---
 
 ## Introduction
 
-**sdev** is a unique, expressive programming language designed to be different from conventional languages. It features:
+**sdev** is an expressive, full-featured programming language with a deliberately unique syntax designed to feel fresh and readable. It supports:
 
-- **Unique syntax** with keywords like `forge`, `conjure`, `ponder`
-- **Block-based structure** using `::` and `;;` instead of braces
-- **Expressive operators** like `also`, `either`, `isnt`
-- **Pipe operator** `|>` for functional composition
-- **Lambda expressions** with `->` arrow syntax
-- **Built-in matrix operations** for machine learning
-- **File I/O and networking** for real-world applications
+- **Unique English-inspired keywords** — `forge`, `conjure`, `ponder`, `cycle`, `iterate`, `yield`, `yeet`, `skip`
+- **Block delimiters** — `::` to open a block and `;;` to close it — no curly braces
+- **First-class functions and lambdas** — `(x) -> x * 2`
+- **Pipe operator** — `|>` for clean functional composition
+- **Full OOP** — `essence` (classes), `extend` (inheritance), `self`, `super`, `new`
+- **Error handling** — `attempt :: ... ;; rescue err :: ... ;;`
+- **Built-in data structures** — Set, Map, Queue, Stack, LinkedList
+- **Matrix math** — `matmul`, `transpose`, `dot`, `reshape`, etc.
+- **2D Graphics & Turtle API** — canvas drawing, shapes, gradients, turtle graphics, sprites
+- **Async / concurrency** — `async conjure`, `await`, `spawn`
+- **JavaScript interop** — `js` keyword for seamless JS integration
+
+sdev runs in the browser-based IDE (at `/ide`), in the Playground (`/`), and as a downloadable Electron desktop application.
 
 ---
 
 ## Getting Started
 
-### Installation
+### Running in the IDE
 
-#### Option 1: Python Interpreter
+Open the sdev IDE at `/ide`. Press **Ctrl+Enter** (or the **Run** button) to execute your program. Output appears in the **OUTPUT** panel at the bottom.
+
+### Running in the Playground
+
+Go to the main Playground at `/`. Type or paste sdev code in the editor, then click **Run**.
+
+### Downloading the Desktop App
+
+In the IDE, go to the **Download** button → **Electron Desktop App**. This gives you three files:
+
+```
+package.json
+main.js
+README.md
+```
+
+Install and run:
+
 ```bash
-# Download sdev-interpreter.py
-python sdev-interpreter.py              # Start REPL
-python sdev-interpreter.py program.sdev # Run a file
+npm install
+npm start
 ```
 
-#### Option 2: As a Python Library
-```python
-from sdev_interpreter import execute
-
-result = execute('speak("Hello, World!")')
-```
+This opens sdev IDE as a native desktop window that wraps the full web IDE.
 
 ### Your First Program
 
-Create a file `hello.sdev`:
 ```sdev
-// This is a comment
+// hello.sdev
 speak("Hello, World!")
-```
-
-Run it:
-```bash
-python sdev-interpreter.py hello.sdev
 ```
 
 Output:
@@ -81,242 +97,540 @@ Output:
 Hello, World!
 ```
 
+A slightly more involved first program:
+
+```sdev
+forge name be "Alice"
+forge age be 30
+
+speak("Name:", name)
+speak("Age:", age)
+speak("In 10 years:", age + 10)
+
+conjure greet(person, greeting) ::
+  yield greeting + ", " + person + "!"
+;;
+
+speak(greet(name, "Welcome"))
+```
+
+Output:
+```
+Name: Alice
+Age: 30
+In 10 years: 40
+Welcome, Alice!
+```
+
 ---
 
 ## Syntax Overview
 
 ### Comments
+
 ```sdev
-// Single line comment
-# Also a comment (Python style)
+// This is a single-line comment
+# This is also a single-line comment (Python style)
 ```
 
 ### Blocks
-sdev uses `::` to start a block and `;;` to end it:
+
+sdev uses `::` to start a block and `;;` to end it — never curly braces `{}`:
+
 ```sdev
 ponder x > 5 ::
-    speak("x is greater than 5")
+  speak("x is big")
+;;
+
+conjure add(a, b) ::
+  yield a + b
 ;;
 ```
 
-### Semicolons
-**Not required!** Statements are separated by newlines.
+Blocks can also be written inline for short single-statement bodies:
+
+```sdev
+ponder x > 5 :: speak("big") ;;
+```
+
+### No Semicolons Required
+
+Statements are separated by newlines. You do NOT need `;` at the end of lines.
+
+```sdev
+forge a be 1
+forge b be 2
+forge c be a + b
+speak(c)
+```
+
+### Indentation
+
+Indentation is cosmetic but strongly recommended. The language uses `::` and `;;` for block structure, not whitespace.
 
 ---
 
-## Variables
+## Variables & Constants
 
 ### Declaring Variables
-Use `forge` to create variables and `be` for assignment:
+
+Use `forge` to declare a new variable and `be` to assign its value:
 
 ```sdev
 forge name be "Alice"
 forge age be 25
-forge active be yep
+forge isActive be yep
+forge score be 0.0
 ```
 
 ### Reassigning Variables
+
+Just use `be` without `forge`:
+
 ```sdev
 forge count be 0
 count be count + 1
 count be 10
 ```
 
-### Constants
-sdev provides mathematical constants:
+### Compound Assignment (shorthand patterns)
+
 ```sdev
-speak(PI)       // 3.141592653589793
-speak(TAU)      // 6.283185307179586
-speak(E)        // 2.718281828459045
-speak(INFINITY) // inf
+forge x be 10
+x be x + 5    // x = 15
+x be x * 2    // x = 30
+x be x - 10   // x = 20
+x be x / 4    // x = 5
+```
+
+### Built-in Constants
+
+sdev provides these constants directly:
+
+```sdev
+speak(PI)        // 3.141592653589793
+speak(TAU)       // 6.283185307179586 (2 * PI)
+speak(E)         // 2.718281828459045
+speak(INFINITY)  // Infinity
+```
+
+### Multiple Variables
+
+```sdev
+forge x be 10
+forge y be 20
+forge z be x + y
+
+// Swap pattern
+forge temp be x
+x be y
+y be temp
 ```
 
 ---
 
 ## Data Types
 
+sdev has six core types:
+
+| sdev Type | Description | Literal Example |
+|-----------|-------------|-----------------|
+| `number` | Integer or float | `42`, `3.14`, `-7`, `1.5e10` |
+| `text` | Strings | `"hello"`, `'world'` |
+| `truth` | Booleans | `yep`, `nope` |
+| `void` | Null / absent | `void` |
+| `list` | Arrays | `[1, 2, 3]` |
+| `tome` | Dictionaries | `:: "key": "value" ;;` |
+
+Functions and class instances are also first-class values.
+
 ### Numbers
+
 ```sdev
 forge integer be 42
-forge decimal be 3.14
-forge negative be -10
-forge scientific be 1.5e10
+forge float be 3.14159
+forge negative be -100
+forge scientific be 1.5e10      // 15,000,000,000
+forge hex be 0xFF               // 255
+```
+
+Arithmetic is standard, with `^` for power:
+
+```sdev
+speak(2 ^ 10)   // 1024
+speak(10 % 3)   // 1
+speak(7 / 2)    // 3.5
 ```
 
 ### Text (Strings)
+
 ```sdev
 forge single be 'Hello'
 forge double be "World"
-forge multi be `This is a
-multiline string`
 
 // Escape sequences
-forge escaped be "Line1\nLine2\tTabbed"
+forge tab be "col1\tcol2"
+forge newline be "line1\nline2"
+forge quoted be "She said \"hi\""
+
+// String concatenation
+forge full be "Hello" + ", " + "World!"
+
+// String repetition
+forge stars be "*" * 10   // "**********"
+
+// Access characters
+speak("hello"[0])   // h
+speak("hello"[-1])  // o (last character)
 ```
 
 ### Truth (Booleans)
+
 ```sdev
-forge yes be yep    // true
-forge no be nope    // false
+forge t be yep    // true
+forge f be nope   // false
+
+// Boolean expressions
+speak(5 > 3)          // yep
+speak(5 equals 3)     // nope
+speak(yep also nope)  // nope
+speak(yep either nope) // yep
+speak(isnt nope)       // yep
 ```
 
 ### Void (Null)
+
 ```sdev
 forge nothing be void
+ponder nothing equals void ::
+  speak("It's void!")
+;;
 ```
 
 ### Lists
+
 ```sdev
-forge numbers be [1, 2, 3, 4, 5]
+forge nums be [1, 2, 3, 4, 5]
 forge mixed be [1, "two", yep, void]
-forge nested be [[1, 2], [3, 4]]
+forge empty be []
+forge nested be [[1, 2], [3, 4], [5, 6]]
+
+// Access by index (0-based)
+speak(nums[0])    // 1
+speak(nums[2])    // 3
+speak(nums[-1])   // 5  (last element)
+
+// Modify element
+nums[0] be 100
+speak(nums)       // [100, 2, 3, 4, 5]
+
+// List length
+speak(measure(nums))   // 5
+
+// Slicing
+speak(portion(nums, 1, 3))  // [2, 3]
+speak(portion(nums, 2))     // [3, 4, 5]
 ```
 
 ### Tomes (Dictionaries)
+
+Tomes are key-value stores. Keys are strings.
+
 ```sdev
-forge person be :: 
-    "name": "Alice",
-    "age": 30,
-    "active": yep
+forge person be ::
+  "name": "Alice",
+  "age": 30,
+  "active": yep
 ;;
 
-// Access values
+// Access values - both bracket and dot notation work
 speak(person["name"])  // Alice
-speak(person.name)     // Alice (dot notation)
+speak(person.age)      // 30
+
+// Set new or existing keys
+person["city"] be "New York"
+person.age be 31
+
+// Check if key exists
+speak(contains(person, "name"))   // yep
+speak(contains(person, "phone"))  // nope
+
+// Get all keys, values, entries
+speak(inscriptions(person))  // ["name", "age", "active", "city"]
+speak(contents(person))      // ["Alice", 31, yep, "New York"]
+speak(entries(person))       // [["name","Alice"], ...]
 ```
 
 ---
 
 ## Operators
 
-### Arithmetic
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `+` | Addition | `5 + 3` → `8` |
-| `-` | Subtraction | `5 - 3` → `2` |
-| `*` | Multiplication | `5 * 3` → `15` |
-| `/` | Division | `5 / 2` → `2.5` |
-| `%` | Modulo | `5 % 2` → `1` |
-| `^` | Power | `2 ^ 3` → `8` |
+### Arithmetic Operators
 
-### Comparison
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `equals` | Equality | `5 equals 5` → `yep` |
-| `differs` | Inequality | `5 differs 3` → `yep` |
-| `<>` | Inequality (alt) | `5 <> 3` → `yep` |
-| `<` | Less than | `3 < 5` → `yep` |
-| `>` | Greater than | `5 > 3` → `yep` |
-| `<=` | Less or equal | `3 <= 3` → `yep` |
-| `>=` | Greater or equal | `5 >= 5` → `yep` |
+| Operator | Description | Example | Result |
+|----------|-------------|---------|--------|
+| `+` | Addition | `5 + 3` | `8` |
+| `-` | Subtraction | `10 - 4` | `6` |
+| `*` | Multiplication | `4 * 3` | `12` |
+| `/` | Division | `7 / 2` | `3.5` |
+| `%` | Modulo | `10 % 3` | `1` |
+| `^` | Power | `2 ^ 8` | `256` |
+| `-x` | Negation | `-5` | `-5` |
 
-### Logical
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `also` | Logical AND | `yep also yep` → `yep` |
-| `either` | Logical OR | `nope either yep` → `yep` |
-| `isnt` | Logical NOT | `isnt nope` → `yep` |
+### Comparison Operators
 
-### String Operations
+| Operator | Description | Example | Result |
+|----------|-------------|---------|--------|
+| `equals` | Equal to | `5 equals 5` | `yep` |
+| `differs` | Not equal | `5 differs 3` | `yep` |
+| `<>` | Not equal (alt) | `5 <> 3` | `yep` |
+| `<` | Less than | `3 < 5` | `yep` |
+| `>` | Greater than | `5 > 3` | `yep` |
+| `<=` | Less or equal | `3 <= 3` | `yep` |
+| `>=` | Greater or equal | `5 >= 5` | `yep` |
+
+### Logical Operators
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| `also` | AND | `yep also yep` → `yep` |
+| `either` | OR | `nope either yep` → `yep` |
+| `isnt` | NOT | `isnt nope` → `yep` |
+
+Short-circuit evaluation applies: `also` stops at first `nope`, `either` stops at first `yep`.
+
+### String & List Concatenation
+
 ```sdev
-// Concatenation
-"Hello" + " " + "World"  // "Hello World"
-
-// Repetition
-"ha" * 3  // "hahaha"
+"Hello" + " World"    // "Hello World"
+[1, 2] + [3, 4]       // [1, 2, 3, 4]
+"ha" * 3              // "hahaha"
+[0] * 5               // [0, 0, 0, 0, 0]
 ```
 
-### Pipe Operator
-Chain function calls:
-```sdev
-forge result be [3, 1, 4, 1, 5]
-    |> sort
-    |> reverse
-speak(result)  // [5, 4, 3, 1, 1]
+### Pipe Operator `|>`
 
-// Equivalent to:
-speak(reverse(sort([3, 1, 4, 1, 5])))
+The pipe operator passes the left-hand value as the first argument to the right-hand function:
+
+```sdev
+// Without pipe
+forge result be weave(sort(sift(each([1,2,3,4,5], x -> x * 2), x -> x > 4)), ", ")
+
+// With pipe — much cleaner!
+forge result be [1, 2, 3, 4, 5]
+  |> each(x -> x * 2)
+  |> sift(x -> x > 4)
+  |> weave(", ")
+speak(result)  // "6, 8, 10"
+```
+
+### Ternary Operator `~`
+
+Inline if/else expression:
+
+```sdev
+forge x be 10
+forge label be x > 5 ~ "big" : "small"
+speak(label)  // "big"
+
+// In function calls
+speak(magnitude(-5) > 3 ~ "large magnitude" : "small magnitude")
+
+// Nested ternary
+forge grade be 85
+forge letter be grade >= 90 ~ "A" : grade >= 80 ~ "B" : grade >= 70 ~ "C" : "F"
+speak(letter)  // "B"
+```
+
+### Operator Precedence (high to low)
+
+1. `^` (power)
+2. Unary `-`, `isnt`
+3. `*`, `/`, `%`
+4. `+`, `-`
+5. `<`, `>`, `<=`, `>=`
+6. `equals`, `differs`, `<>`
+7. `also`
+8. `either`
+9. `~` (ternary)
+10. `|>` (pipe)
+
+---
+
+## String Operations
+
+sdev has a rich string library. All string functions return new strings — strings are immutable.
+
+```sdev
+forge s be "  Hello, World!  "
+
+// Case conversion
+speak(upper(s))          // "  HELLO, WORLD!  "
+speak(lower(s))          // "  hello, world!  "
+
+// Trimming
+speak(trim(s))           // "Hello, World!"
+
+// Length
+speak(measure(s))        // 18
+
+// Contains / starts / ends
+speak(contains(s, "World"))      // yep
+speak(startswith(trim(s), "Hello"))  // yep
+speak(endswith(trim(s), "!"))        // yep
+
+// Replace (replaces ALL occurrences)
+speak(replace("banana", "a", "o"))   // "bonono"
+
+// Find index
+speak(locate("hello world", "world"))  // 6
+speak(locate("hello", "xyz"))          // -1
+
+// Split and join
+forge parts be shatter("a,b,c,d", ",")
+speak(parts)                 // ["a", "b", "c", "d"]
+speak(weave(parts, " | "))   // "a | b | c | d"
+
+// Character list
+speak(chars("abc"))   // ["a", "b", "c"]
+
+// Reverse
+speak(reverse("hello"))  // "olleh"
+
+// Padding
+speak(padLeft("5", 4, "0"))    // "0005"
+speak(padRight("hi", 6, "!"))  // "hi!!!!"
+
+// Format strings (use {} as placeholders)
+speak(format("Hello, {}! You are {} years old.", "Bob", 25))
+// "Hello, Bob! You are 25 years old."
+
+// Repeat
+speak(repeat("ab", 3))   // "ababab"
+
+// Substring
+speak(snatch("hello world", 6, 11))  // "world"
 ```
 
 ---
 
 ## Control Flow
 
-### Conditionals (ponder/otherwise)
+### If / Else — `ponder` / `otherwise`
 
 ```sdev
-forge age be 18
+forge score be 87
 
-ponder age >= 18 ::
-    speak("You are an adult")
+ponder score >= 90 ::
+  speak("Grade: A")
+;; otherwise ponder score >= 80 ::
+  speak("Grade: B")
+;; otherwise ponder score >= 70 ::
+  speak("Grade: C")
+;; otherwise ponder score >= 60 ::
+  speak("Grade: D")
 ;; otherwise ::
-    speak("You are a minor")
+  speak("Grade: F")
 ;;
 ```
 
-### Chained Conditionals
+Inline (for short bodies):
+
 ```sdev
-forge grade be 85
-
-ponder grade >= 90 ::
-    speak("A")
-;; otherwise ponder grade >= 80 ::
-    speak("B")
-;; otherwise ponder grade >= 70 ::
-    speak("C")
-;; otherwise ::
-    speak("F")
-;;
+ponder x > 0 :: speak("positive") ;; otherwise :: speak("non-positive") ;;
 ```
 
-### While Loop (cycle)
+### While Loop — `cycle`
+
 ```sdev
-forge count be 0
-cycle count < 5 ::
-    speak(count)
-    count be count + 1
+forge n be 1
+cycle n <= 10 ::
+  speak(n)
+  n be n + 1
 ;;
-// Output: 0 1 2 3 4
+
+// Infinite loop with break
+cycle yep ::
+  forge x be randint(1, 10)
+  speak("Got:", x)
+  ponder x equals 7 ::
+    speak("Found 7! Stopping.")
+    yeet    // break
+  ;;
+;;
 ```
 
-### For-In Loop (within)
+### For-Each Loop — `iterate through`
+
 ```sdev
 forge fruits be ["apple", "banana", "cherry"]
 
-within fruit be fruits ::
-    speak(fruit)
+iterate fruit through fruits ::
+  speak(fruit)
 ;;
-// Output: apple banana cherry
+// apple
+// banana
+// cherry
 ```
 
-### Iterating with Index
+### For-In Loop — `within`
+
 ```sdev
-within item be enumerate(fruits) ::
-    forge idx be item[0]
-    forge fruit be item[1]
-    speak(idx + ": " + fruit)
+// Iterate over a list
+within fruit be ["apple", "banana", "cherry"] ::
+  speak(fruit)
+;;
+
+// Iterate over a range
+within i be sequence(5) ::
+  speak(i)   // 0 1 2 3 4
+;;
+
+within i be sequence(1, 11) ::
+  speak(i)   // 1 2 3 ... 10
+;;
+
+within i be sequence(0, 20, 5) ::
+  speak(i)   // 0 5 10 15
 ;;
 ```
 
 ### Loop Control
 
-#### Break (yeet)
+#### `yeet` — Break
+
+Exit the nearest enclosing loop immediately:
+
 ```sdev
-cycle yep ::
-    forge input be input("Enter 'quit' to exit: ")
-    ponder input equals "quit" ::
-        yeet
-    ;;
+within i be sequence(100) ::
+  ponder i > 5 ::
+    yeet
+  ;;
+  speak(i)
+;;
+// 0 1 2 3 4 5
+```
+
+#### `skip` — Continue
+
+Skip the rest of the current iteration and go to the next:
+
+```sdev
+within i be sequence(10) ::
+  ponder i % 2 equals 0 ::
+    skip   // skip even numbers
+  ;;
+  speak(i)   // prints only odd: 1 3 5 7 9
 ;;
 ```
 
-#### Continue (skip)
+### Nested Loops
+
 ```sdev
-within i be sequence(10) ::
-    ponder i % 2 equals 0 ::
-        skip  // Skip even numbers
-    ;;
-    speak(i)  // Print odd numbers only
+within i be sequence(1, 4) ::
+  within j be sequence(1, 4) ::
+    speak(i + " x " + j + " = " + morph(i * j, "text"))
+  ;;
 ;;
 ```
 
@@ -324,697 +638,1228 @@ within i be sequence(10) ::
 
 ## Functions
 
-### Declaring Functions (conjure)
+### Basic Functions — `conjure`
+
 ```sdev
 conjure greet(name) ::
-    speak("Hello, " + name + "!")
+  speak("Hello, " + name + "!")
 ;;
 
-greet("World")  // Hello, World!
+greet("Alice")
+greet("World")
 ```
 
-### Return Values (yield)
+### Return Values — `yield`
+
 ```sdev
 conjure add(a, b) ::
-    yield a + b
+  yield a + b
 ;;
 
-forge result be add(5, 3)
-speak(result)  // 8
+conjure max(a, b) ::
+  ponder a > b :: yield a ;;
+  yield b
+;;
+
+forge sum be add(10, 20)
+speak(sum)         // 30
+speak(max(5, 9))   // 9
 ```
 
-### Lambda Functions
-```sdev
-// Single parameter
-forge double be x -> x * 2
-speak(double(5))  // 10
+### Default Parameters
 
-// Multiple parameters
-forge multiply be (a, b) -> a * b
-speak(multiply(4, 3))  // 12
+```sdev
+conjure greet(name, greeting) ::
+  ponder greeting equals void :: greeting be "Hello" ;;
+  yield greeting + ", " + name + "!"
+;;
+
+speak(greet("Alice"))           // Hello, Alice!
+speak(greet("Bob", "Welcome"))  // Welcome, Bob!
+```
+
+### Lambda Functions (Arrow Syntax)
+
+Single expression, one parameter:
+
+```sdev
+forge double be x -> x * 2
+forge square be x -> x ^ 2
+forge negate be x -> -x
+
+speak(double(5))   // 10
+speak(square(4))   // 16
+speak(negate(7))   // -7
+```
+
+Multiple parameters (parentheses required):
+
+```sdev
+forge add be (a, b) -> a + b
+forge clamp be (v, lo, hi) -> v < lo ~ lo : v > hi ~ hi : v
+
+speak(add(3, 4))           // 7
+speak(clamp(150, 0, 100))  // 100
+```
+
+Multi-statement lambda body with `::` and `;;`:
+
+```sdev
+forge process be x -> ::
+  forge doubled be x * 2
+  forge result be doubled + 10
+  yield result
+;;
+
+speak(process(5))   // 20
 ```
 
 ### Closures
+
+Functions capture variables from their enclosing scope:
+
 ```sdev
-conjure makeCounter() ::
-    forge count be 0
-    yield () -> ::
-        count be count + 1
-        yield count
-    ;;
+conjure makeCounter(start) ::
+  forge count be start
+
+  conjure increment() ::
+    count be count + 1
+    yield count
+  ;;
+
+  conjure reset() ::
+    count be start
+  ;;
+
+  yield :: "next": increment, "reset": reset ;;
 ;;
 
-forge counter be makeCounter()
-speak(counter())  // 1
-speak(counter())  // 2
-speak(counter())  // 3
+forge c be makeCounter(0)
+speak(c.next())   // 1
+speak(c.next())   // 2
+speak(c.next())   // 3
+c.reset()
+speak(c.next())   // 1
 ```
 
 ### Recursive Functions
+
 ```sdev
 conjure factorial(n) ::
-    ponder n <= 1 ::
-        yield 1
-    ;;
-    yield n * factorial(n - 1)
+  ponder n <= 1 :: yield 1 ;;
+  yield n * factorial(n - 1)
 ;;
 
-speak(factorial(5))  // 120
+speak(factorial(10))   // 3628800
+
+// Mutual recursion
+conjure isEven(n) ::
+  ponder n equals 0 :: yield yep ;;
+  yield isOdd(n - 1)
+;;
+
+conjure isOdd(n) ::
+  ponder n equals 0 :: yield nope ;;
+  yield isEven(n - 1)
+;;
+
+speak(isEven(4))   // yep
+speak(isOdd(7))    // yep
+```
+
+### Higher-Order Functions as Parameters
+
+```sdev
+conjure applyTwice(f, x) ::
+  yield f(f(x))
+;;
+
+forge double be x -> x * 2
+speak(applyTwice(double, 3))   // 12
+
+conjure compose(f, g) ::
+  yield x -> f(g(x))
+;;
+
+forge addOne be x -> x + 1
+forge triple be x -> x * 3
+forge addOneThenTriple be compose(triple, addOne)
+speak(addOneThenTriple(4))   // 15
+```
+
+### Variadic-style Functions
+
+Use lists to simulate variadic arguments:
+
+```sdev
+conjure sumAll(nums) ::
+  yield fold(nums, 0, (acc, x) -> acc + x)
+;;
+
+speak(sumAll([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))   // 55
 ```
 
 ---
 
 ## Object-Oriented Programming
 
-sdev supports full object-oriented programming with classes, inheritance, and methods.
+sdev has full class-based OOP using `essence` for class definitions, `new` for instantiation, `self` for the instance reference, `super` for parent class access, and `extend` for inheritance.
 
-### Defining Classes (essence)
+### Defining a Class — `essence`
 
-Use `essence` to define a class:
+```sdev
+essence Person ::
+  conjure init(self, name, age) ::
+    self.name be name
+    self.age be age
+  ;;
+
+  conjure greet(self) ::
+    speak("Hi, I'm " + self.name + " and I'm " + morph(self.age, "text") + " years old.")
+  ;;
+
+  conjure birthday(self) ::
+    self.age be self.age + 1
+    speak(self.name + " is now " + morph(self.age, "text") + "!")
+  ;;
+
+  conjure toString(self) ::
+    yield "Person(" + self.name + ", " + morph(self.age, "text") + ")"
+  ;;
+;;
+```
+
+### Creating Instances — `new`
+
+```sdev
+forge alice be new Person("Alice", 30)
+forge bob be new Person("Bob", 25)
+
+alice.greet()   // Hi, I'm Alice and I'm 30 years old.
+bob.greet()     // Hi, I'm Bob and I'm 25 years old.
+
+alice.birthday()   // Alice is now 31!
+speak(alice.age)   // 31
+
+speak(alice.toString())  // Person(Alice, 31)
+```
+
+### Inheritance — `extend`
 
 ```sdev
 essence Animal ::
-    conjure init(self, name) ::
-        self.name be name
-        self.energy be 100
-    ;;
-    
-    conjure speak(self) ::
-        speak(self.name + " makes a sound")
-    ;;
-    
-    conjure eat(self, food) ::
-        self.energy be self.energy + 10
-        speak(self.name + " eats " + food)
-    ;;
+  conjure init(self, name, sound) ::
+    self.name be name
+    self.sound be sound
+    self.energy be 100
+  ;;
+
+  conjure makeSound(self) ::
+    speak(self.name + " says: " + self.sound)
+  ;;
+
+  conjure eat(self, food) ::
+    self.energy be self.energy + 20
+    speak(self.name + " eats " + food)
+  ;;
+
+  conjure status(self) ::
+    speak(self.name + " | Energy: " + morph(self.energy, "text"))
+  ;;
 ;;
-```
 
-### Creating Instances (new)
-
-Use `new` to create instances:
-
-```sdev
-forge dog be new Animal("Buddy")
-dog.speak()         // Buddy makes a sound
-dog.eat("kibble")   // Buddy eats kibble
-speak(dog.energy)   // 110
-```
-
-### Inheritance (extend)
-
-Use `extend` to inherit from another class:
-
-```sdev
 essence Dog extend Animal ::
-    conjure init(self, name, breed) ::
-        super.init(name)
-        self.breed be breed
+  conjure init(self, name, breed) ::
+    super.init(name, "Woof!")
+    self.breed be breed
+    self.tricks be []
+  ;;
+
+  conjure makeSound(self) ::
+    speak(self.name + " barks: WOOF WOOF!")   // Override parent
+  ;;
+
+  conjure learnTrick(self, trick) ::
+    gather(self.tricks, trick)
+    speak(self.name + " learned: " + trick)
+  ;;
+
+  conjure showTricks(self) ::
+    ponder measure(self.tricks) equals 0 ::
+      speak(self.name + " knows no tricks.")
+      yield void
     ;;
-    
-    conjure speak(self) ::
-        speak(self.name + " barks: Woof!")
-    ;;
-    
-    conjure fetch(self) ::
-        self.energy be self.energy - 20
-        speak(self.name + " fetches the ball")
-    ;;
+    speak(self.name + " can do: " + weave(self.tricks, ", "))
+  ;;
 ;;
 
 forge rex be new Dog("Rex", "German Shepherd")
-rex.speak()   // Rex barks: Woof!
-rex.fetch()   // Rex fetches the ball
-rex.eat("treat")  // Inherited: Rex eats treat
+rex.makeSound()                // Rex barks: WOOF WOOF!
+rex.eat("kibble")              // Rex eats kibble
+rex.learnTrick("sit")
+rex.learnTrick("shake")
+rex.learnTrick("roll over")
+rex.showTricks()               // Rex can do: sit, shake, roll over
+rex.status()                   // Rex | Energy: 120
 ```
 
-### Properties and Methods
+### Multi-level Inheritance
 
 ```sdev
-essence Rectangle ::
-    conjure init(self, width, height) ::
-        self.width be width
-        self.height be height
-    ;;
-    
-    conjure area(self) ::
-        yield self.width * self.height
-    ;;
-    
-    conjure perimeter(self) ::
-        yield 2 * (self.width + self.height)
-    ;;
-    
-    conjure scale(self, factor) ::
-        self.width be self.width * factor
-        self.height be self.height * factor
-    ;;
-    
-    conjure describe(self) ::
-        yield format("{}x{} rectangle", self.width, self.height)
-    ;;
+essence Vehicle ::
+  conjure init(self, brand, speed) ::
+    self.brand be brand
+    self.speed be speed
+    self.fuel be 100
+  ;;
+
+  conjure describe(self) ::
+    yield self.brand + " going " + morph(self.speed, "text") + " km/h"
+  ;;
 ;;
 
-forge rect be new Rectangle(10, 5)
-speak(rect.area())       // 50
-speak(rect.perimeter())  // 30
-rect.scale(2)
-speak(rect.describe())   // 20x10 rectangle
+essence Car extend Vehicle ::
+  conjure init(self, brand, speed, doors) ::
+    super.init(brand, speed)
+    self.doors be doors
+  ;;
+
+  conjure honk(self) ::
+    speak(self.brand + ": Beep beep!")
+  ;;
+;;
+
+essence ElectricCar extend Car ::
+  conjure init(self, brand, speed, doors, range) ::
+    super.init(brand, speed, doors)
+    self.range be range
+    self.battery be 100
+  ;;
+
+  conjure charge(self) ::
+    self.battery be 100
+    speak(self.brand + " fully charged!")
+  ;;
+
+  conjure describe(self) ::
+    yield super.describe() + " (Electric, " + morph(self.range, "text") + "km range)"
+  ;;
+;;
+
+forge tesla be new ElectricCar("Tesla Model 3", 250, 4, 500)
+speak(tesla.describe())   // Tesla Model 3 going 250 km/h (Electric, 500km range)
+tesla.honk()              // Tesla Model 3: Beep beep!
+tesla.charge()            // Tesla Model 3 fully charged!
 ```
 
-### Static-like Pattern
+### Properties and Computed Properties
 
 ```sdev
-essence MathUtils ::
-    conjure init(self) ::
-        // No instance state needed
-    ;;
+essence Circle ::
+  conjure init(self, radius) ::
+    self.radius be radius
+  ;;
+
+  conjure area(self) ::
+    yield PI * self.radius ^ 2
+  ;;
+
+  conjure circumference(self) ::
+    yield 2 * PI * self.radius
+  ;;
+
+  conjure scale(self, factor) ::
+    self.radius be self.radius * factor
+    yield self
+  ;;
+
+  conjure toString(self) ::
+    yield "Circle(r=" + morph(nearby(self.radius * 100) / 100, "text") + ")"
+  ;;
 ;;
 
-// Add class-level functions
-MathUtils.square be x -> x * x
-MathUtils.cube be x -> x * x * x
+forge c be new Circle(5)
+speak(nearby(c.area()))           // 79
+speak(nearby(c.circumference()))  // 31
 
-speak(MathUtils.square(4))  // 16
-speak(MathUtils.cube(3))    // 27
+c.scale(2)
+speak(c.toString())   // Circle(r=10)
+```
+
+---
+
+## Error Handling
+
+### Try / Rescue — `attempt` / `rescue`
+
+Use `attempt` to try code that might fail, and `rescue` to catch errors:
+
+```sdev
+attempt ::
+  forge result be 10 / 0
+  speak(result)
+;; rescue err ::
+  speak("Caught an error: " + err)
+;;
+```
+
+```sdev
+attempt ::
+  forge nums be [1, 2, 3]
+  speak(nums[10])   // index out of bounds
+;; rescue err ::
+  speak("Error accessing list:", err)
+;;
+```
+
+### Nested Error Handling
+
+```sdev
+conjure safeDivide(a, b) ::
+  attempt ::
+    ponder b equals 0 ::
+      speak("Error: division by zero")
+      yield void
+    ;;
+    yield a / b
+  ;; rescue err ::
+    speak("Unexpected error:", err)
+    yield void
+  ;;
+;;
+
+speak(safeDivide(10, 2))   // 5
+speak(safeDivide(10, 0))   // Error: division by zero
+```
+
+### Assertion
+
+```sdev
+conjure validateAge(age) ::
+  attempt ::
+    ponder age < 0 ::
+      speak("Error: Age cannot be negative")
+      yield nope
+    ;;
+    ponder age > 150 ::
+      speak("Error: Age is unreasonably large")
+      yield nope
+    ;;
+    yield yep
+  ;; rescue err ::
+    speak("Validation error:", err)
+    yield nope
+  ;;
+;;
 ```
 
 ---
 
 ## Async & Concurrency
 
-sdev supports asynchronous programming and concurrency.
-
 ### Async Functions
 
-Use `async conjure` to define asynchronous functions:
+Use `async conjure` to define an asynchronous function:
 
 ```sdev
-async conjure fetchUser(id) ::
-    forge response be await fetch("https://api.example.com/users/" + id)
-    yield response
+async conjure fetchData(url) ::
+  forge response be await fetch(url)
+  yield response
 ;;
 ```
 
 ### Await
 
-Use `await` to wait for async operations:
+Use `await` inside `async` functions to wait for asynchronous operations:
 
 ```sdev
-async conjure loadData() ::
-    forge user be await fetchUser(1)
-    forge posts be await fetch("https://api.example.com/posts?userId=" + user.id)
-    
-    yield ::
-        "user": user,
-        "posts": posts
-    ;;
+async conjure loadUserProfile(id) ::
+  forge user be await fetchData("https://api.example.com/users/" + id)
+  forge posts be await fetchData("https://api.example.com/posts?userId=" + id)
+
+  yield ::
+    "user": user,
+    "posts": posts
+  ;;
 ;;
 ```
 
 ### Spawn (Concurrent Execution)
 
-Use `spawn` to run functions concurrently:
+Use `spawn` to run functions concurrently without waiting for them:
 
 ```sdev
-conjure task1() ::
-    delay(2000)  // Simulate 2 second task
-    speak("Task 1 complete")
-    yield "result1"
+conjure worker(name, ms) ::
+  delay(ms)
+  speak(name + " finished after " + morph(ms, "text") + "ms")
 ;;
 
-conjure task2() ::
-    delay(1000)  // Simulate 1 second task
-    speak("Task 2 complete")
-    yield "result2"
-;;
-
-// Run concurrently
-spawn task1()
-spawn task2()
-// Output: Task 2 complete (after 1s), Task 1 complete (after 2s)
+spawn worker("Task A", 2000)
+spawn worker("Task B", 500)
+spawn worker("Task C", 1000)
+// Task B completes first, then C, then A
 ```
 
 ### Delay
 
-Pause execution for a specified time:
+Pause execution for a number of milliseconds:
 
 ```sdev
 speak("Starting...")
-delay(1000)  // Wait 1 second
-speak("1 second passed")
-delay(2000)  // Wait 2 more seconds
-speak("Done!")
-```
-
-### Async Iteration Pattern
-
-```sdev
-async conjure fetchAllUsers(ids) ::
-    forge results be []
-    
-    within id be ids ::
-        forge user be await fetchUser(id)
-        gather(results, user)
-    ;;
-    
-    yield results
-;;
-
-forge users be await fetchAllUsers([1, 2, 3, 4, 5])
+delay(1000)
+speak("One second later...")
+delay(2000)
+speak("Three seconds total")
 ```
 
 ---
 
-## Built-in Functions
+## Built-in Output Functions
 
-### Output Functions
 | Function | Description | Example |
 |----------|-------------|---------|
-| `speak(...)` | Print with spaces | `speak("Hello", "World")` → `Hello World` |
-| `whisper(...)` | Print concatenated | `whisper("a", "b", "c")` → `abc` |
-| `shout(...)` | Print uppercase | `shout("hello")` → `HELLO` |
+| `speak(...)` | Print values with spaces between them | `speak("x =", 42)` → `x = 42` |
+| `whisper(...)` | Print values concatenated (no spaces) | `whisper("a", "b")` → `ab` |
+| `shout(...)` | Print values uppercased | `shout("hello")` → `HELLO` |
 
-### Input
 ```sdev
-forge name be input("What's your name? ")
-speak("Hello, " + name)
+forge x be 42
+forge name be "Alice"
+
+speak("The answer is", x)       // The answer is 42
+speak(name, "scored", x, "%")   // Alice scored 42 %
+whisper("[", x, "]")             // [42]
+shout("warning: low battery")    // WARNING: LOW BATTERY
 ```
 
-### Type Functions
+---
+
+## Built-in Math Functions
+
+### Core Math
+
 | Function | Description | Example |
 |----------|-------------|---------|
-| `essence(val)` | Get type name | `essence(42)` → `"number"` |
-| `morph(val, type)` | Convert type | `morph("42", "number")` → `42` |
+| `magnitude(x)` | Absolute value | `magnitude(-5)` → `5` |
+| `root(x)` | Square root | `root(16)` → `4` |
+| `ground(x)` | Floor (round down) | `ground(3.7)` → `3` |
+| `elevate(x)` | Ceiling (round up) | `elevate(3.2)` → `4` |
+| `nearby(x)` | Round to nearest int | `nearby(3.5)` → `4` |
+| `least(...)` | Minimum value | `least(3, 1, 4, 1)` → `1` |
+| `greatest(...)` | Maximum value | `greatest(3, 1, 4, 1)` → `4` |
 
-### Type Names
-- `"void"` - null values
-- `"number"` - numbers
-- `"text"` - strings
-- `"truth"` - booleans
-- `"list"` - lists
-- `"tome"` - dictionaries
-- `"conjuration"` - functions
+### Trigonometry
 
-### Math Functions
 | Function | Description |
 |----------|-------------|
-| `magnitude(x)` | Absolute value |
-| `root(x)` | Square root |
-| `ground(x)` | Floor |
-| `elevate(x)` | Ceiling |
-| `nearby(x)` | Round |
-| `least(...)` | Minimum |
-| `greatest(...)` | Maximum |
-| `sin(x)`, `cos(x)`, `tan(x)` | Trigonometric |
-| `asin(x)`, `acos(x)`, `atan(x)` | Inverse trig |
-| `log(x)`, `log10(x)`, `log2(x)` | Logarithms |
+| `sin(x)` | Sine (radians) |
+| `cos(x)` | Cosine (radians) |
+| `tan(x)` | Tangent (radians) |
+| `asin(x)` | Arcsine |
+| `acos(x)` | Arccosine |
+| `atan(x)` | Arctangent |
+| `atan2(y, x)` | Two-argument arctangent |
+| `radians(deg)` | Convert degrees to radians |
+| `degrees(rad)` | Convert radians to degrees |
+
+### Logarithms & Exponentials
+
+| Function | Description |
+|----------|-------------|
+| `log(x)` | Natural logarithm |
+| `log10(x)` | Base-10 logarithm |
+| `log2(x)` | Base-2 logarithm |
 | `exp(x)` | e^x |
 
-### Random Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `chaos()` | Random 0-1 | `chaos()` → `0.7234...` |
-| `randint(min, max)` | Random integer | `randint(1, 10)` → `7` |
-| `pick(list)` | Random element | `pick([1,2,3])` → `2` |
-| `shuffle(list)` | Shuffle copy | `shuffle([1,2,3])` → `[3,1,2]` |
+### Advanced Math
 
-### String Functions
 | Function | Description | Example |
 |----------|-------------|---------|
-| `measure(s)` | Length | `measure("hello")` → `5` |
+| `clamp(v, min, max)` | Constrain value to range | `clamp(150, 0, 100)` → `100` |
+| `lerp(a, b, t)` | Linear interpolation | `lerp(0, 100, 0.3)` → `30` |
+| `mapRange(v, fromLo, fromHi, toLo, toHi)` | Map value between ranges | `mapRange(50, 0, 100, 0, 1)` → `0.5` |
+| `sum(list)` | Sum all elements of a list | `sum([1,2,3,4])` → `10` |
+| `average(list)` | Mean value of a list | `average([1,2,3,4])` → `2.5` |
+| `sign(x)` | Sign: -1, 0, or 1 | `sign(-5)` → `-1` |
+| `dist(x1, y1, x2, y2)` | Distance between two points | `dist(0,0,3,4)` → `5` |
+
+### Random
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `chaos()` | Random float 0-1 | `chaos()` → `0.7234` |
+| `randint(min, max)` | Random integer (inclusive) | `randint(1, 6)` → `4` |
+| `pick(list)` | Random element from list | `pick(["a","b","c"])` → `"b"` |
+| `shuffle(list)` | Shuffle a copy of list | `shuffle([1,2,3])` → `[3,1,2]` |
+
+```sdev
+// Dice rolling
+conjure rollDice(sides) ::
+  yield randint(1, sides)
+;;
+
+speak("d6:", rollDice(6))
+speak("d20:", rollDice(20))
+
+// Coin flip
+speak(chaos() > 0.5 ~ "Heads" : "Tails")
+```
+
+---
+
+## Built-in String Functions
+
+| Function | Description | Signature |
+|----------|-------------|-----------|
 | `upper(s)` | Uppercase | `upper("hi")` → `"HI"` |
 | `lower(s)` | Lowercase | `lower("HI")` → `"hi"` |
-| `trim(s)` | Strip whitespace | `trim("  hi  ")` → `"hi"` |
-| `reverse(s)` | Reverse | `reverse("abc")` → `"cba"` |
-| `contains(s, sub)` | Contains | `contains("hello", "ell")` → `yep` |
-| `starts(s, prefix)` | Starts with | `starts("hello", "he")` → `yep` |
-| `ends(s, suffix)` | Ends with | `ends("hello", "lo")` → `yep` |
-| `replace(s, old, new)` | Replace | `replace("hi", "i", "ello")` → `"hello"` |
-| `locate(s, sub)` | Find index | `locate("hello", "l")` → `2` |
-| `shatter(s, sep)` | Split | `shatter("a,b,c", ",")` → `["a","b","c"]` |
-| `chars(s)` | To char list | `chars("abc")` → `["a","b","c"]` |
-| `format(s, ...)` | Format string | `format("Hi {}", "Bob")` → `"Hi Bob"` |
-| `padLeft(s, w, c)` | Left pad | `padLeft("5", 3, "0")` → `"005"` |
-| `padRight(s, w, c)` | Right pad | `padRight("5", 3, "0")` → `"500"` |
+| `trim(s)` | Remove surrounding whitespace | `trim("  hi  ")` → `"hi"` |
+| `reverse(s)` | Reverse string | `reverse("abc")` → `"cba"` |
+| `measure(s)` | String length | `measure("hello")` → `5` |
+| `contains(s, sub)` | Check substring | `contains("hello", "ell")` → `yep` |
+| `startswith(s, prefix)` | Starts with | `startswith("hello", "he")` → `yep` |
+| `endswith(s, suffix)` | Ends with | `endswith("hello", "lo")` → `yep` |
+| `replace(s, old, new)` | Replace all occurrences | `replace("aaa", "a", "b")` → `"bbb"` |
+| `locate(s, sub)` | Index of substring (-1 if not found) | `locate("hello", "l")` → `2` |
+| `shatter(s, sep)` | Split string into list | `shatter("a,b", ",")` → `["a","b"]` |
+| `chars(s)` | Split into list of characters | `chars("abc")` → `["a","b","c"]` |
+| `weave(list, sep)` | Join list with separator | `weave(["a","b"], "-")` → `"a-b"` |
+| `padLeft(s, w, c)` | Pad left to width | `padLeft("5", 3, "0")` → `"005"` |
+| `padRight(s, w, c)` | Pad right to width | `padRight("hi", 5, ".")` → `"hi..."` |
+| `format(s, ...)` | Substitute `{}` placeholders | `format("Hi {}!", "Bob")` → `"Hi Bob!"` |
+| `repeat(s, n)` | Repeat string n times | `repeat("ab", 3)` → `"ababab"` |
+| `snatch(s, start, end?)` | Substring by index | `snatch("hello", 1, 3)` → `"el"` |
+
+---
+
+## Built-in List Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `measure(list)` | Length of list | `measure([1,2,3])` → `3` |
+| `gather(list, item)` | Append item (mutates) | `gather([1,2], 3)` → `[1,2,3]` |
+| `pluck(list)` | Remove and return last item | `pluck([1,2,3])` → `3` |
+| `snatch(list, idx)` | Remove item at index | `snatch([1,2,3], 1)` → removes `2` |
+| `insert(list, idx, item)` | Insert at index | `insert([1,3], 1, 2)` → `[1,2,3]` |
+| `portion(list, start, end?)` | Slice | `portion([1,2,3,4], 1, 3)` → `[2,3]` |
+| `reverse(list)` | Return reversed copy | `reverse([1,2,3])` → `[3,2,1]` |
+| `sort(list)` | Sort ascending copy | `sort([3,1,2])` → `[1,2,3]` |
+| `sortDesc(list)` | Sort descending copy | `sortDesc([1,3,2])` → `[3,2,1]` |
+| `unique(list)` | Remove duplicates | `unique([1,1,2,2,3])` → `[1,2,3]` |
+| `flatten(list)` | Flatten nested lists | `flatten([[1,2],[3,4]])` → `[1,2,3,4]` |
+| `concat(a, b)` | Concatenate two lists | `concat([1,2],[3,4])` → `[1,2,3,4]` |
+| `contains(list, item)` | Check membership | `contains([1,2,3], 2)` → `yep` |
+| `first(list)` | First element | `first([1,2,3])` → `1` |
+| `last(list)` | Last element | `last([1,2,3])` → `3` |
+| `clone(list)` | Deep copy | `clone([1,[2,3]])` |
+
+---
+
+## Built-in Tome (Dict) Functions
+
+| Function | Description |
+|----------|-------------|
+| `inscriptions(tome)` | Get all keys as a list |
+| `contents(tome)` | Get all values as a list |
+| `entries(tome)` | Get `[[key, value], ...]` pairs |
+| `contains(tome, key)` | Check if key exists |
+| `merge(t1, t2, ...)` | Merge dicts (later overrides earlier) |
+| `erase(tome, key)` | Remove key |
+
+```sdev
+forge a be :: "x": 1, "y": 2 ;;
+forge b be :: "y": 99, "z": 3 ;;
+forge c be merge(a, b)
+speak(c)  // {"x": 1, "y": 99, "z": 3}
+```
+
+---
+
+## Higher-Order Functions
+
+### `each` — Transform (Map)
+
+Apply a function to every element and return a new list:
+
+```sdev
+forge nums be [1, 2, 3, 4, 5]
+speak(each(nums, x -> x ^ 2))          // [1, 4, 9, 16, 25]
+speak(each(nums, (x, i) -> x + i))     // [1, 3, 5, 7, 9]  (value + index)
+speak(each(["a","b","c"], upper))       // ["A", "B", "C"]
+```
+
+### `sift` — Filter
+
+Keep only elements where the predicate returns `yep`:
+
+```sdev
+forge nums be [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+speak(sift(nums, x -> x % 2 equals 0))       // [2, 4, 6, 8, 10]
+speak(sift(nums, x -> x > 5))                // [6, 7, 8, 9, 10]
+speak(sift(["", "hi", "", "world"], x -> measure(x) > 0))  // ["hi", "world"]
+```
+
+### `fold` — Reduce
+
+Reduce a list to a single value using an accumulator:
+
+```sdev
+forge nums be [1, 2, 3, 4, 5]
+speak(fold(nums, 0, (acc, x) -> acc + x))   // 15 (sum)
+speak(fold(nums, 1, (acc, x) -> acc * x))   // 120 (product)
+
+// Build a string
+speak(fold(["a","b","c"], "", (acc, x) -> acc + x + "-"))  // "a-b-c-"
+
+// Find max
+speak(fold(nums, nums[0], (a, b) -> a > b ~ a : b))   // 5
+```
+
+### `seek` — Find First
+
+Return the first element matching a predicate, or `void`:
+
+```sdev
+forge people be [
+  :: "name": "Alice", "age": 22 ;;,
+  :: "name": "Bob", "age": 35 ;;,
+  :: "name": "Carol", "age": 28 ;;
+]
+
+forge adult be seek(people, p -> p.age >= 30)
+speak(adult.name)   // Bob
+
+forge nobody be seek(people, p -> p.age > 100)
+speak(nobody)   // void
+```
+
+### `every` — All Match
+
+Returns `yep` if ALL elements satisfy the predicate:
+
+```sdev
+speak(every([2,4,6,8], x -> x % 2 equals 0))  // yep
+speak(every([1,2,3], x -> x > 0))             // yep
+speak(every([1,-2,3], x -> x > 0))            // nope
+```
+
+### `some` — Any Match
+
+Returns `yep` if ANY element satisfies the predicate:
+
+```sdev
+speak(some([1,3,5,6], x -> x % 2 equals 0))  // yep (6 is even)
+speak(some([1,3,5,7], x -> x % 2 equals 0))  // nope
+```
+
+### `enumerate` — Index + Value
+
+Pairs each element with its index:
+
+```sdev
+speak(enumerate(["a","b","c"]))
+// [[0,"a"], [1,"b"], [2,"c"]]
+
+within pair be enumerate(["red","green","blue"]) ::
+  speak(pair[0] + ": " + pair[1])
+;;
+// 0: red
+// 1: green
+// 2: blue
+```
+
+### `zip` — Pair Two Lists
+
+Combine two lists element-by-element:
+
+```sdev
+forge keys be ["name", "age", "city"]
+forge vals be ["Alice", 30, "NYC"]
+speak(zip(keys, vals))
+// [["name","Alice"], ["age",30], ["city","NYC"]]
+```
+
+---
+
+## Type System & Conversion
+
+### Getting Type — `essence()`
+
+Returns the type name as a string:
+
+```sdev
+speak(essence(42))         // "number"
+speak(essence("hi"))       // "text"
+speak(essence(yep))        // "truth"
+speak(essence(void))       // "void"
+speak(essence([1,2,3]))    // "list"
+speak(essence(::;;))       // "tome"
+```
+
+### Converting Types — `morph()`
+
+```sdev
+speak(morph("42", "number"))     // 42
+speak(morph(42, "text"))         // "42"
+speak(morph(1, "truth"))         // yep
+speak(morph(0, "truth"))         // nope
+speak(morph("3.14", "number"))   // 3.14
+```
+
+### Type Checking Helpers
+
+```sdev
+speak(essence(x) equals "number")      // Check if number
+speak(essence(x) equals "text")        // Check if string
+speak(essence(x) equals "list")        // Check if list
+speak(essence(x) equals "tome")        // Check if dict
+speak(x equals void)                   // Check if null
+```
 
 ---
 
 ## Collections
 
-### List Operations
-```sdev
-forge list be [1, 2, 3]
-
-// Access
-speak(list[0])     // 1
-speak(list[-1])    // 3 (last element)
-
-// Modify
-list[0] be 10
-speak(list)        // [10, 2, 3]
-
-// Slicing
-speak(list[0:2])   // [10, 2]
-speak(list[1:])    // [2, 3]
-speak(list[:2])    // [10, 2]
-speak(list[::2])   // [10, 3] (every 2nd)
-```
-
-### List Functions
-| Function | Description | Example |
-|----------|-------------|---------|
-| `measure(list)` | Length | `measure([1,2,3])` → `3` |
-| `gather(list, item)` | Append | `gather([1,2], 3)` → `[1,2,3]` |
-| `pluck(list)` | Pop last | `pluck([1,2,3])` → `3` |
-| `snatch(list, idx)` | Remove at index | `snatch([1,2,3], 1)` → `2` |
-| `insert(list, idx, item)` | Insert at index | `insert([1,3], 1, 2)` → `[1,2,3]` |
-| `portion(list, start, end)` | Slice | `portion([1,2,3,4], 1, 3)` → `[2,3]` |
-| `weave(list, sep)` | Join | `weave([1,2,3], "-")` → `"1-2-3"` |
-| `reverse(list)` | Reverse | `reverse([1,2,3])` → `[3,2,1]` |
-| `sort(list)` | Sort ascending | `sort([3,1,2])` → `[1,2,3]` |
-| `sortDesc(list)` | Sort descending | `sortDesc([1,2,3])` → `[3,2,1]` |
-| `unique(list)` | Remove duplicates | `unique([1,1,2])` → `[1,2]` |
-| `clone(list)` | Deep copy | `clone([1,[2,3]])` |
-
-### Tome (Dictionary) Functions
-```sdev
-forge person be :: "name": "Alice", "age": 30 ;;
-
-// Access
-speak(person["name"])  // Alice
-speak(person.age)      // 30
-
-// Modify
-person["city"] be "NYC"
-person.age be 31
-
-// Functions
-speak(inscriptions(person))  // ["name", "age", "city"]
-speak(contents(person))      // ["Alice", 31, "NYC"]
-speak(entries(person))       // [["name","Alice"], ...]
-speak(contains(person, "name"))  // yep
-```
-
-| Function | Description |
-|----------|-------------|
-| `inscriptions(tome)` | Get all keys |
-| `contents(tome)` | Get all values |
-| `entries(tome)` | Get key-value pairs |
-| `merge(t1, t2, ...)` | Merge dictionaries |
-| `erase(tome, key)` | Remove key |
-
-### Set Operations
-| Function | Description | Example |
-|----------|-------------|---------|
-| `union(a, b)` | Union | `union([1,2], [2,3])` → `[1,2,3]` |
-| `intersect(a, b)` | Intersection | `intersect([1,2], [2,3])` → `[2]` |
-| `difference(a, b)` | Difference | `difference([1,2,3], [2])` → `[1,3]` |
-
----
-
-## Data Structures
-
-sdev includes built-in data structures for common use cases.
-
 ### Set
 
-A collection with unique elements:
+A collection of unique elements. Duplicate additions are silently ignored.
 
 ```sdev
 forge s be Set()
 s.add(1)
 s.add(2)
-s.add(1)  // Duplicate ignored
+s.add(2)    // Duplicate ignored
+s.add(3)
 
-speak(s.size())    // 2
-speak(s.has(1))    // yep
-speak(s.values())  // [1, 2]
-s.remove(1)
+speak(s.size())     // 3
+speak(s.has(2))     // yep
+speak(s.has(99))    // nope
+speak(s.values())   // [1, 2, 3]
+
+s.remove(2)
+speak(s.values())   // [1, 3]
+
 s.clear()
+speak(s.size())     // 0
+speak(s.isEmpty())  // yep
 ```
+
+**Set methods:** `add(v)`, `remove(v)`, `has(v)`, `values()`, `size()`, `isEmpty()`, `clear()`, `toList()`
 
 ### Map
 
-Key-value pairs with any key type:
+A key-value store where keys can be any type (including objects):
 
 ```sdev
 forge m be Map()
 m.set("name", "Alice")
-m.set("age", 25)
+m.set("age", 30)
+m.set("active", yep)
 
-speak(m.get("name"))  // Alice
-speak(m.has("age"))   // yep
-speak(m.keys())       // ["name", "age"]
-speak(m.values())     // ["Alice", 25]
-speak(m.entries())    // [["name", "Alice"], ["age", 25]]
-m.delete("age")
+speak(m.get("name"))     // Alice
+speak(m.has("age"))      // yep
+speak(m.keys())          // ["name", "age", "active"]
+speak(m.values())        // ["Alice", 30, yep]
+speak(m.entries())       // [["name","Alice"], ["age",30], ["active",yep]]
+speak(m.size())          // 3
+
+m.delete("active")
+speak(m.size())          // 2
+m.clear()
 ```
+
+**Map methods:** `set(k, v)`, `get(k)`, `has(k)`, `delete(k)`, `keys()`, `values()`, `entries()`, `size()`, `isEmpty()`, `clear()`
 
 ### Queue (FIFO)
 
-First-In-First-Out:
+First-in, first-out data structure:
 
 ```sdev
 forge q be Queue()
 q.enqueue("first")
 q.enqueue("second")
+q.enqueue("third")
 
-speak(q.dequeue())  // first
-speak(q.peek())     // second
-speak(q.size())     // 1
-speak(q.isEmpty())  // nope
+speak(q.peek())      // first  (look without removing)
+speak(q.dequeue())   // first  (remove and return)
+speak(q.peek())      // second
+speak(q.size())      // 2
+speak(q.isEmpty())   // nope
 ```
+
+**Queue methods:** `enqueue(v)`, `dequeue()`, `peek()`, `size()`, `isEmpty()`, `clear()`, `toList()`
 
 ### Stack (LIFO)
 
-Last-In-First-Out:
+Last-in, first-out data structure:
 
 ```sdev
 forge s be Stack()
-s.push(1)
-s.push(2)
-s.push(3)
+s.push(10)
+s.push(20)
+s.push(30)
 
-speak(s.pop())      // 3
-speak(s.peek())     // 2
-speak(s.size())     // 2
+speak(s.peek())   // 30  (look without removing)
+speak(s.pop())    // 30  (remove and return)
+speak(s.pop())    // 20
+speak(s.size())   // 1
+
+// Stack-based undo system
+forge history be Stack()
+history.push("action1")
+history.push("action2")
+history.push("action3")
+
+speak("Undoing:", history.pop())  // action3
+speak("Undoing:", history.pop())  // action2
 ```
+
+**Stack methods:** `push(v)`, `pop()`, `peek()`, `size()`, `isEmpty()`, `clear()`, `toList()`
 
 ### LinkedList
 
-Doubly-linked list:
+A doubly-linked list with O(1) front/back operations:
 
 ```sdev
 forge list be LinkedList()
 list.append(1)
 list.append(2)
+list.append(3)
 list.prepend(0)
 
-speak(list.toList())  // [0, 1, 2]
-speak(list.get(1))    // 1
-list.remove(1)
-speak(list.size())    // 2
+speak(list.toList())   // [0, 1, 2, 3]
+speak(list.size())     // 4
+speak(list.get(2))     // 2
+
+list.remove(1)         // Remove element with value 1
+speak(list.toList())   // [0, 2, 3]
+
+speak(list.head())     // 0
+speak(list.tail())     // 3
+```
+
+**LinkedList methods:** `append(v)`, `prepend(v)`, `remove(v)`, `get(idx)`, `size()`, `head()`, `tail()`, `toList()`, `clear()`
+
+---
+
+## Matrix Operations
+
+sdev has a comprehensive built-in matrix math library useful for data science and machine learning.
+
+### Creating Matrices
+
+```sdev
+// Matrix filled with a value
+forge zeros be matrix(3, 3, 0)
+// [[0,0,0], [0,0,0], [0,0,0]]
+
+forge ones be matrix(2, 4, 1)
+// [[1,1,1,1], [1,1,1,1]]
+
+// Identity matrix
+forge eye be identity(4)
+// [[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]]
+
+// Reshape a flat list into a matrix
+forge m be reshape([1,2,3,4,5,6], 2, 3)
+// [[1,2,3], [4,5,6]]
+```
+
+### Matrix Arithmetic
+
+```sdev
+forge a be [[1, 2], [3, 4]]
+forge b be [[5, 6], [7, 8]]
+
+// Element-wise operations
+speak(matadd(a, b))     // [[6,8], [10,12]]
+speak(matsub(a, b))     // [[-4,-4], [-4,-4]]
+speak(matscale(a, 2))   // [[2,4], [6,8]]
+
+// Matrix multiplication
+speak(matmul(a, b))
+// [[1*5+2*7, 1*6+2*8], [3*5+4*7, 3*6+4*8]]
+// = [[19,22], [43,50]]
+
+// Transpose
+speak(transpose(a))
+// [[1,3], [2,4]]
+```
+
+### Vector Operations
+
+```sdev
+forge v1 be [1, 2, 3]
+forge v2 be [4, 5, 6]
+
+// Dot product
+speak(dot(v1, v2))   // 1*4 + 2*5 + 3*6 = 32
+
+// Element-wise multiply via each
+forge elem be each(v1, (x, i) -> x * v2[i])
+speak(elem)   // [4, 10, 18]
+```
+
+### Matrix Utilities
+
+| Function | Description |
+|----------|-------------|
+| `matrix(rows, cols, fill)` | Create filled matrix |
+| `identity(n)` | Create n×n identity matrix |
+| `transpose(m)` | Transpose rows and columns |
+| `matmul(a, b)` | Matrix multiplication |
+| `matadd(a, b)` | Element-wise addition |
+| `matsub(a, b)` | Element-wise subtraction |
+| `matscale(m, s)` | Scalar multiplication |
+| `dot(a, b)` | Dot product of two vectors |
+| `reshape(list, rows, cols)` | Reshape list to 2D matrix |
+| `flatten(m)` | Flatten 2D matrix to 1D list |
+| `shape(m)` | Get `[rows, cols]` of matrix |
+| `sum(m)` | Sum all elements |
+| `mean(list)` | Mean of a 1D list |
+
+### Neural Network Example
+
+```sdev
+// Sigmoid activation function
+conjure sigmoid(x) ::
+  yield 1 / (1 + exp(-x))
+;;
+
+// Feedforward neural network layer
+conjure layer(inputs, weights, biases) ::
+  // inputs: [1 x n], weights: [n x m], biases: [1 x m]
+  forge z be matmul(inputs, weights)
+  forge zb be matadd(z, biases)
+  // Apply sigmoid element-wise
+  yield each(zb, row -> each(row, x -> sigmoid(x)))
+;;
+
+forge input be [[0.5, 0.3, 0.2]]
+forge w1 be [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
+forge b1 be [[0.1, 0.1]]
+
+forge output be layer(input, w1, b1)
+speak("Layer output:", output)
 ```
 
 ---
 
 ## Graphics & Game Development
 
-sdev includes comprehensive built-in support for 2D graphics, canvas drawing, turtle graphics, and game development.
+sdev has a built-in 2D graphics and turtle graphics API. Graphics commands render to the Canvas panel in the IDE.
 
 ### Canvas Setup
 
 ```sdev
-canvas(800, 600)      // Set canvas size
-clear("#1a1a2e")      // Clear with background color
-background("#2d2d44") // Set background color
+canvas(800, 600)    // Set canvas dimensions (width, height)
+clear("#1a1a2e")    // Clear with a background color
+```
+
+### Fill and Stroke
+
+```sdev
+fill("blue")          // Set fill color
+noFill()              // Disable fill
+stroke("red", 2)      // Set stroke: color, width
+noStroke()            // Disable stroke
+lineWidth(3)          // Set line width separately
+alpha(0.5)            // Set global transparency (0–1)
+lineCap("round")      // Line cap: "round", "square", "butt"
+lineJoin("round")     // Line join: "round", "bevel", "miter"
 ```
 
 ### Basic Shapes
 
 ```sdev
-// Rectangle (x, y, width, height, radius?)
-fill("blue")
-rect(50, 50, 100, 80)
-rect(200, 50, 100, 80, 10)  // Rounded corners
+// Rectangle: rect(x, y, width, height, cornerRadius?)
+fill("steelblue")
+rect(50, 50, 200, 100)
+rect(300, 50, 200, 100, 20)    // Rounded corners
 
-// Circle (x, y, radius)
-fill("red")
-circle(150, 200, 50)
+// Circle: circle(x, y, radius)
+fill("tomato")
+circle(150, 300, 60)
 
-// Ellipse (x, y, radiusX, radiusY, rotation?)
-fill("green")
-ellipse(300, 200, 60, 40)
-ellipse(400, 200, 60, 40, 45)  // Rotated 45 degrees
-
-// Arc (x, y, radius, startAngle, endAngle, counterclockwise?)
-stroke("yellow", 3)
-arc(200, 350, 40, 0, 180)
-arc(300, 350, 40, 0, 270, yep)  // Counter-clockwise
-
-// Line (x1, y1, x2, y2)
-stroke("white", 2)
-line(50, 400, 200, 450)
-
-// Point (x, y, size?)
-fill("cyan")
-point(100, 100)
-point(120, 100, 5)  // Larger point
-
-// Triangle (x1, y1, x2, y2, x3, y3)
-fill("orange")
-triangle(400, 100, 450, 180, 350, 180)
-
-// Polygon (array of [x, y] points)
-fill("purple")
-polygon([[500, 100], [550, 150], [530, 200], [470, 200], [450, 150]])
-
-// Star (x, y, outerRadius, innerRadius, points?)
+// Ellipse: ellipse(x, y, radiusX, radiusY, rotation?)
 fill("gold")
-star(600, 150, 50, 25)
-star(700, 150, 50, 25, 8)  // 8-pointed star
+ellipse(350, 300, 100, 50)
+ellipse(550, 300, 100, 50, 45)   // Rotated 45°
 
-// Heart (x, y, size)
+// Line: line(x1, y1, x2, y2)
+stroke("white", 2)
+line(50, 400, 750, 400)
+
+// Arc: arc(x, y, radius, startAngle, endAngle, counterclockwise?)
+stroke("lime", 3)
+arc(200, 500, 50, 0, 270)
+
+// Triangle: triangle(x1, y1, x2, y2, x3, y3)
+fill("orchid")
+triangle(400, 450, 450, 550, 350, 550)
+
+// Polygon: polygon([[x,y], ...])
+fill("coral")
+polygon([[600, 400], [650, 430], [640, 490], [560, 490], [550, 430]])
+
+// Star: star(x, y, outerR, innerR, points?)
+fill("gold")
+star(150, 150, 50, 25)          // 5-pointed star
+star(300, 150, 60, 25, 8)       // 8-pointed star
+
+// Heart: heart(x, y, size)
 fill("red")
-heart(650, 300, 40)
-```
+heart(500, 150, 50)
 
-### Drawing State
-
-```sdev
-// Fill and Stroke
-fill("blue")           // Set fill color
-noFill()               // Disable fill
-stroke("red", 2)       // Set stroke color and width
-noStroke()             // Disable stroke
-lineWidth(3)           // Set line width
-lineCap("round")       // Line cap: round, square, butt
-lineJoin("round")      // Line join: round, bevel, miter
-
-// Transparency and Shadows
-alpha(0.5)             // Set global alpha (0-1)
-shadow("black", 10, 5, 5)  // Shadow: color, blur, offsetX, offsetY
-noShadow()             // Disable shadow
+// Point: point(x, y, size?)
+fill("white")
+point(100, 100)
+point(150, 100, 8)
 ```
 
 ### Text Drawing
 
 ```sdev
 fill("white")
-text("Hello, World!", 100, 100)      // Basic text
-text("Large Text", 100, 150, 32)     // With font size
+text("Hello, World!", 100, 100)           // Basic text
+text("Large Text", 100, 150, 36)          // With size
+text("Bold Text", 100, 200, 24, "bold")   // With style
 
-font("Arial", "bold")                // Font family and style
-textAlign("center", "middle")        // Horizontal and vertical alignment
+font("Arial", "bold")                     // Set font family and style
+textAlign("center", "middle")             // Horizontal: left/center/right; Vertical: top/middle/bottom
 ```
 
 ### Gradients
 
 ```sdev
-// Linear Gradient (x1, y1, x2, y2, colorStops...)
-// colorStops are [position, color] pairs where position is 0-1
+// Linear gradient: fill with gradient from (x1,y1) to (x2,y2)
+// Color stops: [position, color] where position is 0.0 to 1.0
 linearGradient(0, 0, 400, 0, [0, "red"], [0.5, "yellow"], [1, "green"])
 rect(0, 0, 400, 100)
 
-// Radial Gradient (x1, y1, r1, x2, y2, r2, colorStops...)
-radialGradient(200, 200, 0, 200, 200, 100, [0, "white"], [1, "blue"])
-circle(200, 200, 100)
+// Radial gradient: from inner circle to outer circle
+radialGradient(200, 200, 0, 200, 200, 150, [0, "white"], [0.5, "cyan"], [1, "navy"])
+circle(200, 200, 150)
+```
+
+### Shadows
+
+```sdev
+shadow("rgba(0,0,0,0.5)", 15, 5, 5)   // color, blur, offsetX, offsetY
+fill("gold")
+circle(200, 200, 80)
+noShadow()
 ```
 
 ### Transformations
 
 ```sdev
-save()                 // Save current state
-translate(100, 100)    // Move origin
-rotate(0.5)            // Rotate (radians)
-scale(2)               // Scale uniformly
-scale(2, 1.5)          // Scale x and y separately
-restore()              // Restore saved state
-resetTransform()       // Reset all transformations
+save()                // Push current state
+translate(200, 200)   // Move origin to (200, 200)
+rotate(0.785)         // Rotate 45° (in radians)
+scale(1.5)            // Scale uniformly
+rect(-50, -50, 100, 100)   // Draw centered rectangle
+restore()             // Pop saved state
+
+resetTransform()      // Reset all transforms to identity
 ```
 
 ### Path Drawing
 
 ```sdev
-beginPath()
-moveTo(50, 50)
-lineTo(150, 50)
-lineTo(150, 150)
-lineTo(50, 150)
-closePath()
-fillPath()             // Fill the path
-strokePath()           // Stroke the path
-
-// Bezier Curves
+// Custom polygon path
+fill("purple")
 beginPath()
 moveTo(100, 100)
-bezierTo(150, 50, 200, 150, 250, 100)  // cp1x, cp1y, cp2x, cp2y, x, y
+lineTo(200, 80)
+lineTo(250, 150)
+lineTo(200, 220)
+lineTo(100, 200)
+closePath()
+fillPath()
 strokePath()
 
-// Quadratic Curves
+// Bezier curve
+stroke("cyan", 2)
 beginPath()
-moveTo(100, 200)
-quadraticTo(150, 150, 200, 200)  // cpx, cpy, x, y
+moveTo(100, 300)
+bezierTo(150, 200, 250, 400, 300, 300)   // cp1x, cp1y, cp2x, cp2y, x, y
+strokePath()
+
+// Quadratic curve
+beginPath()
+moveTo(100, 400)
+quadraticTo(200, 350, 300, 400)           // cpx, cpy, x, y
 strokePath()
 ```
 
 ### Turtle Graphics
 
-```sdev
-turtle()               // Initialize turtle at center
-forward(100)           // Move forward
-backward(50)           // Move backward
-left(90)               // Turn left (degrees)
-right(45)              // Turn right (degrees)
-penup()                // Stop drawing
-pendown()              // Start drawing
-pencolor("lime")       // Set pen color
-penwidth(3)            // Set pen width
-goto(200, 200)         // Go to coordinates
-home()                 // Return to center
-setheading(90)         // Set absolute heading
-heading()              // Get current heading
-pos()                  // Get current position [x, y]
-turtleCircle(50)       // Draw circle of radius
-turtleCircle(50, 72)   // Circle with specific steps
-dot(10)                // Draw dot at position
-dot(10, "red")         // Dot with color
-stamp()                // Stamp turtle shape
+The turtle graphics API lets you draw by commanding a turtle that moves and draws lines as it goes.
 
-// Example: Turtle Spiral
+```sdev
+canvas(500, 500)
+clear("#0d0d20")
+turtle()           // Create turtle at center, facing up
+
+// Basic movement
+forward(100)       // Move forward 100 units (drawing as it goes)
+right(90)          // Turn right 90 degrees
+forward(100)
+right(90)
+forward(100)
+right(90)
+forward(100)       // This draws a square!
+
+// Pen control
+penup()            // Lift pen — move without drawing
+goto(250, 250)     // Jump to coordinates
+pendown()          // Lower pen — start drawing again
+
+// Pen style
+pencolor("lime")   // Set pen color (any CSS color)
+penwidth(3)        // Set pen width
+
+// Advanced
+setheading(45)     // Set absolute direction (degrees)
+speak(heading())   // Get current heading
+speak(pos())       // Get current [x, y] position
+home()             // Return to start position
+
+// Turtle circle
+turtleCircle(50)        // Draw full circle
+turtleCircle(50, 72)    // Polygon approximation (72 steps)
+
+// Dot and stamp
+dot(10, "red")     // Draw a filled dot
+stamp()            // Leave a mark of the turtle shape
+
+// EXAMPLE: Psychedelic spiral
+canvas(600, 600)
+clear("#000000")
 turtle()
-clear("black")
-within i be sequence(1, 200) ::
-    pencolor(hue(i * 2))
-    forward(i * 2)
-    right(91)
+within i be sequence(0, 300) ::
+  pencolor(hue(i * 1.2))
+  penwidth(1 + i * 0.02)
+  forward(i)
+  right(91)
 ;;
 ```
 
-### Sprites & Game Development
+### Sprites & Game Objects
 
 ```sdev
-// Create Sprite (x, y, width, height, color?)
-forge player be createSprite(100, 100, 50, 50, "blue")
-forge enemy be createSprite(200, 150, 40, 40, "red")
+// Create sprite: createSprite(x, y, width, height, color?)
+forge player be createSprite(100, 100, 40, 40, "blue")
+forge enemy be createSprite(400, 300, 40, 40, "red")
 
-// Access properties
-speak(player.x)        // 100
-speak(player.y)        // 100
-speak(player.width)    // 50
-speak(player.height)   // 50
-speak(player.color)    // blue
-
-// Set velocity
+// Access/set properties
+player.x be 150
 player.velocityX be 5
-player.velocityY be 2
+player.velocityY be -2
 
-// Update sprite (applies velocity)
+// Update position (applies velocity)
 updateSprite(player)
-
-// Move sprite by delta
-moveSprite(player, 10, 5)
 
 // Draw sprite
 drawSprite(player)
@@ -1022,860 +1867,693 @@ drawSprite(enemy)
 
 // Collision detection
 ponder spriteCollides(player, enemy) ::
-    speak("Hit!")
+  speak("HIT!")
 ;;
-```
 
-### 2D Vectors (Vec2)
-
-```sdev
-forge v1 be Vec2(3, 4)
-forge v2 be Vec2(1, 2)
-
-forge sum be v1.add(v2)       // Vec2(4, 6)
-forge diff be v1.sub(v2)      // Vec2(2, 2)
-forge scaled be v1.mul(2)     // Vec2(6, 8)
-
-speak(v1.mag())               // 5
-forge unit be v1.normalize()  // Vec2(0.6, 0.8)
-speak(v1.dot(v2))             // 11
-speak(v1.distance(v2))        // 2.83
+// Move by delta
+moveSprite(player, 10, 5)
 ```
 
 ### Color Functions
 
 ```sdev
-// RGB and RGBA
+// CSS color names work directly
+fill("red")
+fill("steelblue")
+fill("rgba(255, 0, 0, 0.5)")
+
+// Helper functions
 forge red be rgb(255, 0, 0)
-forge transparent be rgba(255, 0, 0, 0.5)
+forge transparent be rgba(0, 255, 0, 0.3)
 
-// HSL and HSLA
-forge blue be hue(240)              // Just hue (auto s=100, l=50)
-forge purple be hue(280, 80, 60)    // hue, saturation, lightness
-forge faded be hsla(120, 100, 50, 0.5)
+// HSL color — hue(hue, saturation?, lightness?)
+forge cyan be hue(180)              // Cyan (s=100, l=50 defaults)
+forge purple be hue(270, 80, 60)    // Custom HSL
+forge faded be hsla(240, 100, 50, 0.4)
 
-// Random Color
-forge color be randomColor()
+// Rainbow cycle (great for spirals!)
+within i be sequence(360) ::
+  fill(hue(i))
+  rect(i, 0, 1, 50)
+;;
+
+// Random color
+fill(randomColor())
 ```
 
-### Graphics Math Utilities
+### Graphics Math
 
 ```sdev
-// Angle conversion
-forge rad be radians(180)     // Degrees to radians -> PI
-forge deg be degrees(3.14159) // Radians to degrees -> 180
+// Convert degrees/radians
+speak(radians(180))   // 3.14159...
+speak(degrees(PI))    // 180
 
-// Interpolation
-forge value be lerp(0, 100, 0.5)    // Linear interpolation -> 50
+// Lerp (smooth transitions)
+forge pos be lerp(0, 100, 0.25)   // 25
 
-// Range mapping
-forge mapped be mapRange(50, 0, 100, 0, 1)  // Map value to new range -> 0.5
+// Map value between ranges
+forge brightness be mapRange(50, 0, 100, 0, 255)   // 127.5
 
-// Constraining
-forge clamped be constrain(150, 0, 100)  // Clamp to range -> 100
+// Clamp
+forge safe be clamp(150, 0, 100)   // 100
 
-// Distance
-forge d be dist(0, 0, 3, 4)  // Distance between points -> 5
+// Distance between two points
+speak(dist(0, 0, 3, 4))   // 5
 ```
 
-### Complete Graphics Example
+### Complete 2D Graphics Example — Starfield
 
 ```sdev
-// Starfield Animation
 canvas(800, 600)
 
-forge stars be []
-within i be sequence(1, 100) ::
-    stars.push(::
-        "x": random(0, 800),
-        "y": random(0, 600),
-        "size": random(1, 4),
-        "speed": random(1, 5)
-    ;;)
+// Create 200 stars
+forge stars be each(sequence(200), i -> ::
+  "x": randint(0, 800),
+  "y": randint(0, 600),
+  "r": chaos() * 2 + 0.5,
+  "speed": chaos() * 2 + 0.5,
+  "bright": chaos() * 0.7 + 0.3
+;;)
+
+clear("#000011")
+
+within star be stars ::
+  fill(rgba(255, 255, 255, star.bright))
+  circle(star.x, star.y, star.r)
 ;;
 
-conjure drawFrame() ::
-    clear("#000011")
-    
-    within star be stars ::
-        // Update position
-        star.y be star.y + star.speed
-        ponder star.y > 600 ::
-            star.y be 0
-            star.x be random(0, 800)
-        ;;
-        
-        // Draw star
-        fill(rgba(255, 255, 255, star.size / 4))
-        circle(star.x, star.y, star.size)
-    ;;
-;;
-
-// Call drawFrame in a game loop
-drawFrame()
-```
-
-### Graphics Function Reference
-
-| Function | Description |
-|----------|-------------|
-| `canvas(w, h)` | Set canvas size |
-| `clear(color?)` | Clear canvas |
-| `background(color)` | Set background |
-| `fill(color)` | Set fill color |
-| `noFill()` | Disable fill |
-| `stroke(color, width?)` | Set stroke |
-| `noStroke()` | Disable stroke |
-| `lineWidth(w)` | Set line width |
-| `lineCap(style)` | Line cap style |
-| `lineJoin(style)` | Line join style |
-| `alpha(a)` | Set global alpha |
-| `shadow(color, blur, x, y?)` | Add shadow |
-| `noShadow()` | Remove shadow |
-| `rect(x, y, w, h, r?)` | Draw rectangle |
-| `circle(x, y, r)` | Draw circle |
-| `ellipse(x, y, rx, ry, rot?)` | Draw ellipse |
-| `arc(x, y, r, start, end, ccw?)` | Draw arc |
-| `line(x1, y1, x2, y2)` | Draw line |
-| `point(x, y, size?)` | Draw point |
-| `triangle(x1, y1, x2, y2, x3, y3)` | Draw triangle |
-| `polygon(points)` | Draw polygon |
-| `star(x, y, outer, inner, pts?)` | Draw star |
-| `heart(x, y, size)` | Draw heart |
-| `text(str, x, y, size?)` | Draw text |
-| `textAlign(h, v?)` | Set text alignment |
-| `font(family, style?)` | Set font |
-| `linearGradient(...)` | Create linear gradient |
-| `radialGradient(...)` | Create radial gradient |
-| `translate(x, y)` | Translate origin |
-| `rotate(angle)` | Rotate canvas |
-| `scale(x, y?)` | Scale canvas |
-| `save()` | Save state |
-| `restore()` | Restore state |
-| `resetTransform()` | Reset transforms |
-| `beginPath()` | Start new path |
-| `closePath()` | Close path |
-| `moveTo(x, y)` | Move to point |
-| `lineTo(x, y)` | Line to point |
-| `bezierTo(...)` | Bezier curve |
-| `quadraticTo(...)` | Quadratic curve |
-| `fillPath()` | Fill current path |
-| `strokePath()` | Stroke current path |
-| `turtle()` | Initialize turtle |
-| `forward(d)` | Move forward |
-| `backward(d)` | Move backward |
-| `left(deg)` | Turn left |
-| `right(deg)` | Turn right |
-| `penup()` | Pen up |
-| `pendown()` | Pen down |
-| `pencolor(c)` | Set pen color |
-| `penwidth(w)` | Set pen width |
-| `goto(x, y)` | Go to position |
-| `home()` | Return home |
-| `setheading(deg)` | Set heading |
-| `heading()` | Get heading |
-| `pos()` | Get position |
-| `turtleCircle(r, steps?)` | Draw circle |
-| `dot(size?, color?)` | Draw dot |
-| `stamp()` | Stamp turtle |
-| `createSprite(...)` | Create sprite |
-| `drawSprite(s)` | Draw sprite |
-| `moveSprite(s, dx, dy)` | Move sprite |
-| `updateSprite(s)` | Update sprite |
-| `spriteCollides(a, b)` | Check collision |
-| `rgb(r, g, b)` | RGB color |
-| `rgba(r, g, b, a)` | RGBA color |
-| `hue(h, s?, l?)` | HSL color |
-| `hsla(h, s, l, a)` | HSLA color |
-| `randomColor()` | Random color |
-| `radians(deg)` | Convert to radians |
-| `degrees(rad)` | Convert to degrees |
-| `lerp(a, b, t)` | Linear interpolation |
-| `mapRange(...)` | Map value to range |
-| `constrain(v, min, max)` | Clamp value |
-| `dist(x1, y1, x2, y2)` | Calculate distance |
-
----
-
-### each (map)
-Transform each element:
-```sdev
-forge numbers be [1, 2, 3, 4, 5]
-forge doubled be each(numbers, x -> x * 2)
-speak(doubled)  // [2, 4, 6, 8, 10]
-
-// With index
-forge indexed be each(numbers, (x, i) -> x + i)
-```
-
-### sift (filter)
-Keep elements matching predicate:
-```sdev
-forge numbers be [1, 2, 3, 4, 5, 6]
-forge evens be sift(numbers, x -> x % 2 equals 0)
-speak(evens)  // [2, 4, 6]
-```
-
-### fold (reduce)
-Reduce to single value:
-```sdev
-forge numbers be [1, 2, 3, 4, 5]
-forge total be fold(numbers, 0, (acc, x) -> acc + x)
-speak(total)  // 15
-
-// Find maximum
-forge max be fold(numbers, numbers[0], (a, b) -> a > b ~ a : b)
-```
-
-### seek (find)
-Find first matching element:
-```sdev
-forge users be [
-    :: "name": "Alice", "age": 25 ;;,
-    :: "name": "Bob", "age": 30 ;;
-]
-forge adult be seek(users, u -> u.age >= 30)
-speak(adult.name)  // Bob
-```
-
-### every & some
-```sdev
-forge nums be [2, 4, 6, 8]
-speak(every(nums, x -> x % 2 equals 0))  // yep (all even)
-speak(some(nums, x -> x > 5))  // yep (some > 5)
-```
-
-### zip & enumerate
-```sdev
-forge a be [1, 2, 3]
-forge b be ["a", "b", "c"]
-speak(zip(a, b))  // [[1,"a"], [2,"b"], [3,"c"]]
-
-speak(enumerate(["x", "y", "z"]))  // [[0,"x"], [1,"y"], [2,"z"]]
-```
-
----
-
-## Matrix Operations
-
-### Creating Matrices
-```sdev
-// Zero matrix
-forge zeros be matrix(3, 3, 0)
-// [[0,0,0], [0,0,0], [0,0,0]]
-
-// Identity matrix
-forge eye be identity(3)
-// [[1,0,0], [0,1,0], [0,0,1]]
-
-// From list
-forge m be reshape([1,2,3,4,5,6], 2, 3)
-// [[1,2,3], [4,5,6]]
-```
-
-### Matrix Functions
-| Function | Description |
-|----------|-------------|
-| `matrix(rows, cols, fill)` | Create matrix |
-| `identity(n)` | Identity matrix |
-| `transpose(m)` | Transpose |
-| `matmul(a, b)` | Matrix multiply |
-| `matadd(a, b)` | Matrix add |
-| `matsub(a, b)` | Matrix subtract |
-| `matscale(m, scalar)` | Scale matrix |
-| `dot(a, b)` | Dot product |
-| `reshape(list, rows, cols)` | Reshape to 2D |
-| `flatten(m)` | Flatten to 1D |
-| `shape(m)` | Get dimensions |
-| `sum(m)` | Sum all elements |
-| `mean(list)` | Calculate mean |
-
-### Example: Matrix Operations
-```sdev
-forge a be [[1, 2], [3, 4]]
-forge b be [[5, 6], [7, 8]]
-
-// Addition
-speak(matadd(a, b))  // [[6,8], [10,12]]
-
-// Multiplication
-speak(matmul(a, b))  // [[19,22], [43,50]]
-
-// Transpose
-speak(transpose(a))  // [[1,3], [2,4]]
-
-// Dot product of vectors
-forge v1 be [1, 2, 3]
-forge v2 be [4, 5, 6]
-speak(dot(v1, v2))  // 32
+// Draw nebula in center
+radialGradient(400, 300, 0, 400, 300, 200,
+  [0, "rgba(100,50,200,0.4)"],
+  [0.5, "rgba(50,100,255,0.2)"],
+  [1, "rgba(0,0,0,0)"]
+)
+circle(400, 300, 200)
 ```
 
 ---
 
 ## File I/O
 
+> **Note:** File I/O is available in the Python standalone interpreter and native desktop builds. In the browser-based IDE, these functions are simulated.
+
 ### Reading Files
+
 ```sdev
+// Read entire file as text
 forge content be decipher("data.txt")
 speak(content)
 
-// Read JSON
-forge data be unetch(decipher("config.json"))
-speak(data.setting)
+// Read and parse JSON
+forge config be unetch(decipher("config.json"))
+speak(config.version)
+speak(config.name)
 ```
 
 ### Writing Files
-```sdev
-inscribe("output.txt", "Hello, World!")
 
-// Write JSON
-forge data be :: "name": "Alice", "score": 100 ;;
-inscribe("data.json", etch(data, 2))  // Pretty print with indent
+```sdev
+// Write text file
+inscribe("output.txt", "Hello, World!\n")
+
+// Write JSON with indentation
+forge data be :: "score": 100, "name": "Alice", "level": 5 ;;
+inscribe("save.json", etch(data))
 ```
 
-### Appending to Files
+### Append to File
+
 ```sdev
-appendFile("log.txt", "New entry\n")
+appendFile("log.txt", "User logged in\n")
+appendFile("log.txt", "User viewed dashboard\n")
 ```
 
-### File Operations
+### File Utilities
+
 | Function | Description |
 |----------|-------------|
-| `decipher(path)` | Read file |
-| `inscribe(path, content)` | Write file |
+| `decipher(path)` | Read file as text |
+| `inscribe(path, content)` | Write text to file |
 | `appendFile(path, content)` | Append to file |
-| `fileExists(path)` | Check if exists |
-| `deleteFile(path)` | Delete file |
-| `listDir(path)` | List directory |
+| `fileExists(path)` | Returns `yep`/`nope` |
+| `deleteFile(path)` | Delete a file |
+| `listDir(path)` | Get list of files in directory |
 
 ---
 
 ## Networking
 
-### HTTP Requests
-```sdev
-// Simple GET request
-forge data be fetch("https://api.example.com/users")
-speak(data)
+> **Note:** Network functions are available in async contexts. In the browser they use `fetch`. In native builds they use Node.js http.
 
-// POST request with options
-forge response be fetch("https://api.example.com/users", ::
+### HTTP GET
+
+```sdev
+async conjure getUsers() ::
+  forge data be await fetch("https://jsonplaceholder.typicode.com/users")
+  yield data
+;;
+```
+
+### HTTP POST
+
+```sdev
+async conjure createUser(name, email) ::
+  forge response be await fetch("https://api.example.com/users", ::
     "method": "POST",
     "headers": :: "Content-Type": "application/json" ;;,
-    "body": :: "name": "Alice" ;;
-;;)
-```
-
----
-
-## Error Handling
-
-### Try/Rescue (try/catch)
-```sdev
-attempt ::
-    forge result be decipher("missing.txt")
-    speak(result)
-;; rescue error ::
-    speak("Error occurred: " + error)
+    "body": :: "name": name, "email": email ;;
+  ;;)
+  yield response
 ;;
 ```
 
-### Assertions
-```sdev
-forge age be 18
-assert(age >= 0, "Age cannot be negative")
-assert(age < 150)  // Default message
-```
-
 ---
 
-## Examples
+## Examples & Recipes
 
 ### FizzBuzz
+
 ```sdev
 within i be sequence(1, 101) ::
-    ponder i % 15 equals 0 ::
-        speak("FizzBuzz")
-    ;; otherwise ponder i % 3 equals 0 ::
-        speak("Fizz")
-    ;; otherwise ponder i % 5 equals 0 ::
-        speak("Buzz")
-    ;; otherwise ::
-        speak(i)
-    ;;
+  ponder i % 15 equals 0 ::
+    speak("FizzBuzz")
+  ;; otherwise ponder i % 3 equals 0 ::
+    speak("Fizz")
+  ;; otherwise ponder i % 5 equals 0 ::
+    speak("Buzz")
+  ;; otherwise ::
+    speak(i)
+  ;;
 ;;
 ```
 
-### Fibonacci Sequence
+### Fibonacci (Memoized)
+
 ```sdev
-conjure fibonacci(n) ::
-    ponder n <= 1 ::
-        yield n
-    ;;
-    yield fibonacci(n - 1) + fibonacci(n - 2)
+forge memo be :: ;;
+
+conjure fib(n) ::
+  ponder n <= 1 :: yield n ;;
+  ponder contains(memo, morph(n, "text")) ::
+    yield memo[morph(n, "text")]
+  ;;
+  forge result be fib(n - 1) + fib(n - 2)
+  memo[morph(n, "text")] be result
+  yield result
 ;;
 
-within i be sequence(10) ::
-    speak(fibonacci(i))
+within i be sequence(0, 30) ::
+  speak("fib(" + morph(i, "text") + ") =", fib(i))
 ;;
 ```
 
-### Quick Sort
+### Binary Search
+
+```sdev
+conjure binarySearch(arr, target) ::
+  forge lo be 0
+  forge hi be measure(arr) - 1
+
+  cycle lo <= hi ::
+    forge mid be ground((lo + hi) / 2)
+    ponder arr[mid] equals target ::
+      yield mid
+    ;; otherwise ponder arr[mid] < target ::
+      lo be mid + 1
+    ;; otherwise ::
+      hi be mid - 1
+    ;;
+  ;;
+
+  yield -1
+;;
+
+forge sorted be [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+speak(binarySearch(sorted, 23))   // 5
+speak(binarySearch(sorted, 50))   // -1
+```
+
+### Quicksort
+
 ```sdev
 conjure quicksort(arr) ::
-    ponder measure(arr) <= 1 ::
-        yield arr
-    ;;
-    
-    forge pivot be arr[0]
-    forge rest be portion(arr, 1)
-    
-    forge less be sift(rest, x -> x < pivot)
-    forge greater be sift(rest, x -> x >= pivot)
-    
-    yield quicksort(less) + [pivot] + quicksort(greater)
+  ponder measure(arr) <= 1 :: yield arr ;;
+
+  forge pivot be arr[ground(measure(arr) / 2)]
+  forge less be sift(arr, x -> x < pivot)
+  forge equal be sift(arr, x -> x equals pivot)
+  forge greater be sift(arr, x -> x > pivot)
+
+  yield quicksort(less) + equal + quicksort(greater)
 ;;
 
 speak(quicksort([3, 6, 8, 10, 1, 2, 1]))
 // [1, 1, 2, 3, 6, 8, 10]
 ```
 
-### Simple Calculator
+### Stack-Based Calculator
+
 ```sdev
-conjure calculate(a, op, b) ::
-    ponder op equals "+" ::
-        yield a + b
-    ;; otherwise ponder op equals "-" ::
-        yield a - b
-    ;; otherwise ponder op equals "*" ::
-        yield a * b
-    ;; otherwise ponder op equals "/" ::
-        yield a / b
+conjure calculate(expression) ::
+  forge tokens be shatter(expression, " ")
+  forge stack be Stack()
+
+  within token be tokens ::
+    ponder token equals "+" ::
+      forge b be stack.pop()
+      forge a be stack.pop()
+      stack.push(a + b)
+    ;; otherwise ponder token equals "-" ::
+      forge b be stack.pop()
+      forge a be stack.pop()
+      stack.push(a - b)
+    ;; otherwise ponder token equals "*" ::
+      forge b be stack.pop()
+      forge a be stack.pop()
+      stack.push(a * b)
+    ;; otherwise ponder token equals "/" ::
+      forge b be stack.pop()
+      forge a be stack.pop()
+      stack.push(a / b)
     ;; otherwise ::
-        yield "Unknown operator"
+      stack.push(morph(token, "number"))
     ;;
+  ;;
+
+  yield stack.pop()
 ;;
 
-speak(calculate(10, "+", 5))   // 15
-speak(calculate(10, "*", 3))   // 30
+speak(calculate("3 4 + 2 *"))    // (3+4)*2 = 14
+speak(calculate("5 1 2 + 4 * + 3 -"))  // 5+(1+2)*4-3 = 14
 ```
 
-### Word Counter
+### Caesar Cipher
+
 ```sdev
-conjure countWords(text) ::
-    forge words be shatter(trim(text), " ")
-    forge counts be ::;;
-    
-    within word be words ::
-        forge w be lower(word)
-        ponder contains(counts, w) ::
-            counts[w] be counts[w] + 1
-        ;; otherwise ::
-            counts[w] be 1
-        ;;
+conjure caesarEncode(text, shift) ::
+  forge result be ""
+  within ch be chars(text) ::
+    forge code be locate("ABCDEFGHIJKLMNOPQRSTUVWXYZ", upper(ch))
+    ponder code >= 0 ::
+      forge shifted be (code + shift) % 26
+      result be result + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[shifted]
+    ;; otherwise ::
+      result be result + ch
     ;;
-    
-    yield counts
+  ;;
+  yield result
 ;;
 
-forge text be "The quick brown fox jumps over the lazy dog"
-speak(countWords(text))
+speak(caesarEncode("HELLO WORLD", 3))   // KHOOR ZRUOG
+speak(caesarEncode("KHOOR ZRUOG", 23))  // HELLO WORLD (decode with 26-3=23)
 ```
 
-### Neural Network Layer (Matrix Operations)
+### Word Frequency Counter
+
 ```sdev
-// Simple feedforward layer
-conjure sigmoid(x) ::
-    yield 1 / (1 + exp(-x))
+conjure wordFrequency(text) ::
+  forge words be shatter(lower(trim(text)), " ")
+  forge freq be ::;;
+
+  within word be words ::
+    forge w be replace(replace(word, ".", ""), ",", "")
+    ponder measure(w) > 0 ::
+      ponder contains(freq, w) ::
+        freq[w] be freq[w] + 1
+      ;; otherwise ::
+        freq[w] be 1
+      ;;
+    ;;
+  ;;
+
+  yield freq
 ;;
 
-conjure feedforward(inputs, weights, bias) ::
-    // Matrix multiply inputs by weights
-    forge z be matmul(inputs, weights)
-    
-    // Add bias
-    forge output be matadd(z, bias)
-    
-    // Apply activation (element-wise sigmoid)
-    yield each(output, row -> each(row, x -> sigmoid(x)))
-;;
-
-// Example usage
-forge inputs be [[1, 2, 3]]  // 1x3 input
-forge weights be [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]  // 3x2 weights
-forge bias be [[0.1, 0.1]]  // 1x2 bias
-
-forge result be feedforward(inputs, weights, bias)
-speak(result)
+forge text be "the quick brown fox jumps over the lazy dog the fox"
+forge freq be wordFrequency(text)
+speak(freq)
+// Sort by frequency
+forge sorted be sort(inscriptions(freq), k -> -freq[k])
 ```
 
----
+### Prime Sieve
 
-## Reference Card
-
-### Keywords
-| Keyword | Purpose |
-|---------|---------|
-| `forge` | Declare variable |
-| `be` | Assignment |
-| `conjure` | Declare function |
-| `yield` | Return value |
-| `ponder` | If statement |
-| `otherwise` | Else clause |
-| `cycle` | While loop |
-| `within` | For-in loop |
-| `yeet` | Break |
-| `skip` | Continue |
-| `attempt` | Try block |
-| `rescue` | Catch block |
-| `yep` | True |
-| `nope` | False |
-| `void` | Null |
-| `also` | Logical AND |
-| `either` | Logical OR |
-| `isnt` | Logical NOT |
-| `equals` | Equality |
-| `differs` | Inequality |
-
-### Special Symbols
-| Symbol | Purpose |
-|--------|---------|
-| `::` | Start block |
-| `;;` | End block |
-| `->` | Lambda arrow |
-| `|>` | Pipe operator |
-| `~` | Ternary if |
-| `:` | Ternary else / dict key-value |
-
-### Quick Examples
 ```sdev
-// Variable
-forge x be 42
+conjure sieve(limit) ::
+  forge primes be each(sequence(2, limit + 1), x -> x)
+  forge result be []
 
-// Function
-conjure greet(name) ::
-    yield "Hello, " + name
+  cycle measure(primes) > 0 ::
+    forge p be primes[0]
+    gather(result, p)
+    primes be sift(primes, x -> x % p differs 0)
+  ;;
+
+  yield result
 ;;
 
-// If/else
-ponder x > 0 ::
-    speak("positive")
-;; otherwise ::
-    speak("non-positive")
+speak(sieve(50))
+// [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
+```
+
+### Linked-List Graph Traversal (BFS)
+
+```sdev
+// BFS using a Queue
+conjure bfs(graph, start) ::
+  forge visited be Set()
+  forge queue be Queue()
+  forge order be []
+
+  queue.enqueue(start)
+  visited.add(start)
+
+  cycle isnt queue.isEmpty() ::
+    forge node be queue.dequeue()
+    gather(order, node)
+
+    within neighbor be graph[node] ::
+      ponder isnt visited.has(neighbor) ::
+        visited.add(neighbor)
+        queue.enqueue(neighbor)
+      ;;
+    ;;
+  ;;
+
+  yield order
 ;;
 
-// Loop
-within i be sequence(5) ::
-    speak(i)
+forge graph be ::
+  "A": ["B", "C"],
+  "B": ["A", "D", "E"],
+  "C": ["A", "F"],
+  "D": ["B"],
+  "E": ["B", "F"],
+  "F": ["C", "E"]
 ;;
 
-// Lambda
-forge double be x -> x * 2
+speak(bfs(graph, "A"))  // ["A", "B", "C", "D", "E", "F"]
+```
 
-// Pipe
-[1,2,3] |> each(x -> x * 2) |> speak
+### Turtle Mandala
 
-// Dict
-forge obj be :: "key": "value" ;;
+```sdev
+canvas(600, 600)
+clear("#000000")
+turtle()
+penwidth(1.5)
+
+forge petals be 12
+forge petalAngle be 360 / petals
+
+within i be sequence(petals) ::
+  pencolor(hue(i * petalAngle))
+  within j be sequence(60) ::
+    forward(j * 0.5)
+    right(6)
+  ;;
+  penup()
+  home()
+  pendown()
+  setheading(i * petalAngle)
+;;
 ```
 
 ---
 
 ## JavaScript Interop (JS Interpreter Only)
 
-The JavaScript interpreter includes a special `js` keyword for calling external JavaScript functions directly. This is powerful for integrating with browser APIs and libraries like Leaflet.
+The browser-based interpreter includes a special `js` keyword for calling JavaScript functions directly from sdev code. This allows integration with browser APIs, DOM manipulation, and third-party JS libraries.
 
-### Syntax Forms
-
-sdev supports **three forms** of the `js` keyword:
+### Three Syntax Forms
 
 ```sdev
-// 1. Single-line (expression on same line)
-js <javascript expression>
+// 1. Single-line expression
+js <expression>
 
-// 2. Parenthesized form (multiline expressions)
+// 2. Parenthesized form (for objects, multi-line expressions)
 js (
-  <multiline javascript code>
+  <expression>
 )
 
-// 3. Block form (multiline statements)
+// 3. Statement block
 js {
-  <multiline javascript statements>
+  <statements>
 }
 ```
 
 ### Basic Examples
 
 ```sdev
-// Call a global function
+// Browser dialog
 js alert("Hello from sdev!")
 
-// Access browser APIs  
+// Read browser properties
 forge width be js window.innerWidth
-forge height be js window.innerHeight
-speak("Window size: " + width + "x" + height)
+speak("Width:", width)
 
-// Create DOM elements
-js document.body.style.backgroundColor = "navy"
+// DOM manipulation
+js document.body.style.backgroundColor = "#1a1a2e"
+js document.title = "My sdev App"
 
-// Use Math functions
-forge angle be js Math.PI / 4
+// Math
+forge angle be js Math.PI / 6
 forge result be js Math.sin(0.5)
 ```
 
-### Object Literals and Arrays
-
-The `js` keyword fully supports object literals `{}` and arrays `[]`:
+### Object Literals
 
 ```sdev
-// Create object literals using parenthesized form
-forge options be js ({
+// Use parenthesized form for object literals
+forge opts be js ({
   dragging: true,
-  zoomControl: false,
-  center: [51.5, -0.09]
+  zoom: 12,
+  center: [51.505, -0.09]
 })
-
-// Or inline (parenthesized for objects)
-forge point be js ({ x: 100, y: 200, label: "Start" })
-
-// Arrays work directly
-forge coords be js [[40.7, -74], [34.0, -118], [41.8, -87]]
 
 // Nested objects
 forge config be js ({
-  map: { zoom: 12, animate: true },
-  markers: [
-    { lat: 51.5, lng: -0.09, title: "London" },
-    { lat: 48.8, lng: 2.35, title: "Paris" }
-  ]
+  api: {
+    url: "https://api.example.com",
+    timeout: 5000
+  },
+  debug: false
 })
 ```
 
 ### Arrow Functions
 
-Arrow functions are fully supported:
-
 ```sdev
-// Arrow function in callback
-js myArray.map(x => x * 2)
+// Map/filter in JS
+forge doubled be js [1, 2, 3, 4].map(x => x * 2)
+forge filtered be js [1, 2, 3, 4].filter(x => x > 2)
 
-// Arrow function with body
-js myArray.filter(item => {
-  return item.active && item.score > 50;
+// Event handlers
+js document.getElementById("btn").addEventListener("click", (e) => {
+  console.log("Clicked!", e.target)
 })
 
-// Event handlers with arrows
-js button.addEventListener("click", (e) => {
-  console.log("Clicked at", e.clientX, e.clientY);
-})
-
-// Using sdev variables in arrows
-forge multiplier be 3
+// Use sdev variables in JS arrows
+forge multiplier be 5
 forge result be js [1, 2, 3].map(x => x * multiplier)
 ```
 
-### Multiline JavaScript Blocks
-
-Use `js { ... }` for complex multiline JavaScript:
+### Multi-line JS Blocks
 
 ```sdev
-// Multiline statement block
 js {
-  const data = [1, 2, 3, 4, 5];
-  let sum = 0;
-  for (const num of data) {
-    sum += num;
-  }
-  console.log("Sum:", sum);
-}
+  const canvas = document.createElement("canvas")
+  canvas.width = 400
+  canvas.height = 300
+  document.body.appendChild(canvas)
 
-// Define and call a function
-js {
-  function greet(name) {
-    return "Hello, " + name + "!";
-  }
-  alert(greet("World"));
-}
-
-// Complex DOM manipulation
-js {
-  const div = document.createElement("div");
-  div.className = "notification";
-  div.innerHTML = "<strong>Alert!</strong> Something happened.";
-  div.style.cssText = "padding: 10px; background: yellow;";
-  document.body.appendChild(div);
+  const ctx = canvas.getContext("2d")
+  ctx.fillStyle = "navy"
+  ctx.fillRect(0, 0, 400, 300)
+  ctx.fillStyle = "white"
+  ctx.font = "24px monospace"
+  ctx.fillText("Made in sdev!", 100, 150)
 }
 ```
 
-### Multiline Expressions with Parentheses
-
-Use `js ( ... )` for multiline expressions that return a value:
-
-```sdev
-// Multiline object literal
-forge settings be js (
-  {
-    theme: "dark",
-    fontSize: 14,
-    features: {
-      autoSave: true,
-      spellCheck: false
-    }
-  }
-)
-
-// Complex expression
-forge result be js (
-  [1, 2, 3, 4, 5]
-    .map(x => x * x)
-    .filter(x => x > 5)
-    .reduce((a, b) => a + b, 0)
-)
-```
-
-### Leaflet Integration
-
-The `js` keyword is especially useful with Leaflet:
+### Leaflet Map Integration
 
 ```sdev
 // Initialize a Leaflet map
-forge myMap be js L.map("map").setView([51.505, -0.09], 13)
+forge map be js L.map("map-container").setView([51.505, -0.09], 13)
 
-// Add a tile layer
-js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
+js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", ({
+  attribution: "© OpenStreetMap contributors"
+})).addTo(map)
 
-// Add a marker with options
-forge marker be js (
-  L.marker([51.5, -0.09], {
-    draggable: true,
-    title: "Click me!"
-  }).addTo(myMap)
-)
-
-// Bind a popup
-js marker.bindPopup("Hello World!").openPopup()
-
-// Add event listener with arrow function
-js myMap.on("click", (e) => {
-  console.log("Clicked at:", e.latlng.lat, e.latlng.lng);
-  L.marker(e.latlng).addTo(myMap);
-})
-
-// Complex Leaflet setup
-js {
-  const circle = L.circle([51.508, -0.11], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-  }).addTo(myMap);
-  
-  circle.bindPopup("I am a circle.");
-}
-```
-
-### Variable Access
-
-sdev variables are accessible within `js` expressions:
-
-```sdev
-forge lat be 40.7128
-forge lng be -74.0060
-forge zoom be 12
-
-// Use sdev variables in JavaScript
-forge map be js L.map("map").setView([lat, lng], zoom)
-
-forge name be "New York"
-js console.log("Viewing: " + name)
-
-// Variables in arrow functions
-forge items be ["a", "b", "c"]
-forge prefix be "item_"
-js items.map(x => prefix + x)
-```
-
-### More Examples
-
-
-```sdev
-// Simple function call
-js console.log("Hello from JS!")
-
-// Create a Leaflet map
-forge myMap be js L.map("map").setView([51.505, -0.09], 13)
-
-// Add a tile layer
-js L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(myMap)
-
-// Add a marker
-forge marker be js L.marker([51.5, -0.09]).addTo(myMap)
-
-// Bind a popup
-js marker.bindPopup("Hello World!").openPopup()
-
-// Access browser APIs
-js document.title = "My sdev App"
-
-// Create objects (wrap in parentheses for object literals)
-forge settings be js ({ theme: "dark", fontSize: 14 })
-
-// Array operations
-forge numbers be js [1, 2, 3, 4, 5].map(x => x * x)
-
-// DOM manipulation
-js document.getElementById("demo").innerHTML = "Changed by sdev!"
-
-// Event listeners
-js myMap.on("click", (e) => console.log("Clicked:", e.latlng))
-
-// Timer functions
-js setTimeout(() => alert("Hello!"), 1000)
-```
-
-### Using sdev Variables in JavaScript
-
-sdev variables are automatically accessible in `js` expressions:
-
-```sdev
-forge lat be 40.7128
-forge lng be -74.0060
-forge zoom be 12
-
-// Use sdev variables directly
-forge map be js L.map("map").setView([lat, lng], zoom)
-
-forge name be "New York"
-js console.log("Viewing: " + name)
-
-forge items be ["a", "b", "c"]
-forge prefix be "item_"
-forge result be js items.map(x => prefix + x)
-```
-
-### Error Handling
-
-JavaScript errors are caught and converted to sdev errors:
-
-```sdev
-attempt ::
-    js undefinedFunction()
-;; rescue err ::
-    speak("JS Error: " + err)
+// Add markers
+conjure addMarker(lat, lng, label) ::
+  js L.marker([lat, lng]).addTo(map).bindPopup(label)
 ;;
+
+addMarker(51.505, -0.09, "London, UK")
+addMarker(48.8566, 2.3522, "Paris, France")
+addMarker(52.52, 13.405, "Berlin, Germany")
 ```
-
-### Security Notes
-
-- The `js` keyword uses `new Function()` in browsers for sandboxed execution
-- Variables from sdev are passed into the JavaScript context
-- Global objects (window, document, L, etc.) remain accessible
-- Use with caution - arbitrary JavaScript execution can have side effects
 
 ---
 
-## Version
+## Complete Reference Card
 
-sdev version 1.0.0
+### Keywords
 
-For updates and more examples, visit the sdev repository.
+| Keyword | Purpose |
+|---------|---------|
+| `forge` | Declare a variable |
+| `be` | Assign a value |
+| `conjure` | Declare a function |
+| `yield` | Return a value from a function |
+| `ponder` | `if` statement |
+| `otherwise` | `else` clause |
+| `cycle` | `while` loop |
+| `iterate` | `for-each` loop (iterate x through list) |
+| `through` | Used with iterate |
+| `within` | `for-in` loop (within x be list) |
+| `yeet` | `break` — exit loop |
+| `skip` | `continue` — skip iteration |
+| `attempt` | `try` block |
+| `rescue` | `catch` block |
+| `yep` | Boolean `true` |
+| `nope` | Boolean `false` |
+| `void` | Null / absent value |
+| `also` | Logical AND |
+| `either` | Logical OR |
+| `isnt` | Logical NOT |
+| `equals` | Equality comparison |
+| `differs` | Inequality comparison |
+| `essence` | Define a class |
+| `extend` | Class inheritance |
+| `self` | Instance reference inside class methods |
+| `super` | Parent class reference |
+| `new` | Create class instance |
+| `summon` | Import from Gist |
+| `async` | Mark function as async |
+| `await` | Wait for async operation |
+| `spawn` | Run function concurrently |
+
+### Special Symbols
+
+| Symbol | Purpose |
+|--------|---------|
+| `::` | Start a block |
+| `;;` | End a block |
+| `->` | Lambda arrow |
+| `\|>` | Pipe operator |
+| `~` | Ternary condition operator |
+| `:` | Ternary else / dict key-value separator |
+| `//` | Line comment |
+| `#` | Line comment (Python style) |
+| `^` | Power operator |
+| `<>` | Inequality (alternative to `differs`) |
+
+### Built-in Constants
+
+| Constant | Value |
+|----------|-------|
+| `PI` | 3.141592653589793 |
+| `TAU` | 6.283185307179586 |
+| `E` | 2.718281828459045 |
+| `INFINITY` | Infinity |
+
+### Quick Reference Examples
+
+```sdev
+// ── Variables ──
+forge x be 42
+forge name be "Alice"
+forge active be yep
+
+// ── Arithmetic ──
+speak(2 ^ 10)     // 1024
+speak(10 % 3)     // 1
+speak(-5 + 8)     // 3
+
+// ── String ──
+speak("Hello" + " " + "World")
+speak(upper("hello"))        // HELLO
+speak(measure("hello"))      // 5
+
+// ── List ──
+forge nums be [1, 2, 3, 4, 5]
+gather(nums, 6)              // [1,2,3,4,5,6]
+speak(nums[-1])              // 6
+speak(sort(nums))            // [1,2,3,4,5,6]
+
+// ── Conditionals ──
+ponder x > 0 ::
+  speak("positive")
+;; otherwise ::
+  speak("non-positive")
+;;
+
+// ── Ternary ──
+forge label be x > 0 ~ "pos" : "neg"
+
+// ── Loop ──
+within i be sequence(5) :: speak(i) ;;  // 0 1 2 3 4
+cycle x > 0 :: x be x - 1 ;;
+
+// ── Function ──
+conjure add(a, b) :: yield a + b ;;
+forge double be x -> x * 2
+
+// ── Pipe ──
+[1,2,3,4,5] |> each(x -> x * 2) |> sift(x -> x > 4) |> speak
+// [6, 8, 10]
+
+// ── OOP ──
+essence Dog ::
+  conjure init(self, name) :: self.name be name ;;
+  conjure bark(self) :: speak(self.name + ": WOOF!") ;;
+;;
+forge rex be new Dog("Rex")
+rex.bark()
+
+// ── Error Handling ──
+attempt ::
+  forge n be morph("not a number", "number")
+;; rescue err ::
+  speak("Error:", err)
+;;
+
+// ── Higher-order ──
+forge evens be sift(sequence(10), x -> x % 2 equals 0)
+forge sum be fold(evens, 0, (a, b) -> a + b)
+speak(sum)   // 20
+
+// ── Collections ──
+forge s be Set()
+s.add(1) s.add(2) s.add(2)
+speak(s.values())   // [1, 2]
+
+forge q be Queue()
+q.enqueue("a") q.enqueue("b")
+speak(q.dequeue())   // a
+
+// ── Matrix ──
+forge a be [[1,2],[3,4]]
+forge b be [[5,6],[7,8]]
+speak(matmul(a, b))   // [[19,22],[43,50]]
+
+// ── Graphics ──
+canvas(400, 400)
+clear("#111")
+fill(hue(120))
+circle(200, 200, 100)
+
+// ── Turtle ──
+turtle()
+within i be sequence(4) ::
+  forward(100)
+  right(90)
+;;
+```
+
+---
+
+*This documentation covers sdev version 1.x. For the latest updates and additional examples, visit the sdev IDE.*
