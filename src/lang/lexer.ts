@@ -136,7 +136,7 @@ export class Lexer {
       return;
     }
 
-    // Numbers
+    // Numbers (including hex 0x...)
     if (this.isDigit(char)) {
       this.scanNumber(char, startColumn);
       return;
@@ -189,6 +189,17 @@ export class Lexer {
 
   private scanNumber(first: string, startColumn: number): void {
     let value = first;
+
+    // Hex literals: 0x... or 0X...
+    if (first === '0' && (this.peek() === 'x' || this.peek() === 'X')) {
+      value += this.advance(); // x
+      while (this.isHexDigit(this.peek())) {
+        value += this.advance();
+      }
+      this.addToken(TokenType.NUMBER, String(parseInt(value, 16)), startColumn);
+      return;
+    }
+
     while (this.isDigit(this.peek())) {
       value += this.advance();
     }
@@ -262,6 +273,12 @@ export class Lexer {
 
   private isDigit(char: string): boolean {
     return char >= '0' && char <= '9';
+  }
+
+  private isHexDigit(char: string): boolean {
+    return (char >= '0' && char <= '9') ||
+           (char >= 'a' && char <= 'f') ||
+           (char >= 'A' && char <= 'F');
   }
 
   private isAlpha(char: string): boolean {
