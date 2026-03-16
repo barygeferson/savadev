@@ -7,6 +7,7 @@ export type ASTNode =
   | BinaryExpr
   | UnaryExpr
   | TernaryExpr
+  | AwaitExpr
   | CallExpr
   | IndexExpr
   | MemberExpr
@@ -81,6 +82,12 @@ export interface TernaryExpr {
   condition: ASTNode;
   thenExpr: ASTNode;
   elseExpr: ASTNode;
+  line: number;
+}
+
+export interface AwaitExpr {
+  type: 'AwaitExpr';
+  operand: ASTNode;
   line: number;
 }
 

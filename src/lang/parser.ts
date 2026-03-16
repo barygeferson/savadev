@@ -21,6 +21,7 @@ export class Parser {
   private parseStatement(): AST.ASTNode {
     if (this.check(TokenType.FORGE)) return this.parseForgeStatement();
     if (this.check(TokenType.CONJURE)) return this.parseConjureDeclaration();
+    if (this.check(TokenType.ASYNC)) return this.parseAsyncConjure();
     if (this.check(TokenType.PONDER)) return this.parsePonderStatement();
     if (this.check(TokenType.CYCLE)) return this.parseCycleStatement();
     if (this.check(TokenType.ITERATE)) return this.parseIterateStatement();
@@ -29,7 +30,8 @@ export class Parser {
     if (this.check(TokenType.YEET)) return this.parseYeetStatement();
     if (this.check(TokenType.SKIP)) return this.parseSkipStatement();
     if (this.check(TokenType.ATTEMPT)) return this.parseAttemptStatement();
-    if (this.check(TokenType.ESSENCE)) return this.parseEssenceDeclaration();
+    // 'essence' is a contextual keyword - check by value
+    if (this.checkIdentifierValue('essence')) return this.parseEssenceDeclaration();
     if (this.check(TokenType.DOUBLE_COLON)) return this.parseBlockStatement();
     return this.parseExpressionStatement();
   }
@@ -67,9 +69,35 @@ export class Parser {
     return { type: 'FuncDeclaration', name, params, body, line: conjureToken.line };
   }
 
+  // async conjure name(params) :: body ;;
+  private parseAsyncConjure(): AST.FuncDeclaration {
+    const asyncToken = this.consume(TokenType.ASYNC, "Expected 'async'");
+    this.consume(TokenType.CONJURE, "Expected 'conjure' after 'async'");
+    const name = this.consume(TokenType.IDENTIFIER, "Expected function name").value;
+    this.consume(TokenType.LPAREN, "Expected '('");
+    
+    const params: string[] = [];
+    if (!this.check(TokenType.RPAREN)) {
+      do {
+        if (this.check(TokenType.SELF)) {
+          this.advance();
+          params.push('self');
+        } else {
+          params.push(this.consume(TokenType.IDENTIFIER, "Expected parameter name").value);
+        }
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RPAREN, "Expected ')'");
+    
+    const body = this.parseBlockStatement();
+    // Async functions are treated the same as regular functions in the tree-walk interpreter
+    return { type: 'FuncDeclaration', name, params, body, line: asyncToken.line };
+  }
+
   // essence ClassName (extend Parent)? :: methods ;;
+  // 'essence' is treated as a contextual keyword (IDENTIFIER with value 'essence')
   private parseEssenceDeclaration(): AST.ClassDeclaration {
-    const essenceToken = this.consume(TokenType.ESSENCE, "Expected 'essence'");
+    const essenceToken = this.advance(); // consume 'essence' identifier
     const name = this.consume(TokenType.IDENTIFIER, "Expected class name").value;
     
     let superClass: string | undefined;
@@ -313,6 +341,13 @@ export class Parser {
       const operand = this.parseUnary();
       return { type: 'UnaryExpr', operator, operand, line: this.previous().line };
     }
+    // await expression
+    if (this.match(TokenType.AWAIT)) {
+      const awaitLine = this.previous().line;
+      const operand = this.parseUnary();
+      // In our synchronous interpreter, await is a no-op pass-through
+      return { type: 'AwaitExpr', operand, line: awaitLine } as AST.ASTNode;
+    }
     return this.parseCall();
   }
 
@@ -332,7 +367,12 @@ export class Parser {
       } else if (this.match(TokenType.ARROW)) {
         // Lambda: x -> expr
         if (expr.type === 'Identifier') {
-          const body = this.parseExpression();
+          let body: AST.ASTNode;
+          if (this.check(TokenType.DOUBLE_COLON)) {
+            body = this.parseBlockStatement();
+          } else {
+            body = this.parseExpression();
+          }
           expr = { type: 'LambdaExpr', params: [expr.name], body, line: expr.line } as AST.LambdaExpr;
         } else {
           throw new SdevError('Invalid lambda syntax', expr.line);
@@ -422,7 +462,6 @@ export class Parser {
         if (!isLambdaParams) {
           throw new SdevError('Invalid lambda parameters', token.line);
         }
-        // Lambda body may be a block or expression
         let body: AST.ASTNode;
         if (this.check(TokenType.DOUBLE_COLON)) {
           body = this.parseBlockStatement();
@@ -434,6 +473,8 @@ export class Parser {
       
       // Just grouping - return single expression
       if (exprs.length === 1) return exprs[0];
+      // Empty parens that aren't lambda — error
+      if (exprs.length === 0) throw new SdevError('Empty parentheses', token.line);
       throw new SdevError('Unexpected multiple expressions', token.line);
     }
 
@@ -441,7 +482,25 @@ export class Parser {
       return this.parseArrayLiteral(token.line);
     }
 
-    if (this.match(TokenType.DOUBLE_COLON)) {
+    // Dict literal: :: key: value, ... ;;
+    // Also handles empty dict ::;;
+    if (this.check(TokenType.DOUBLE_COLON)) {
+      // Peek ahead to see if this is a dict literal (expression context)
+      // We detect dict literal when next meaningful token after :: is either
+      // ;; (empty dict) or an expression followed by :
+      const savedPos = this.pos;
+      this.advance(); // consume ::
+      
+      // Empty dict: ::;;
+      if (this.check(TokenType.DOUBLE_SEMI)) {
+        this.advance(); // consume ;;
+        return { type: 'DictLiteral', entries: [], line: token.line };
+      }
+      
+      // Try to parse as dict: look for pattern: expr COLON
+      // Restore and use proper dict parse
+      this.pos = savedPos;
+      this.advance(); // re-consume ::
       return this.parseDictLiteral(token.line);
     }
 
@@ -452,6 +511,7 @@ export class Parser {
     const elements: AST.ASTNode[] = [];
     if (!this.check(TokenType.RBRACKET)) {
       do {
+        if (this.check(TokenType.RBRACKET)) break;
         elements.push(this.parseExpression());
       } while (this.match(TokenType.COMMA));
     }
@@ -487,8 +547,21 @@ export class Parser {
     return this.peek().type === TokenType.EOF;
   }
 
+  private advance(): Token {
+    if (!this.isAtEnd()) this.pos++;
+    return this.previous();
+  }
+
   private check(type: TokenType): boolean {
-    return !this.isAtEnd() && this.peek().type === type;
+    if (this.isAtEnd()) return false;
+    return this.peek().type === type;
+  }
+
+  /** Check if current token is IDENTIFIER with a specific value */
+  private checkIdentifierValue(value: string): boolean {
+    if (this.isAtEnd()) return false;
+    const t = this.peek();
+    return t.type === TokenType.IDENTIFIER && t.value === value;
   }
 
   private match(...types: TokenType[]): boolean {
@@ -501,13 +574,9 @@ export class Parser {
     return false;
   }
 
-  private advance(): Token {
-    if (!this.isAtEnd()) this.pos++;
-    return this.previous();
-  }
-
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
-    throw new SdevError(message, this.peek().line, this.peek().column);
+    const token = this.peek();
+    throw new SdevError(message + ` (got '${token.value}')`, token.line, token.column);
   }
 }

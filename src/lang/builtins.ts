@@ -393,9 +393,49 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
         return haystack.includes(needle);
       }
       if (Array.isArray(haystack)) {
-        return haystack.some(item => item === needle);
+        return haystack.some(item => JSON.stringify(item) === JSON.stringify(needle));
       }
-      throw new SdevError('First argument must be text or list', line);
+      // Dict/tome: check if key exists
+      if (haystack && typeof haystack === 'object') {
+        const key = String(needle);
+        return key in (haystack as Record<string, unknown>);
+      }
+      throw new SdevError('First argument must be text, list, or tome', line);
+    },
+  });
+
+  // len - alias for measure (used internally by compiler forEach)
+  builtins.set('len', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('len() takes 1 argument', line);
+      const arg = args[0];
+      if (typeof arg === 'string') return arg.length;
+      if (Array.isArray(arg)) return arg.length;
+      if (arg && typeof arg === 'object') return Object.keys(arg as Record<string, unknown>).length;
+      throw new SdevError('len() argument must be string, list, or dict', line);
+    },
+  });
+
+  // gettype - get the type of a value (avoids 'essence' keyword clash)
+  builtins.set('gettype', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('gettype() takes 1 argument', line);
+      const val = args[0];
+      if (val === null) return 'void';
+      if (typeof val === 'number') return 'number';
+      if (typeof val === 'string') return 'text';
+      if (typeof val === 'boolean') return 'truth';
+      if (Array.isArray(val)) return 'list';
+      if (typeof val === 'object') {
+        if ((val as { type?: string }).type === 'builtin' ||
+            (val as { type?: string }).type === 'user' ||
+            (val as { type?: string }).type === 'lambda') return 'conjuration';
+        if ((val as { type?: string }).type === 'class') return 'class';
+        return 'tome';
+      }
+      return 'mystery';
     },
   });
 
@@ -1167,17 +1207,27 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
-  // snatch(list, idx) - remove at index and return value
+  // snatch(str_or_list, start, end?) - substring OR remove at index from list
   builtins.set('snatch', {
     type: 'builtin',
     call: (args: unknown[], line: number) => {
-      if (args.length !== 2) throw new SdevError('snatch() takes 2 arguments (list, index)', line);
-      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
-      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
-      const arr = args[0];
-      const idx = args[1] < 0 ? arr.length + args[1] : args[1];
-      if (idx < 0 || idx >= arr.length) throw new SdevError('Index out of bounds', line);
-      return arr.splice(idx, 1)[0];
+      if (args.length < 2) throw new SdevError('snatch() takes 2-3 arguments', line);
+      // String substring: snatch(str, start, end?)
+      if (typeof args[0] === 'string') {
+        const str = args[0];
+        const start = args[1] as number;
+        const end = args.length === 3 ? (args[2] as number) : undefined;
+        return str.slice(start, end);
+      }
+      // List: snatch(list, index) - remove at index
+      if (Array.isArray(args[0])) {
+        if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+        const arr = args[0];
+        const idx = args[1] < 0 ? arr.length + args[1] : args[1];
+        if (idx < 0 || idx >= arr.length) throw new SdevError('Index out of bounds', line);
+        return arr.splice(idx, 1)[0];
+      }
+      throw new SdevError('First argument must be text or list', line);
     },
   });
 
@@ -1445,6 +1495,7 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
       obj.values = { type: 'builtin', call: () => Array.from(data.values()) } as SdevFunction;
       obj.entries = { type: 'builtin', call: () => Array.from(data.entries()).map(([k, v]) => [k, v]) } as SdevFunction;
       obj.size = { type: 'builtin', call: () => data.size } as SdevFunction;
+      obj.isEmpty = { type: 'builtin', call: () => data.size === 0 } as SdevFunction;
       obj.clear = { type: 'builtin', call: () => { data.clear(); return null; } } as SdevFunction;
       return obj;
     },
@@ -1462,6 +1513,7 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
       obj.size = { type: 'builtin', call: () => data.length } as SdevFunction;
       obj.isEmpty = { type: 'builtin', call: () => data.length === 0 } as SdevFunction;
       obj.clear = { type: 'builtin', call: () => { data.length = 0; return null; } } as SdevFunction;
+      obj.toList = { type: 'builtin', call: () => [...data] } as SdevFunction;
       return obj;
     },
   });
@@ -1478,6 +1530,7 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
       obj.size = { type: 'builtin', call: () => data.length } as SdevFunction;
       obj.isEmpty = { type: 'builtin', call: () => data.length === 0 } as SdevFunction;
       obj.clear = { type: 'builtin', call: () => { data.length = 0; return null; } } as SdevFunction;
+      obj.toList = { type: 'builtin', call: () => [...data] } as SdevFunction;
       return obj;
     },
   });
@@ -1492,8 +1545,9 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
       obj.prepend = { type: 'builtin', call: (args: unknown[]) => { data.unshift(args[0]); return null; } } as SdevFunction;
       obj.get = { type: 'builtin', call: (args: unknown[], line: number) => {
         const idx = args[0] as number;
-        if (idx < 0 || idx >= data.length) throw new SdevError('Index out of bounds', line);
-        return data[idx];
+        const ri = idx < 0 ? data.length + idx : idx;
+        if (ri < 0 || ri >= data.length) throw new SdevError('Index out of bounds', line);
+        return data[ri];
       } } as SdevFunction;
       obj.remove = { type: 'builtin', call: (args: unknown[]) => {
         const idx = data.findIndex(x => JSON.stringify(x) === JSON.stringify(args[0]));
@@ -1501,6 +1555,15 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
         return null;
       } } as SdevFunction;
       obj.size = { type: 'builtin', call: () => data.length } as SdevFunction;
+      obj.isEmpty = { type: 'builtin', call: () => data.length === 0 } as SdevFunction;
+      obj.head = { type: 'builtin', call: (_args: unknown[], line: number) => {
+        if (data.length === 0) throw new SdevError('LinkedList is empty', line);
+        return data[0];
+      } } as SdevFunction;
+      obj.tail = { type: 'builtin', call: (_args: unknown[], line: number) => {
+        if (data.length === 0) throw new SdevError('LinkedList is empty', line);
+        return data[data.length - 1];
+      } } as SdevFunction;
       obj.toList = { type: 'builtin', call: () => [...data] } as SdevFunction;
       obj.clear = { type: 'builtin', call: () => { data.length = 0; return null; } } as SdevFunction;
       return obj;

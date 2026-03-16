@@ -28,6 +28,8 @@ export enum TokenType {
   NEW = 'NEW',             // new instance
   SELF = 'SELF',           // self reference
   SUPER = 'SUPER',         // super call
+  ASYNC = 'ASYNC',         // async function modifier
+  AWAIT = 'AWAIT',         // await expression
   
   // Operators
   PLUS = 'PLUS',
@@ -98,9 +100,13 @@ export const KEYWORDS: Record<string, TokenType> = {
   'summon': TokenType.SUMMON,
   'attempt': TokenType.ATTEMPT,
   'rescue': TokenType.RESCUE,
-  'essence': TokenType.ESSENCE,
   'extend': TokenType.EXTEND,
   'new': TokenType.NEW,
   'self': TokenType.SELF,
   'super': TokenType.SUPER,
+  'async': TokenType.ASYNC,
+  'await': TokenType.AWAIT,
+  // NOTE: 'essence' is intentionally NOT a keyword here so it can be used as
+  // both a statement keyword (class declaration) AND a function name (type checker).
+  // The parser handles 'essence' as a contextual keyword via IDENTIFIER.
 };

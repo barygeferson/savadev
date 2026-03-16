@@ -82,6 +82,9 @@ export class Interpreter {
         return this.executeUnary(node, env);
       case 'TernaryExpr':
         return this.executeTernary(node, env);
+      case 'AwaitExpr':
+        // In synchronous interpreter, await is a pass-through
+        return this.execute(node.operand, env);
       case 'CallExpr':
         return this.executeCall(node, env);
       case 'NewExpr':
@@ -186,8 +189,18 @@ export class Interpreter {
         return this.requireNumbers(left, right, '-', node.line, (a, b) => a - b);
       case '*':
         if (typeof left === 'number' && typeof right === 'number') return left * right;
-        if (typeof left === 'string' && typeof right === 'number') return left.repeat(Math.max(0, Math.floor(right)));
-        if (typeof left === 'number' && typeof right === 'string') return right.repeat(Math.max(0, Math.floor(left)));
+        if (typeof left === 'string' && typeof right === 'number') return left.repeat(Math.max(0, Math.floor(right as number)));
+        if (typeof left === 'number' && typeof right === 'string') return (right as string).repeat(Math.max(0, Math.floor(left as number)));
+        if (Array.isArray(left) && typeof right === 'number') {
+          const result: unknown[] = [];
+          for (let i = 0; i < Math.max(0, Math.floor(right as number)); i++) result.push(...(left as unknown[]));
+          return result;
+        }
+        if (typeof left === 'number' && Array.isArray(right)) {
+          const result: unknown[] = [];
+          for (let i = 0; i < Math.max(0, Math.floor(left as number)); i++) result.push(...(right as unknown[]));
+          return result;
+        }
         throw new SdevError("Cannot use '*' with these types", node.line);
       case '/':
         return this.requireNumbers(left, right, '/', node.line, (a, b) => {
