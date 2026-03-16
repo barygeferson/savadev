@@ -393,9 +393,49 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
         return haystack.includes(needle);
       }
       if (Array.isArray(haystack)) {
-        return haystack.some(item => item === needle);
+        return haystack.some(item => JSON.stringify(item) === JSON.stringify(needle));
       }
-      throw new SdevError('First argument must be text or list', line);
+      // Dict/tome: check if key exists
+      if (haystack && typeof haystack === 'object') {
+        const key = String(needle);
+        return key in (haystack as Record<string, unknown>);
+      }
+      throw new SdevError('First argument must be text, list, or tome', line);
+    },
+  });
+
+  // len - alias for measure (used internally by compiler forEach)
+  builtins.set('len', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('len() takes 1 argument', line);
+      const arg = args[0];
+      if (typeof arg === 'string') return arg.length;
+      if (Array.isArray(arg)) return arg.length;
+      if (arg && typeof arg === 'object') return Object.keys(arg as Record<string, unknown>).length;
+      throw new SdevError('len() argument must be string, list, or dict', line);
+    },
+  });
+
+  // gettype - get the type of a value (avoids 'essence' keyword clash)
+  builtins.set('gettype', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      if (args.length !== 1) throw new SdevError('gettype() takes 1 argument', line);
+      const val = args[0];
+      if (val === null) return 'void';
+      if (typeof val === 'number') return 'number';
+      if (typeof val === 'string') return 'text';
+      if (typeof val === 'boolean') return 'truth';
+      if (Array.isArray(val)) return 'list';
+      if (typeof val === 'object') {
+        if ((val as { type?: string }).type === 'builtin' ||
+            (val as { type?: string }).type === 'user' ||
+            (val as { type?: string }).type === 'lambda') return 'conjuration';
+        if ((val as { type?: string }).type === 'class') return 'class';
+        return 'tome';
+      }
+      return 'mystery';
     },
   });
 
