@@ -82,6 +82,9 @@ export class Interpreter {
         return this.executeUnary(node, env);
       case 'TernaryExpr':
         return this.executeTernary(node, env);
+      case 'AwaitExpr':
+        // In synchronous interpreter, await is a pass-through
+        return this.execute(node.operand, env);
       case 'CallExpr':
         return this.executeCall(node, env);
       case 'NewExpr':
