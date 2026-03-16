@@ -1207,17 +1207,27 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
-  // snatch(list, idx) - remove at index and return value
+  // snatch(str_or_list, start, end?) - substring OR remove at index from list
   builtins.set('snatch', {
     type: 'builtin',
     call: (args: unknown[], line: number) => {
-      if (args.length !== 2) throw new SdevError('snatch() takes 2 arguments (list, index)', line);
-      if (!Array.isArray(args[0])) throw new SdevError('First argument must be a list', line);
-      if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
-      const arr = args[0];
-      const idx = args[1] < 0 ? arr.length + args[1] : args[1];
-      if (idx < 0 || idx >= arr.length) throw new SdevError('Index out of bounds', line);
-      return arr.splice(idx, 1)[0];
+      if (args.length < 2) throw new SdevError('snatch() takes 2-3 arguments', line);
+      // String substring: snatch(str, start, end?)
+      if (typeof args[0] === 'string') {
+        const str = args[0];
+        const start = args[1] as number;
+        const end = args.length === 3 ? (args[2] as number) : undefined;
+        return str.slice(start, end);
+      }
+      // List: snatch(list, index) - remove at index
+      if (Array.isArray(args[0])) {
+        if (typeof args[1] !== 'number') throw new SdevError('Second argument must be a number', line);
+        const arr = args[0];
+        const idx = args[1] < 0 ? arr.length + args[1] : args[1];
+        if (idx < 0 || idx >= arr.length) throw new SdevError('Index out of bounds', line);
+        return arr.splice(idx, 1)[0];
+      }
+      throw new SdevError('First argument must be text or list', line);
     },
   });
 
