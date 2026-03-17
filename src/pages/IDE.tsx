@@ -25,7 +25,7 @@ import {
   Play, Zap, ArrowLeft, Download, Cpu, Save, Settings,
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
-  Bug, Palette, X
+  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IdeFile, SidePanel, IdeSettings } from '@/components/ide/types';
@@ -34,6 +34,8 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useCodeTranslation, mightNeedTranslation } from '@/hooks/useCodeTranslation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -272,6 +274,35 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+const SUPPORTED_LANGUAGES = [
+  { value: 'auto', label: '🌐 Auto-detect' },
+  { value: 'Spanish', label: '🇪🇸 Spanish' },
+  { value: 'French', label: '🇫🇷 French' },
+  { value: 'German', label: '🇩🇪 German' },
+  { value: 'Portuguese', label: '🇧🇷 Portuguese' },
+  { value: 'Italian', label: '🇮🇹 Italian' },
+  { value: 'Dutch', label: '🇳🇱 Dutch' },
+  { value: 'Russian', label: '🇷🇺 Russian' },
+  { value: 'Chinese', label: '🇨🇳 Chinese' },
+  { value: 'Japanese', label: '🇯🇵 Japanese' },
+  { value: 'Korean', label: '🇰🇷 Korean' },
+  { value: 'Arabic', label: '🇸🇦 Arabic' },
+  { value: 'Hindi', label: '🇮🇳 Hindi' },
+  { value: 'Turkish', label: '🇹🇷 Turkish' },
+  { value: 'Polish', label: '🇵🇱 Polish' },
+  { value: 'Swedish', label: '🇸🇪 Swedish' },
+  { value: 'Norwegian', label: '🇳🇴 Norwegian' },
+  { value: 'Danish', label: '🇩🇰 Danish' },
+  { value: 'Finnish', label: '🇫🇮 Finnish' },
+  { value: 'Greek', label: '🇬🇷 Greek' },
+  { value: 'Hebrew', label: '🇮🇱 Hebrew' },
+  { value: 'Ukrainian', label: '🇺🇦 Ukrainian' },
+  { value: 'Czech', label: '🇨🇿 Czech' },
+  { value: 'Romanian', label: '🇷🇴 Romanian' },
+  { value: 'Hungarian', label: '🇭🇺 Hungarian' },
+  { value: 'English', label: '🇬🇧 English (no translate)' },
+];
+
 export default function IDEPage() {
   const navigate = useNavigate();
 
@@ -288,6 +319,12 @@ export default function IDEPage() {
   const [showCanvas, setShowCanvas] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [runMode, setRunMode] = useState<'interpreter' | 'vm'>('interpreter');
+
+  // Translation state
+  const [selectedLanguage, setSelectedLanguage] = useState('auto');
+  const [translatedContent, setTranslatedContent] = useState<Map<string, string>>(new Map());
+  const [showTranslated, setShowTranslated] = useState(false);
+  const { isTranslating, lastResult, translate } = useCodeTranslation();
 
   // Execution state
   const [output, setOutput] = useState<string[]>([]);
@@ -346,15 +383,43 @@ export default function IDEPage() {
     }
   }, [activeId, settings.autoSave]);
 
-  const runCode = useCallback(() => {
+  const runCode = useCallback(async () => {
     if (!activeFile) return;
-    const code = activeFile.content;
+
+    let code = activeFile.content;
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
-    const t0 = performance.now();
     setIsRunning(true);
     setStatusMsg('Running…');
+
+    // Auto-translate if needed
+    const needsTranslation = selectedLanguage !== 'English' &&
+      (selectedLanguage !== 'auto' || mightNeedTranslation(code));
+
+    if (needsTranslation) {
+      setStatusMsg('Translating…');
+      const result = await translate(code, selectedLanguage);
+      if (result) {
+        // Cache translated version per file
+        setTranslatedContent(prev => {
+          const next = new Map(prev);
+          next.set(activeFile.id + ':' + code.slice(0, 40), result.translated);
+          return next;
+        });
+        code = result.translated;
+        if (!result.fromCache) {
+          toast.success(`Translated from ${result.detectedLanguage} → English`, {
+            description: 'Translation cached for next run',
+            duration: 3000,
+          });
+        }
+      } else {
+        toast.error('Translation failed — running original code');
+      }
+    }
+
+    const t0 = performance.now();
 
     try {
       if (runMode === 'interpreter') {
@@ -409,7 +474,7 @@ export default function IDEPage() {
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode]);
+  }, [activeFile, runMode, selectedLanguage, translate]);
 
   const newFile = useCallback(() => {
     const id = String(++fileIdCounter);
@@ -702,6 +767,53 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipContent>Command Palette (Ctrl+P)</TooltipContent>
             </Tooltip>
 
+            {/* Language selector */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 border border-border/40 rounded-md px-1.5 h-7 bg-background/20">
+                  <Languages className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="h-5 w-[90px] border-0 bg-transparent text-xs p-0 focus:ring-0 font-mono text-muted-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border/50 max-h-64">
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <SelectItem key={lang.value} value={lang.value} className="text-xs font-mono cursor-pointer">
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <div className="font-semibold mb-1">Code Language</div>
+                  <div>Write sdev in your language.</div>
+                  <div>AI translates to English on first run,</div>
+                  <div>then caches for instant future runs.</div>
+                  {lastResult && <div className="mt-1 text-primary">Last: {lastResult.detectedLanguage} {lastResult.fromCache ? '(cached ⚡)' : '(translated ✨)'}</div>}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Show translated source toggle */}
+            {lastResult && lastResult.detectedLanguage !== 'English' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                    onClick={() => setShowTranslated(v => !v)}
+                  >
+                    {showTranslated ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{showTranslated ? 'Show original code' : 'Show English translation'}</TooltipContent>
+              </Tooltip>
+            )}
+
             <div className="flex items-center gap-1 border border-border/40 rounded-md overflow-hidden">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -773,10 +885,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             <Button
               size="sm"
               onClick={runCode}
-              disabled={isRunning}
+              disabled={isRunning || isTranslating}
               className="gap-1.5 bg-gradient-to-r from-neon-cyan to-neon-violet border-0 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
             >
-              {isRunning ? (
+              {isTranslating ? (
+                <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Translating</span>
+              ) : isRunning ? (
                 <span className="flex items-center gap-1"><span className="animate-spin">⟳</span> Running</span>
               ) : (
                 <><Play className="w-3 h-3" /> Run</>
@@ -855,18 +969,49 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <ResizablePanel defaultSize={65} minSize={25}>
                   <div className="flex flex-col h-full">
                     <IdeTabs files={openFiles} activeId={activeId} onSelect={selectFile} onClose={closeTab} />
+                    {/* Translation banner */}
+                    {lastResult && lastResult.detectedLanguage !== 'English' && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border-b border-primary/20 text-xs font-mono">
+                        <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
+                        <span className="text-primary">
+                          {lastResult.fromCache ? '⚡ Cached translation' : '✨ Translated'} from <strong>{lastResult.detectedLanguage}</strong> → English
+                        </span>
+                        <button
+                          onClick={() => setShowTranslated(v => !v)}
+                          className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showTranslated ? <><EyeOff className="w-3 h-3" /> Show original</> : <><Eye className="w-3 h-3" /> View English</>}
+                        </button>
+                      </div>
+                    )}
                     <div className="flex-1 overflow-hidden">
                       {activeFile ? (
-                        <IdeEditor
-                          key={activeFile.id}
-                          value={activeFile.content}
-                          onChange={updateActiveContent}
-                          onRun={runCode}
-                          fileName={activeFile.name}
-                          settings={settings}
-                          onCursorChange={setCursor}
-                          onSelectionChange={setSelection}
-                        />
+                        showTranslated && lastResult ? (
+                          <div className="flex flex-col h-full">
+                            <div className="px-3 py-1 text-[10px] font-mono text-muted-foreground bg-muted/10 border-b border-border/30 flex items-center gap-2">
+                              <Eye className="w-3 h-3" />
+                              English translation (read-only) — edit your original to make changes
+                            </div>
+                            <IdeEditor
+                              key={activeFile.id + '-translated'}
+                              value={lastResult.translated}
+                              onChange={() => {}}
+                              fileName={activeFile.name}
+                              settings={settings}
+                            />
+                          </div>
+                        ) : (
+                          <IdeEditor
+                            key={activeFile.id}
+                            value={activeFile.content}
+                            onChange={updateActiveContent}
+                            onRun={runCode}
+                            fileName={activeFile.name}
+                            settings={settings}
+                            onCursorChange={setCursor}
+                            onSelectionChange={setSelection}
+                          />
+                        )
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 gap-4">
                           <SplitSquareHorizontal className="w-12 h-12 opacity-20" />
