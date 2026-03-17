@@ -969,18 +969,49 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <ResizablePanel defaultSize={65} minSize={25}>
                   <div className="flex flex-col h-full">
                     <IdeTabs files={openFiles} activeId={activeId} onSelect={selectFile} onClose={closeTab} />
+                    {/* Translation banner */}
+                    {lastResult && lastResult.detectedLanguage !== 'English' && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border-b border-primary/20 text-xs font-mono">
+                        <CheckCircle2 className="w-3 h-3 text-primary flex-shrink-0" />
+                        <span className="text-primary">
+                          {lastResult.fromCache ? '⚡ Cached translation' : '✨ Translated'} from <strong>{lastResult.detectedLanguage}</strong> → English
+                        </span>
+                        <button
+                          onClick={() => setShowTranslated(v => !v)}
+                          className="ml-auto flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showTranslated ? <><EyeOff className="w-3 h-3" /> Show original</> : <><Eye className="w-3 h-3" /> View English</>}
+                        </button>
+                      </div>
+                    )}
                     <div className="flex-1 overflow-hidden">
                       {activeFile ? (
-                        <IdeEditor
-                          key={activeFile.id}
-                          value={activeFile.content}
-                          onChange={updateActiveContent}
-                          onRun={runCode}
-                          fileName={activeFile.name}
-                          settings={settings}
-                          onCursorChange={setCursor}
-                          onSelectionChange={setSelection}
-                        />
+                        showTranslated && lastResult ? (
+                          <div className="flex flex-col h-full">
+                            <div className="px-3 py-1 text-[10px] font-mono text-muted-foreground bg-muted/10 border-b border-border/30 flex items-center gap-2">
+                              <Eye className="w-3 h-3" />
+                              English translation (read-only) — edit your original to make changes
+                            </div>
+                            <IdeEditor
+                              key={activeFile.id + '-translated'}
+                              value={lastResult.translated}
+                              onChange={() => {}}
+                              fileName={activeFile.name}
+                              settings={settings}
+                            />
+                          </div>
+                        ) : (
+                          <IdeEditor
+                            key={activeFile.id}
+                            value={activeFile.content}
+                            onChange={updateActiveContent}
+                            onRun={runCode}
+                            fileName={activeFile.name}
+                            settings={settings}
+                            onCursorChange={setCursor}
+                            onSelectionChange={setSelection}
+                          />
+                        )
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 gap-4">
                           <SplitSquareHorizontal className="w-12 h-12 opacity-20" />
