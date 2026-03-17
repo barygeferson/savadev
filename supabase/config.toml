@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.sdev-chat]
 verify_jwt = false
+
+[functions.translate-sdev]
+verify_jwt = false
