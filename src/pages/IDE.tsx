@@ -274,6 +274,35 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+const SUPPORTED_LANGUAGES = [
+  { value: 'auto', label: '🌐 Auto-detect' },
+  { value: 'Spanish', label: '🇪🇸 Spanish' },
+  { value: 'French', label: '🇫🇷 French' },
+  { value: 'German', label: '🇩🇪 German' },
+  { value: 'Portuguese', label: '🇧🇷 Portuguese' },
+  { value: 'Italian', label: '🇮🇹 Italian' },
+  { value: 'Dutch', label: '🇳🇱 Dutch' },
+  { value: 'Russian', label: '🇷🇺 Russian' },
+  { value: 'Chinese', label: '🇨🇳 Chinese' },
+  { value: 'Japanese', label: '🇯🇵 Japanese' },
+  { value: 'Korean', label: '🇰🇷 Korean' },
+  { value: 'Arabic', label: '🇸🇦 Arabic' },
+  { value: 'Hindi', label: '🇮🇳 Hindi' },
+  { value: 'Turkish', label: '🇹🇷 Turkish' },
+  { value: 'Polish', label: '🇵🇱 Polish' },
+  { value: 'Swedish', label: '🇸🇪 Swedish' },
+  { value: 'Norwegian', label: '🇳🇴 Norwegian' },
+  { value: 'Danish', label: '🇩🇰 Danish' },
+  { value: 'Finnish', label: '🇫🇮 Finnish' },
+  { value: 'Greek', label: '🇬🇷 Greek' },
+  { value: 'Hebrew', label: '🇮🇱 Hebrew' },
+  { value: 'Ukrainian', label: '🇺🇦 Ukrainian' },
+  { value: 'Czech', label: '🇨🇿 Czech' },
+  { value: 'Romanian', label: '🇷🇴 Romanian' },
+  { value: 'Hungarian', label: '🇭🇺 Hungarian' },
+  { value: 'English', label: '🇬🇧 English (no translate)' },
+];
+
 export default function IDEPage() {
   const navigate = useNavigate();
 
@@ -290,6 +319,12 @@ export default function IDEPage() {
   const [showCanvas, setShowCanvas] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [runMode, setRunMode] = useState<'interpreter' | 'vm'>('interpreter');
+
+  // Translation state
+  const [selectedLanguage, setSelectedLanguage] = useState('auto');
+  const [translatedContent, setTranslatedContent] = useState<Map<string, string>>(new Map());
+  const [showTranslated, setShowTranslated] = useState(false);
+  const { isTranslating, lastResult, translate } = useCodeTranslation();
 
   // Execution state
   const [output, setOutput] = useState<string[]>([]);
