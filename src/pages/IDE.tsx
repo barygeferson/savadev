@@ -383,15 +383,43 @@ export default function IDEPage() {
     }
   }, [activeId, settings.autoSave]);
 
-  const runCode = useCallback(() => {
+  const runCode = useCallback(async () => {
     if (!activeFile) return;
-    const code = activeFile.content;
+
+    let code = activeFile.content;
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
-    const t0 = performance.now();
     setIsRunning(true);
     setStatusMsg('Running…');
+
+    // Auto-translate if needed
+    const needsTranslation = selectedLanguage !== 'English' &&
+      (selectedLanguage !== 'auto' || mightNeedTranslation(code));
+
+    if (needsTranslation) {
+      setStatusMsg('Translating…');
+      const result = await translate(code, selectedLanguage);
+      if (result) {
+        // Cache translated version per file
+        setTranslatedContent(prev => {
+          const next = new Map(prev);
+          next.set(activeFile.id + ':' + code.slice(0, 40), result.translated);
+          return next;
+        });
+        code = result.translated;
+        if (!result.fromCache) {
+          toast.success(`Translated from ${result.detectedLanguage} → English`, {
+            description: 'Translation cached for next run',
+            duration: 3000,
+          });
+        }
+      } else {
+        toast.error('Translation failed — running original code');
+      }
+    }
+
+    const t0 = performance.now();
 
     try {
       if (runMode === 'interpreter') {
@@ -446,7 +474,7 @@ export default function IDEPage() {
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode]);
+  }, [activeFile, runMode, selectedLanguage, translate]);
 
   const newFile = useCallback(() => {
     const id = String(++fileIdCounter);
