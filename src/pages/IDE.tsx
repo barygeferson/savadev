@@ -767,6 +767,53 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipContent>Command Palette (Ctrl+P)</TooltipContent>
             </Tooltip>
 
+            {/* Language selector */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 border border-border/40 rounded-md px-1.5 h-7 bg-background/20">
+                  <Languages className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="h-5 w-[90px] border-0 bg-transparent text-xs p-0 focus:ring-0 font-mono text-muted-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border/50 max-h-64">
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <SelectItem key={lang.value} value={lang.value} className="text-xs font-mono cursor-pointer">
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-xs">
+                  <div className="font-semibold mb-1">Code Language</div>
+                  <div>Write sdev in your language.</div>
+                  <div>AI translates to English on first run,</div>
+                  <div>then caches for instant future runs.</div>
+                  {lastResult && <div className="mt-1 text-primary">Last: {lastResult.detectedLanguage} {lastResult.fromCache ? '(cached ⚡)' : '(translated ✨)'}</div>}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Show translated source toggle */}
+            {lastResult && lastResult.detectedLanguage !== 'English' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
+                    onClick={() => setShowTranslated(v => !v)}
+                  >
+                    {showTranslated ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{showTranslated ? 'Show original code' : 'Show English translation'}</TooltipContent>
+              </Tooltip>
+            )}
+
             <div className="flex items-center gap-1 border border-border/40 rounded-md overflow-hidden">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -838,10 +885,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             <Button
               size="sm"
               onClick={runCode}
-              disabled={isRunning}
+              disabled={isRunning || isTranslating}
               className="gap-1.5 bg-gradient-to-r from-neon-cyan to-neon-violet border-0 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
             >
-              {isRunning ? (
+              {isTranslating ? (
+                <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Translating</span>
+              ) : isRunning ? (
                 <span className="flex items-center gap-1"><span className="animate-spin">⟳</span> Running</span>
               ) : (
                 <><Play className="w-3 h-3" /> Run</>
