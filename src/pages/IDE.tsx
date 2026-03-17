@@ -25,7 +25,7 @@ import {
   Play, Zap, ArrowLeft, Download, Cpu, Save, Settings,
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
-  Bug, Palette, X
+  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IdeFile, SidePanel, IdeSettings } from '@/components/ide/types';
@@ -34,6 +34,8 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useCodeTranslation, mightNeedTranslation } from '@/hooks/useCodeTranslation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const STARTER_FILES: IdeFile[] = [
   {
