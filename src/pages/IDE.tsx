@@ -300,6 +300,7 @@ const SUPPORTED_LANGUAGES = [
   { value: 'Czech', label: '🇨🇿 Czech' },
   { value: 'Romanian', label: '🇷🇴 Romanian' },
   { value: 'Hungarian', label: '🇭🇺 Hungarian' },
+  { value: 'Bulgarian', label: '🇧🇬 Bulgarian' },
   { value: 'English', label: '🇬🇧 English (no translate)' },
 ];
 
