@@ -612,9 +612,21 @@ TRANSLATION RULES — follow them strictly:
 11. If the code is already 100% in English sdev, return it unchanged.
 12. Multi-word foreign keywords that map to a single sdev keyword should be collapsed (e.g. "да бъде" → "be", "в противен случай" → "otherwise").
 13. Pay attention to the CONTEXT: a word might be a keyword in one position but an identifier in another. Use the sdev syntax rules to determine which.
-14. CLASS DECLARATIONS: The sdev class syntax is EXACTLY "essence <ClassName> ::" — the word "essence" comes FIRST, then the class name, then "::". Do NOT output "forge X essence ::" or "essence X Class ::". The correct pattern is always: essence ClassName ::
+14. CLASS DECLARATIONS: When you see words like "クラス", "класс", "classe", "klasse", "sınıf", "klasa", "osztály" etc. (meaning "class"), the ENTIRE class declaration must become "essence <ClassName> ::". The word for "class" becomes "essence", and the class name is the OTHER word (e.g. "動物 クラス ::" → "essence Animal ::", "Животное класс ::" → "essence Animal ::"). NEVER merge them into one word. NEVER use "forge" for class declarations.
 15. Do NOT add extra words like "Class", "class", "Klasse", etc. after the class name. Just "essence ClassName ::" is correct.
-16. VARIABLE DECLARATIONS: The pattern is "forge <name> be <value>" — "forge" comes first, then variable name, then "be", then value.`;
+16. VARIABLE DECLARATIONS: The pattern is "forge <name> be <value>" — "forge" comes first, then variable name, then "be", then value.
+17. CRITICAL EXAMPLES of correct translations:
+    - "動物 クラス ::" → "essence Animal ::" (NOT "forge AnimalClass ::")
+    - "Животное класс ::" → "essence Animal ::" (NOT "forge Animal essence ::")
+    - "classe Animal ::" → "essence Animal ::" 
+    - "sınıf Hayvan ::" → "essence Animal ::"
+    - "създай сума(а, б)" → "conjure sum(a, b)"
+    - "кажи(х)" → "speak(x)"
+    - "ако х > 5 ::" → "ponder x > 5 ::"
+    - "иначе ::" → "otherwise ::"
+    - "докато вярно ::" → "cycle yep ::"
+    - "обходи елемент през списък ::" → "iterate element through list ::"`;
+
 
     const userPrompt = `${langHint} Please translate this sdev code to English sdev:
 
