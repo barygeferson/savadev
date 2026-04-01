@@ -611,7 +611,10 @@ TRANSLATION RULES — follow them strictly:
 10. Preserve all whitespace, indentation, and line structure exactly.
 11. If the code is already 100% in English sdev, return it unchanged.
 12. Multi-word foreign keywords that map to a single sdev keyword should be collapsed (e.g. "да бъде" → "be", "в противен случай" → "otherwise").
-13. Pay attention to the CONTEXT: a word might be a keyword in one position but an identifier in another. Use the sdev syntax rules to determine which.`;
+13. Pay attention to the CONTEXT: a word might be a keyword in one position but an identifier in another. Use the sdev syntax rules to determine which.
+14. CLASS DECLARATIONS: The sdev class syntax is EXACTLY "essence <ClassName> ::" — the word "essence" comes FIRST, then the class name, then "::". Do NOT output "forge X essence ::" or "essence X Class ::". The correct pattern is always: essence ClassName ::
+15. Do NOT add extra words like "Class", "class", "Klasse", etc. after the class name. Just "essence ClassName ::" is correct.
+16. VARIABLE DECLARATIONS: The pattern is "forge <name> be <value>" — "forge" comes first, then variable name, then "be", then value.`;
 
     const userPrompt = `${langHint} Please translate this sdev code to English sdev:
 
