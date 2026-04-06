@@ -10,12 +10,12 @@ const REFERENCE = [
   {
     title: 'Core Types',
     icon: BookOpen,
-    content: `**number** - Any number: \`42\`, \`3.14\`, \`-10\`
-**text** - Strings: \`"hello"\`, \`'world'\`, \`\`backticks\`\`
-**truth** - Booleans: \`yep\`, \`nope\`
-**void** - Null value: \`void\`
-**list** - Arrays: \`[1, 2, 3]\`
-**tome** - Dictionaries: \`{"key": "value"}\``,
+    content: `**number** — Any number: \`42\`, \`3.14\`, \`-10\`
+**text** — Strings: \`"hello"\`, \`'world'\`, \`\\\`backticks\\\`\`
+**truth** — Booleans: \`yep\`, \`nope\`
+**void** — Null value: \`void\`
+**list** — Arrays: \`[1, 2, 3]\`
+**tome** — Dictionaries: \`{"key": "value"}\``,
   },
   {
     title: 'Variables',
@@ -28,49 +28,29 @@ x be 20  // reassign
 \`\`\``,
   },
   {
-    title: 'Conjurations (Functions)',
+    title: 'Functions',
     icon: Wand2,
     content: `Define with \`conjure\`:
 \`\`\`
 conjure add(a, b) ::
   yield a + b
 ;;
-
-forge result be add(2, 3)
 \`\`\`
 
-**Lambdas** with \`->\`:
-\`\`\`
-forge double be (x) -> x * 2
-forge sum be (a, b) -> a + b
-\`\`\``,
+**Lambdas:** \`(x) -> x * 2\``,
   },
   {
     title: 'Control Flow',
     icon: GitBranch,
-    content: `**Ponder (If):**
-\`\`\`
-ponder x > 10 ::
-  speak("big")
-;; otherwise ponder x > 5 ::
-  speak("medium")
-;; otherwise ::
-  speak("small")
-;;
-\`\`\`
+    content: `**ponder** (if) · **otherwise** (else) · **cycle** (while) · **iterate** (for-each)
 
-**Cycle (While):**
 \`\`\`
-cycle x < 10 ::
-  x be x + 1
-;;
-\`\`\`
+ponder x > 10 :: speak("big") ;;
+otherwise :: speak("small") ;;
 
-**Iterate (For-Each):**
-\`\`\`
-iterate item through myList ::
-  speak(item)
-;;
+cycle x < 10 :: x be x + 1 ;;
+
+iterate item through myList :: speak(item) ;;
 \`\`\``,
   },
   {
@@ -79,19 +59,13 @@ iterate item through myList ::
     content: `**Math:** \`+\`, \`-\`, \`*\`, \`/\`, \`%\`, \`^\` (power)
 **Compare:** \`equals\`, \`differs\`, \`<\`, \`>\`, \`<=\`, \`>=\`
 **Logic:** \`also\` (and), \`either\` (or), \`isnt\` (not)
-**Pipe:** \`|>\` chains function calls
-**Text concat:** \`"a" + "b"\` → \`"ab"\``,
+**Pipe:** \`|>\` chains function calls`,
   },
   {
     title: 'Pipe Operator',
     icon: ArrowRight,
-    content: `Chain operations with \`|>\`:
+    content: `Chain operations:
 \`\`\`
-// Traditional
-forge doubled be each(nums, x -> x * 2)
-forge filtered be sift(doubled, x -> x > 5)
-
-// With pipes
 forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
 \`\`\``,
   },
@@ -99,70 +73,59 @@ forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
     title: 'Built-in Functions',
     icon: Wrench,
     content: `**Output:** \`speak()\`, \`whisper()\`, \`shout()\`
-**Type:** \`essence()\`, \`morph(v, "type")\`, \`isNum()\`, \`isText()\`, \`isList()\`, \`isTome()\`
-**Lists:** \`measure()\`, \`gather()\`, \`pluck()\`, \`insert()\`, \`remove()\`, \`portion()\`, \`concat()\`, \`flatten()\`
-**Transform:** \`each()\`, \`sift()\`, \`fold()\`, \`find()\`, \`all()\`, \`any()\`
-**Text:** \`upper()\`, \`lower()\`, \`trim()\`, \`shatter()\`, \`weave()\`, \`replace()\`, \`startswith()\`, \`endswith()\`
-**Math:** \`magnitude()\`, \`least()\`, \`greatest()\`, \`root()\`, \`ground()\`, \`elevate()\`, \`nearby()\`
-**Advanced Math:** \`clamp()\`, \`lerp()\`, \`mapRange()\`, \`sum()\`, \`average()\`, \`sign()\`
-**Sequence:** \`sequence(n)\`, \`sequence(start, end)\`
-**Tomes:** \`inscriptions()\`, \`contents()\`, \`entries()\`, \`has()\`, \`get()\`, \`set()\`, \`merge()\`
+**Type:** \`essence()\`, \`morph(v, "type")\`
+**Lists:** \`measure()\`, \`gather()\`, \`pluck()\`, \`portion()\`, \`concat()\`, \`flatten()\`
+**Transform:** \`each()\`, \`sift()\`, \`fold()\`, \`find()\`
+**Text:** \`upper()\`, \`lower()\`, \`trim()\`, \`shatter()\`, \`weave()\`, \`replace()\`
+**Math:** \`magnitude()\`, \`root()\`, \`ground()\`, \`elevate()\`, \`clamp()\`, \`lerp()\`
 **Random:** \`chaos()\`, \`randint()\`, \`pick()\`, \`shuffle()\`
-**Utility:** \`reverse()\`, \`contains()\`, \`unique()\`, \`sort()\`, \`first()\`, \`last()\`
-**Time:** \`now()\`, \`timestamp()\`
+**Tomes:** \`inscriptions()\`, \`contents()\`, \`entries()\`
 **JSON:** \`etch()\`, \`unetch()\``,
   },
   {
     title: 'Unique Syntax',
     icon: Sparkles,
-    content: `**Blocks:** \`::\` starts, \`;;\` ends (no braces!)
-**No semicolons** required at end of statements
-**Power operator:** \`2^10\` for exponentiation
-**yep/nope** instead of true/false
-**void** instead of null
+    content: `**Blocks:** \`::\` starts, \`;;\` ends
+**No semicolons** required
+**Power:** \`2^10\`
+**Booleans:** \`yep\` / \`nope\`
+**Null:** \`void\`
 **Constants:** \`PI\`, \`TAU\`, \`E\`, \`INFINITY\``,
   },
 ];
 
 export function LanguageReference() {
   return (
-    <div className="rounded-lg border border-border/50 glass overflow-hidden">
-      <Accordion type="single" collapsible className="px-2">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <Accordion type="single" collapsible className="px-3">
         {REFERENCE.map((item, i) => {
           const Icon = item.icon;
           return (
-            <AccordionItem key={i} value={`item-${i}`} className="border-border/30">
+            <AccordionItem key={i} value={`item-${i}`} className="border-border/50">
               <AccordionTrigger className="text-sm py-3 hover:no-underline group">
                 <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Icon className="w-3.5 h-3.5 text-primary" />
+                  <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                  <span className="font-medium">{item.title}</span>
+                  <span className="font-medium text-sm">{item.title}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground pb-4 pl-9">
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {item.content.split('\n').map((line, j) => {
                     if (line.startsWith('```')) return null;
                     if (line.startsWith('**') && line.includes('**')) {
                       const parts = line.split('**');
                       return (
-                        <p key={j} className="my-1">
-                          <strong className="text-primary font-mono text-xs">{parts[1]}</strong>
-                          <span className="text-muted-foreground">{parts[2]}</span>
+                        <p key={j} className="my-0.5 text-xs">
+                          <strong className="text-primary font-mono">{parts[1]}</strong>
+                          <span>{parts[2]}</span>
                         </p>
-                      );
-                    }
-                    if (line.startsWith('`') && line.endsWith('`')) {
-                      return (
-                        <code key={j} className="block my-1 px-3 py-2 bg-background/50 border border-border/30 rounded text-xs font-mono text-foreground">
-                          {line.slice(1, -1)}
-                        </code>
                       );
                     }
                     if (line.trim()) {
                       return (
-                        <code key={j} className="block px-3 py-1 bg-background/30 text-xs font-mono text-muted-foreground">
+                        <code key={j} className="block px-3 py-1.5 bg-muted/50 rounded text-xs font-mono text-foreground/70">
                           {line}
                         </code>
                       );
