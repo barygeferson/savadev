@@ -1,5 +1,4 @@
 import { useRef, useEffect } from 'react';
-import { Terminal } from 'lucide-react';
 
 interface CodeEditorProps {
   value: string;
@@ -15,7 +14,7 @@ export function CodeEditor({ value, onChange, onRun, placeholder }: CodeEditorPr
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = Math.max(300, textarea.scrollHeight) + 'px';
+      textarea.style.height = Math.max(320, textarea.scrollHeight) + 'px';
     }
   }, [value]);
 
@@ -44,32 +43,29 @@ export function CodeEditor({ value, onChange, onRun, placeholder }: CodeEditorPr
   const lineCount = value.split('\n').length;
 
   return (
-    <div className="relative rounded-lg border border-border/50 glass overflow-hidden group hover:border-primary/30 transition-all">
+    <div className="rounded-xl border border-border bg-card overflow-hidden group hover:border-primary/20 transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border/50">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-destructive/80" />
-            <div className="w-3 h-3 rounded-full bg-neon-orange/80" />
-            <div className="w-3 h-3 rounded-full bg-neon-green/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-rose/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-amber/50" />
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-green/50" />
           </div>
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-primary" />
-            <span className="text-sm font-mono text-foreground">main.sdev</span>
-          </div>
+          <span className="text-xs font-mono text-muted-foreground">main.sdev</span>
         </div>
-        <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground">
           <span>{lineCount} lines</span>
-          <span className="hidden sm:inline">Ctrl+Enter to execute</span>
+          <span className="hidden sm:inline opacity-50">⌘+Enter to run</span>
         </div>
       </div>
 
-      {/* Editor content */}
+      {/* Editor */}
       <div className="relative flex">
         {/* Line numbers */}
-        <div className="flex-shrink-0 w-12 py-4 text-right pr-3 select-none border-r border-border/30 bg-background/30">
+        <div className="flex-shrink-0 w-10 py-4 text-right pr-2 select-none border-r border-border/50 bg-muted/10">
           {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i} className="text-xs font-mono text-muted-foreground/50 leading-6">
+            <div key={i} className="text-[11px] font-mono text-muted-foreground/30 leading-6">
               {i + 1}
             </div>
           ))}
@@ -83,14 +79,9 @@ export function CodeEditor({ value, onChange, onRun, placeholder }: CodeEditorPr
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           spellCheck={false}
-          className="flex-1 min-h-[300px] p-4 font-mono text-sm bg-transparent resize-none focus:outline-none text-foreground placeholder:text-muted-foreground leading-6"
+          className="flex-1 min-h-[320px] p-4 font-mono text-sm bg-transparent resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/40 leading-6"
           style={{ tabSize: 2 }}
         />
-      </div>
-
-      {/* Glow effect on focus */}
-      <div className="absolute inset-0 pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity">
-        <div className="absolute inset-0 rounded-lg shadow-neon-cyan" />
       </div>
     </div>
   );

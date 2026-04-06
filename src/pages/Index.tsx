@@ -10,7 +10,13 @@ import { CodeTranslator } from '@/components/CodeTranslator';
 import { SdevChatbot } from '@/components/SdevChatbot';
 import { CompilerPanel } from '@/components/CompilerPanel';
 import { Button } from '@/components/ui/button';
-import { Play, Zap, Wand2, Terminal, ChevronDown, Cpu, MonitorDot } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Play, Zap, Wand2, Terminal, Cpu, MonitorDot,
+  ArrowRight, Code2, Palette, Box, BookOpen,
+  Timer, Trash2, Share2, Copy, Check, ChevronDown,
+  Rocket, Shield, Globe2, Layers
+} from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
@@ -28,6 +34,37 @@ speak(message)
 // Try graphics! Click "Turtle" or "Canvas" examples
 `;
 
+const FEATURES = [
+  {
+    icon: Rocket,
+    title: 'Expressive Syntax',
+    description: 'Write code that reads like poetry. No curly braces, no semicolons — just clean, intuitive blocks.',
+    color: 'text-brand-cyan',
+    bg: 'bg-brand-cyan/10',
+  },
+  {
+    icon: Shield,
+    title: 'Built-in Graphics',
+    description: 'Turtle graphics, 2D canvas, 3D rendering — all built into the language with zero setup.',
+    color: 'text-brand-purple',
+    bg: 'bg-brand-purple/10',
+  },
+  {
+    icon: Globe2,
+    title: 'Write in Any Language',
+    description: 'Code in Bulgarian, Japanese, Spanish, or 25+ other languages. AI translates your keywords seamlessly.',
+    color: 'text-brand-amber',
+    bg: 'bg-brand-amber/10',
+  },
+  {
+    icon: Layers,
+    title: 'Compiler + VM',
+    description: 'Full bytecode compiler with a virtual machine. Compile to IR, inspect disassembly, run at speed.',
+    color: 'text-brand-green',
+    bg: 'bg-brand-green/10',
+  },
+];
+
 const Index = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState(DEFAULT_CODE);
@@ -36,9 +73,12 @@ const Index = () => {
   const [graphicsCommands, setGraphicsCommands] = useState<GraphicsCommand[]>([]);
   const [showCanvas, setShowCanvas] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
-  const [showReference, setShowReference] = useState(false);
   const [showCompiler, setShowCompiler] = useState(false);
+  const [execTime, setExecTime] = useState<number>();
+  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('output');
   const canvasRef = useRef<CanvasHandle>(null);
+  const playgroundRef = useRef<HTMLDivElement>(null);
 
   const runCode = useCallback(() => {
     const outputLines: string[] = [];
@@ -46,6 +86,7 @@ const Index = () => {
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
 
     try {
+      const t0 = performance.now();
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
@@ -54,8 +95,6 @@ const Index = () => {
       const env = new Environment();
       const builtins = createBuiltins((msg) => outputLines.push(msg));
       builtins.forEach((fn, name) => env.define(name, fn));
-      
-      // Add math constants directly
       env.define('PI', Math.PI);
       env.define('TAU', Math.PI * 2);
       env.define('E', Math.E);
@@ -70,11 +109,18 @@ const Index = () => {
       const interpreter = new Interpreter((msg) => outputLines.push(msg));
       (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
       interpreter.interpret(ast);
+      const t1 = performance.now();
 
+      setExecTime(Math.round((t1 - t0) * 100) / 100);
       setOutput(outputLines);
       setError(undefined);
       setGraphicsCommands(commands);
-      if (commands.length > 0) setShowCanvas(true);
+      if (commands.length > 0) {
+        setShowCanvas(true);
+        setActiveTab('canvas');
+      } else {
+        setActiveTab('output');
+      }
     } catch (e) {
       setOutput(outputLines);
       if (e instanceof SdevError) {
@@ -90,6 +136,7 @@ const Index = () => {
     setOutput([]);
     setError(undefined);
     setGraphicsCommands([]);
+    setExecTime(undefined);
   }, []);
 
   const handleTranslatedCode = useCallback((translatedCode: string) => {
@@ -100,180 +147,353 @@ const Index = () => {
     setGraphicsCommands([]);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-background cyber-grid relative overflow-hidden">
-      {/* Ambient glow effects */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-neon-cyan/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-neon-magenta/10 rounded-full blur-[128px] pointer-events-none" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-neon-violet/5 rounded-full blur-[200px] pointer-events-none" />
+  const handleClearOutput = useCallback(() => {
+    setOutput([]);
+    setError(undefined);
+    setExecTime(undefined);
+  }, []);
 
-      {/* Header */}
-      <header className="relative border-b border-border/50 glass sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+  const handleCopyCode = useCallback(() => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [code]);
+
+  const handleShare = useCallback(() => {
+    const encoded = btoa(encodeURIComponent(code));
+    const url = `${window.location.origin}?code=${encoded}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [code]);
+
+  const scrollToPlayground = () => {
+    playgroundRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-background relative">
+      {/* Subtle background gradient */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-brand-cyan/[0.03] rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-brand-purple/[0.03] rounded-full blur-[150px]" />
+      </div>
+
+      {/* ===== NAVIGATION ===== */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
             {/* Logo */}
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-neon-cyan via-neon-violet to-neon-magenta rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative w-12 h-12 rounded-xl bg-background border border-border flex items-center justify-center">
-                <Zap className="w-6 h-6 text-primary" />
+            <a href="/" className="flex items-center gap-3 group">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-5 h-5 text-primary" />
               </div>
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold gradient-text tracking-wider">SDEV</h1>
-              <p className="text-xs text-muted-foreground font-mono">{'>'} code_becomes_poetry</p>
+              <span className="text-xl font-display font-bold tracking-tight text-foreground">sdev</span>
+            </a>
+            {/* Nav links */}
+            <div className="hidden md:flex items-center gap-1">
+              <button
+                onClick={scrollToPlayground}
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
+              >
+                Playground
+              </button>
+              <a
+                href="/SDEV_DOCUMENTATION.md"
+                target="_blank"
+                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted/50"
+              >
+                Docs
+              </a>
+              <DownloadablesDropdown code={code} />
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <DownloadablesDropdown code={code} />
+          <div className="flex items-center gap-2">
             <Button
               onClick={() => navigate('/ide')}
-              variant="outline"
-              className="gap-2 border-border/50 hover:border-neon-green/50 hover:shadow-[0_0_15px_rgba(0,255,136,0.2)] transition-all"
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-foreground"
             >
-              <MonitorDot className="w-4 h-4 text-neon-green" />
-              <span className="hidden sm:inline">Open IDE</span>
+              <MonitorDot className="w-4 h-4" />
+              <span className="hidden sm:inline">IDE</span>
             </Button>
-            <Button 
-              onClick={() => setShowCompiler(!showCompiler)} 
-              variant={showCompiler ? "secondary" : "outline"}
-              className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
+            <Button
+              onClick={scrollToPlayground}
+              size="sm"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
             >
-              <Cpu className="w-4 h-4" />
-              <span className="hidden sm:inline">Compiler</span>
-            </Button>
-            <Button 
-              onClick={() => setShowTranslator(!showTranslator)} 
-              variant={showTranslator ? "secondary" : "outline"}
-              className="gap-2 border-border/50 hover:border-neon-violet/50 hover:shadow-neon-violet transition-all"
-            >
-              <Wand2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Translate</span>
-            </Button>
-            <Button 
-              onClick={runCode} 
-              className="gap-2 bg-gradient-to-r from-neon-cyan to-neon-violet hover:shadow-neon-cyan transition-all border-0 text-primary-foreground font-semibold"
-            >
-              <Play className="w-4 h-4" />
-              Execute
+              <Play className="w-3.5 h-3.5" />
+              Try it
             </Button>
           </div>
-        </div>
+        </nav>
       </header>
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
-        {/* Hero section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 glass mb-4">
-            <Terminal className="w-4 h-4 text-primary" />
-            <span className="text-sm font-mono text-muted-foreground">version 1.0.0</span>
-          </div>
-        </div>
-
-        {/* Example selector */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground mb-3 font-mono">
-            <span className="text-primary">$</span> select_example:
-          </p>
-          <ExampleCode onSelect={handleExampleSelect} />
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main editor area */}
-          <div className="lg:col-span-2 space-y-6">
-            <CodeEditor value={code} onChange={setCode} onRun={runCode} placeholder="// Write your sdev code here..." />
-            <OutputPanel lines={output} error={error} />
-            {showCanvas && <CanvasPanel ref={canvasRef} commands={graphicsCommands} onClose={() => setShowCanvas(false)} />}
-          </div>
-
-          {/* Sidebar */}
+      {/* ===== HERO ===== */}
+      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left: copy */}
           <div className="space-y-6">
-          {/* Translator Panel */}
-            {showTranslator && (
-              <div className="gradient-border">
-                <CodeTranslator onTranslated={handleTranslatedCode} />
-              </div>
-            )}
-
-            {/* Compiler Panel */}
-            {showCompiler && (
-              <CompilerPanel
-                code={code}
-                onOutput={(lines, err) => {
-                  setOutput(lines);
-                  setError(err);
-                }}
-              />
-            )}
-
-            {/* Quick Reference Toggle */}
-            <button
-              onClick={() => setShowReference(!showReference)}
-              className="w-full flex items-center justify-between p-4 rounded-lg border border-border/50 glass hover:border-primary/30 transition-all group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Terminal className="w-4 h-4 text-primary" />
-                </div>
-                <span className="font-medium text-foreground">Language Reference</span>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showReference ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showReference && <LanguageReference />}
-
-            {/* Info card */}
-            <div className="rounded-lg border border-border/50 glass p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-neon-magenta/10 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-secondary" />
-                </div>
-                <h3 className="font-semibold text-foreground">Import Libraries</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Use GitHub Gists to share and import code modules:
-              </p>
-              <div className="rounded-lg bg-background/50 border border-border/50 p-3">
-                <code className="text-sm font-mono">
-                  <span className="text-primary">summon</span>{' '}
-                  <span className="text-secondary">"gist:abc123"</span>
-                </code>
-              </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border text-xs text-muted-foreground font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+              v1.0.0 — now with multi-language support
             </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1]">
+              Code becomes{' '}
+              <span className="gradient-text">poetry.</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+              sdev is a programming language designed for clarity and creativity.
+              Expressive syntax, built-in graphics, a full compiler — and you can write it in any human language.
+            </p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Button
+                onClick={scrollToPlayground}
+                size="lg"
+                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 px-6"
+              >
+                Try the Playground
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={() => navigate('/ide')}
+                variant="outline"
+                size="lg"
+                className="gap-2 h-12 px-6 border-border hover:bg-muted/50"
+              >
+                <MonitorDot className="w-4 h-4" />
+                Open IDE
+              </Button>
+            </div>
+          </div>
 
-            {/* Keyboard shortcuts */}
-            <div className="rounded-lg border border-border/50 glass p-5 space-y-3">
-              <h3 className="font-semibold text-foreground text-sm">Shortcuts</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Run code</span>
-                  <kbd className="px-2 py-1 rounded bg-muted text-xs font-mono">Ctrl+Enter</kbd>
+          {/* Right: hero code preview */}
+          <div className="relative">
+            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-2xl shadow-brand-cyan/5">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-brand-rose/60" />
+                  <div className="w-3 h-3 rounded-full bg-brand-amber/60" />
+                  <div className="w-3 h-3 rounded-full bg-brand-green/60" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Insert tab</span>
-                  <kbd className="px-2 py-1 rounded bg-muted text-xs font-mono">Tab</kbd>
+                <span className="text-xs font-mono text-muted-foreground ml-2">example.sdev</span>
+              </div>
+              <pre className="p-5 text-sm font-mono leading-7 text-foreground/90 overflow-x-auto">
+<span className="text-muted-foreground">// A taste of sdev</span>
+{'\n'}<span className="text-brand-cyan">conjure</span> <span className="text-brand-amber">greet</span>(name) <span className="text-muted-foreground">::</span>
+{'\n'}  <span className="text-brand-cyan">yield</span> <span className="text-brand-green">"Hello, "</span> + name + <span className="text-brand-green">"!"</span>
+{'\n'}<span className="text-muted-foreground">;;</span>
+{'\n'}
+{'\n'}<span className="text-brand-cyan">forge</span> names <span className="text-brand-cyan">be</span> [<span className="text-brand-green">"Ada"</span>, <span className="text-brand-green">"Alan"</span>, <span className="text-brand-green">"Grace"</span>]
+{'\n'}
+{'\n'}<span className="text-brand-cyan">iterate</span> name <span className="text-brand-cyan">through</span> names <span className="text-muted-foreground">::</span>
+{'\n'}  <span className="text-brand-amber">speak</span>(<span className="text-brand-amber">greet</span>(name))
+{'\n'}<span className="text-muted-foreground">;;</span>
+              </pre>
+              <div className="px-5 py-3 border-t border-border bg-muted/20">
+                <div className="flex items-center gap-2 text-xs font-mono text-brand-green">
+                  <span>{'>'}</span> Hello, Ada!
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono text-brand-green">
+                  <span>{'>'}</span> Hello, Alan!
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono text-brand-green">
+                  <span>{'>'}</span> Hello, Grace!
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer className="relative border-t border-border/50 mt-16 py-8 glass">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-primary" />
-              <span className="font-display text-lg gradient-text">SDEV</span>
-            </div>
-            <p className="text-sm text-muted-foreground font-mono">
-              {'>'} where_code_becomes_poetry
+      {/* ===== FEATURES ===== */}
+      <section className="border-t border-border bg-muted/20">
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-display font-bold tracking-tight">Why sdev?</h2>
+            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+              A language built for humans first, with powerful tools for developers.
             </p>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="animate-flicker">◉ System Online</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="group p-6 rounded-xl border border-border bg-card hover:border-primary/20 transition-all"
+              >
+                <div className={`w-10 h-10 rounded-lg ${f.bg} flex items-center justify-center mb-4`}>
+                  <f.icon className={`w-5 h-5 ${f.color}`} />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== PLAYGROUND ===== */}
+      <section ref={playgroundRef} className="border-t border-border">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          {/* Playground header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-display font-bold tracking-tight">Playground</h2>
+              <p className="text-sm text-muted-foreground mt-1">Write, run, and experiment with sdev code in your browser.</p>
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyCode}
+                className="gap-1.5 text-xs text-muted-foreground"
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                className="gap-1.5 text-xs text-muted-foreground"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Share
+              </Button>
+              <Button
+                variant={showTranslator ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowTranslator(!showTranslator)}
+                className="gap-1.5 text-xs"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                Translate
+              </Button>
+              <Button
+                variant={showCompiler ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowCompiler(!showCompiler)}
+                className="gap-1.5 text-xs"
+              >
+                <Cpu className="w-3.5 h-3.5" />
+                Compiler
+              </Button>
+              <Button
+                onClick={runCode}
+                size="sm"
+                className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              >
+                <Play className="w-3.5 h-3.5" />
+                Run
+                <kbd className="hidden sm:inline ml-1 px-1.5 py-0.5 rounded bg-primary-foreground/20 text-[10px] font-mono">⌘↵</kbd>
+              </Button>
+            </div>
+          </div>
+
+          {/* Examples bar */}
+          <div className="mb-4">
+            <ExampleCode onSelect={handleExampleSelect} />
+          </div>
+
+          {/* Editor + Output grid */}
+          <div className="grid lg:grid-cols-5 gap-4">
+            {/* Editor */}
+            <div className="lg:col-span-3">
+              <CodeEditor value={code} onChange={setCode} onRun={runCode} placeholder="// Write your sdev code here..." />
+            </div>
+
+            {/* Output panel */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Output tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+                <div className="flex items-center justify-between">
+                  <TabsList className="h-9 bg-muted/30">
+                    <TabsTrigger value="output" className="text-xs gap-1.5 data-[state=active]:bg-card">
+                      <Terminal className="w-3.5 h-3.5" />
+                      Output
+                    </TabsTrigger>
+                    {showCanvas && (
+                      <TabsTrigger value="canvas" className="text-xs gap-1.5 data-[state=active]:bg-card">
+                        <Palette className="w-3.5 h-3.5" />
+                        Canvas
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
+                  <div className="flex items-center gap-2">
+                    {execTime !== undefined && (
+                      <span className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
+                        <Timer className="w-3 h-3" />
+                        {execTime}ms
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClearOutput}
+                      className="w-7 h-7 text-muted-foreground hover:text-foreground"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <TabsContent value="output" className="mt-2">
+                  <OutputPanel lines={output} error={error} />
+                </TabsContent>
+                <TabsContent value="canvas" className="mt-2">
+                  {showCanvas && (
+                    <CanvasPanel ref={canvasRef} commands={graphicsCommands} onClose={() => setShowCanvas(false)} />
+                  )}
+                </TabsContent>
+              </Tabs>
+
+              {/* Compiler */}
+              {showCompiler && (
+                <CompilerPanel
+                  code={code}
+                  onOutput={(lines, err) => {
+                    setOutput(lines);
+                    setError(err);
+                  }}
+                />
+              )}
+
+              {/* Translator */}
+              {showTranslator && (
+                <CodeTranslator onTranslated={handleTranslatedCode} />
+              )}
+            </div>
+          </div>
+
+          {/* Language reference */}
+          <div className="mt-8">
+            <details className="group">
+              <summary className="flex items-center gap-3 cursor-pointer select-none py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <BookOpen className="w-4 h-4" />
+                Language Reference
+                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="pt-2">
+                <LanguageReference />
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FOOTER ===== */}
+      <footer className="border-t border-border bg-card/50">
+        <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Zap className="w-4 h-4 text-primary" />
+            <span className="font-display font-semibold text-foreground">sdev</span>
+            <span className="text-sm text-muted-foreground">— where code becomes poetry</span>
+          </div>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <a href="/SDEV_DOCUMENTATION.md" target="_blank" className="hover:text-foreground transition-colors">Docs</a>
+            <button onClick={() => navigate('/ide')} className="hover:text-foreground transition-colors">IDE</button>
+            <span className="font-mono text-xs">v1.0.0</span>
           </div>
         </div>
       </footer>
