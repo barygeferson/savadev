@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-        display: ['Orbitron', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        display: ['Space Grotesk', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -62,6 +62,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        brand: {
+          cyan: "hsl(var(--brand-cyan))",
+          purple: "hsl(var(--brand-purple))",
+          amber: "hsl(var(--brand-amber))",
+          green: "hsl(var(--brand-green))",
+          rose: "hsl(var(--brand-rose))",
+        },
+        // Legacy neon aliases
         neon: {
           cyan: "hsl(var(--neon-cyan))",
           magenta: "hsl(var(--neon-magenta))",
@@ -101,6 +109,10 @@ export default {
           "50%": { opacity: "0.8" },
           "25%, 75%": { opacity: "0.9" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -109,12 +121,13 @@ export default {
         "float": "float 6s ease-in-out infinite",
         "scan": "scan 3s linear infinite",
         "flicker": "flicker 3s linear infinite",
+        "fade-in": "fade-in 0.5s ease-out forwards",
       },
       boxShadow: {
-        "neon-cyan": "0 0 5px hsl(180 100% 50% / 0.5), 0 0 20px hsl(180 100% 50% / 0.3), 0 0 40px hsl(180 100% 50% / 0.1)",
-        "neon-magenta": "0 0 5px hsl(320 100% 60% / 0.5), 0 0 20px hsl(320 100% 60% / 0.3), 0 0 40px hsl(320 100% 60% / 0.1)",
-        "neon-violet": "0 0 5px hsl(270 100% 65% / 0.5), 0 0 20px hsl(270 100% 65% / 0.3), 0 0 40px hsl(270 100% 65% / 0.1)",
-        "inner-glow": "inset 0 0 20px hsl(180 100% 50% / 0.1)",
+        "neon-cyan": "0 0 20px hsl(167 80% 52% / 0.15)",
+        "neon-magenta": "0 0 20px hsl(350 72% 58% / 0.15)",
+        "neon-violet": "0 0 20px hsl(260 60% 62% / 0.15)",
+        "inner-glow": "inset 0 0 20px hsl(167 80% 52% / 0.05)",
       },
     },
   },
