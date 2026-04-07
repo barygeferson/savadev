@@ -1275,6 +1275,368 @@ speak(c)  // {"x": 1, "y": 99, "z": 3}
 
 ---
 
+## Input / Output
+
+### `input(prompt?)` — Read User Input
+
+Prompts the user for input and returns the entered text:
+
+```sdev
+forge name be input("What is your name? ")
+speak("Hello, " + name + "!")
+
+forge age be morph(input("Enter your age: "), "number")
+speak("You are " + age + " years old")
+```
+
+### `print(...)` / `println(...)` — Print (Aliases)
+
+Standard aliases for `speak()`:
+
+```sdev
+print("Hello")
+println("World")
+```
+
+---
+
+## Character & Code Point Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `chr(n)` | Number to character | `chr(65)` → `"A"` |
+| `ord(c)` | Character to number | `ord("A")` → `65` |
+
+```sdev
+speak(chr(72) + chr(105))  // "Hi"
+speak(ord("A"))             // 65
+
+// Build a Caesar cipher
+conjure encrypt(text, shift) ::
+  forge result be ""
+  iterate through text ::
+    forge code be ord(item) + shift
+    result be result + chr(code)
+  ;;
+  yield result
+;;
+speak(encrypt("ABC", 3))  // "DEF"
+```
+
+---
+
+## Number Base Conversion
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `hex(n)` | Number to hex string | `hex(255)` → `"0xFF"` |
+| `oct(n)` | Number to octal | `oct(8)` → `"0o10"` |
+| `bin(n)` | Number to binary | `bin(10)` → `"0b1010"` |
+| `parseNum(str, base?)` | Parse string with base | `parseNum("FF", 16)` → `255` |
+
+```sdev
+speak(hex(255))        // "0xFF"
+speak(bin(42))         // "0b101010"
+speak(oct(64))         // "0o100"
+speak(parseNum("1010", 2))  // 10
+speak(parseNum("FF", 16))   // 255
+```
+
+---
+
+## Number Formatting & Checking
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `toFixed(n, digits)` | Format decimal places | `toFixed(3.14159, 2)` → `"3.14"` |
+| `toPrecision(n, p)` | Format to precision | `toPrecision(123.456, 4)` → `"123.5"` |
+| `isNaN(v)` | Check if NaN | `isNaN(0/0)` → `yep` |
+| `isFinite(v)` | Check if finite | `isFinite(INFINITY)` → `nope` |
+| `isInteger(v)` | Check if integer | `isInteger(3.0)` → `yep` |
+
+```sdev
+forge pi be 3.14159265
+speak(toFixed(pi, 2))      // "3.14"
+speak(toPrecision(pi, 4))  // "3.142"
+speak(isInteger(42))       // yep
+speak(isFinite(1/0))       // nope
+```
+
+---
+
+## String Checking Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `capitalize(s)` | First char uppercase | `capitalize("hello")` → `"Hello"` |
+| `title(s)` | Title Case | `title("hello world")` → `"Hello World"` |
+| `center(s, width, char?)` | Center-pad | `center("hi", 10, "-")` → `"----hi----"` |
+| `trimLeft(s)` | Trim left whitespace | `trimLeft("  hi")` → `"hi"` |
+| `trimRight(s)` | Trim right whitespace | `trimRight("hi  ")` → `"hi"` |
+| `isUpper(s)` | All uppercase? | `isUpper("ABC")` → `yep` |
+| `isLower(s)` | All lowercase? | `isLower("abc")` → `yep` |
+| `isDigit(s)` | All digits? | `isDigit("123")` → `yep` |
+| `isAlpha(s)` | All alphabetic? | `isAlpha("abc")` → `yep` |
+| `isAlphaNum(s)` | All alphanumeric? | `isAlphaNum("abc123")` → `yep` |
+| `isSpace(s)` | All whitespace? | `isSpace("  ")` → `yep` |
+
+```sdev
+speak(capitalize("hello world"))  // "Hello world"
+speak(title("the quick brown fox"))  // "The Quick Brown Fox"
+speak(center("TITLE", 20, "="))  // "=======TITLE========"
+speak(isDigit("42"))   // yep
+speak(isAlpha("hello"))  // yep
+```
+
+---
+
+## Regex / Pattern Matching
+
+| Function | Description |
+|----------|-------------|
+| `match(text, pattern)` | First regex match (returns list or void) |
+| `matchAll(text, pattern)` | All regex matches |
+| `replaceRegex(text, pattern, replacement)` | Regex replace (global) |
+| `test(text, pattern)` | Test if pattern matches |
+
+```sdev
+forge text be "Hello 123 World 456"
+speak(match(text, "\\d+"))           // ["123"]
+speak(matchAll(text, "\\d+"))        // [["123"], ["456"]]
+speak(replaceRegex(text, "\\d+", "#"))  // "Hello # World #"
+speak(test(text, "\\d+"))           // yep
+
+// Validate email
+conjure isEmail(s) ::
+  yield test(s, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+;;
+speak(isEmail("user@example.com"))  // yep
+```
+
+---
+
+## Bitwise Operations
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `bitAnd(a, b)` | Bitwise AND | `bitAnd(5, 3)` → `1` |
+| `bitOr(a, b)` | Bitwise OR | `bitOr(5, 3)` → `7` |
+| `bitXor(a, b)` | Bitwise XOR | `bitXor(5, 3)` → `6` |
+| `bitNot(a)` | Bitwise NOT | `bitNot(0)` → `-1` |
+| `bitShiftLeft(a, n)` | Left shift | `bitShiftLeft(1, 3)` → `8` |
+| `bitShiftRight(a, n)` | Right shift | `bitShiftRight(8, 2)` → `2` |
+
+```sdev
+// Flags / bitmask example
+forge READ be 1
+forge WRITE be 2
+forge EXEC be 4
+
+forge perms be bitOr(READ, WRITE)  // 3
+speak(bitAnd(perms, READ) > 0)     // yep (has read)
+speak(bitAnd(perms, EXEC) > 0)     // nope (no exec)
+```
+
+---
+
+## Base64 Encoding
+
+| Function | Description |
+|----------|-------------|
+| `base64encode(text)` | Encode text to base64 |
+| `base64decode(text)` | Decode base64 to text |
+
+```sdev
+forge encoded be base64encode("Hello, World!")
+speak(encoded)  // "SGVsbG8sIFdvcmxkIQ=="
+speak(base64decode(encoded))  // "Hello, World!"
+```
+
+---
+
+## Hash Function
+
+```sdev
+speak(hash("hello"))     // deterministic 32-bit integer hash
+speak(hash([1, 2, 3]))   // works on any value
+```
+
+---
+
+## Time & Date
+
+| Function | Description |
+|----------|-------------|
+| `now()` | Current timestamp in milliseconds |
+| `timestamp()` | ISO 8601 string |
+| `time()` | Detailed time tome with year, month, day, etc. |
+| `formatTime(ms)` | Format milliseconds to ISO string |
+
+```sdev
+forge t be time()
+speak("Year: " + t.year)
+speak("Month: " + t.month)
+speak("Day: " + t.day)
+speak("Hour: " + t.hour)
+speak("ISO: " + t.iso)
+
+forge start be now()
+// ... do work ...
+forge elapsed be now() - start
+speak("Took " + elapsed + "ms")
+```
+
+---
+
+## Functional Programming
+
+| Function | Description |
+|----------|-------------|
+| `compose(f, g, ...)` | Right-to-left function composition |
+| `pipe(value, f, g, ...)` | Left-to-right value piping |
+| `curry(fn, arity)` | Currying |
+| `memoize(fn)` | Cache function results |
+| `tap(value, fn)` | Execute fn with value, return value |
+| `times(n, fn)` | Call fn n times with index |
+| `groupBy(list, fn)` | Group elements by key function |
+| `chunk(list, size)` | Split list into chunks |
+
+```sdev
+// Compose
+conjure double(x) :: yield x * 2 ;;
+conjure addOne(x) :: yield x + 1 ;;
+forge doubleAndAdd be compose(addOne, double)
+speak(doubleAndAdd(5))  // 11
+
+// Pipe
+forge result be pipe(5, double, addOne, double)
+speak(result)  // 22
+
+// Memoize (cache expensive computations)
+conjure fib(n) ::
+  ponder n <= 1 :: yield n ;;
+  yield fib(n - 1) + fib(n - 2)
+;;
+forge fastFib be memoize(fib)
+speak(fastFib(10))  // 55
+
+// Group and chunk
+forge words be ["apple", "avocado", "banana", "blueberry", "cherry"]
+speak(groupBy(words, w -> charAt(w, 0)))
+// :: a: ["apple", "avocado"], b: ["banana", "blueberry"], c: ["cherry"] ;;
+
+speak(chunk([1,2,3,4,5,6,7], 3))  // [[1,2,3], [4,5,6], [7]]
+
+// Times
+speak(times(5, i -> i * i))  // [0, 1, 4, 9, 16]
+```
+
+---
+
+## Buffer / Memory Operations
+
+sdev provides low-level byte buffer operations for systems programming:
+
+### `buffer(size)` — Create Byte Buffer
+
+```sdev
+forge mem be buffer(1024)
+mem.set(0, 255)
+mem.set(1, 128)
+speak(mem.get(0))    // 255
+speak(mem.get(1))    // 128
+speak(mem.size())    // 1024
+```
+
+### Buffer Methods
+
+| Method | Description |
+|--------|-------------|
+| `buf.get(index)` | Read byte at index |
+| `buf.set(index, value)` | Write byte at index (0-255) |
+| `buf.fill(value)` | Fill entire buffer |
+| `buf.slice(start, end)` | Get portion as list |
+| `buf.toList()` | Convert to list of numbers |
+| `buf.toText()` | Decode as UTF-8 text |
+| `buf.fromString(text)` | Write UTF-8 text into buffer |
+| `buf.copyTo(target)` | Copy data to another buffer |
+| `buf.size()` | Get buffer size |
+
+### `pointer(buffer, offset)` — Memory Pointer
+
+```sdev
+forge mem be buffer(256)
+forge ptr be pointer(mem, 0)
+ptr.write(42)
+speak(ptr.read())        // 42
+
+forge ptr2 be ptr.advance(4)
+ptr2.writeU16(1024)
+speak(ptr2.readU16())    // 1024
+
+ptr2.writeU32(0xDEADBEEF)
+speak(hex(ptr2.readU32()))  // "0xDEADBEEF"
+```
+
+### Pointer Methods
+
+| Method | Description |
+|--------|-------------|
+| `ptr.read()` | Read byte |
+| `ptr.write(v)` | Write byte |
+| `ptr.advance(n?)` | Return new pointer at offset+n |
+| `ptr.readU16()` | Read 16-bit unsigned (little-endian) |
+| `ptr.readU32()` | Read 32-bit unsigned (little-endian) |
+| `ptr.writeU16(v)` | Write 16-bit unsigned |
+| `ptr.writeU32(v)` | Write 32-bit unsigned |
+
+---
+
+## Error Handling & Control Flow
+
+| Function | Description |
+|----------|-------------|
+| `exit(code?)` | Terminate program with exit code |
+| `panic(message)` | Fatal error (kernel panic) |
+| `throw(message)` | Throw custom error |
+
+```sdev
+// Throw and catch
+attempt ::
+  forge x be input("Enter a number: ")
+  forge n be morph(x, "number")
+  ponder n < 0 ::
+    throw("Negative numbers not allowed!")
+  ;;
+  speak("Square root: " + root(n))
+rescue err ::
+  speak("Error: " + err)
+;;
+
+// Exit
+ponder badCondition ::
+  exit(1)
+;;
+```
+
+---
+
+## Additional Aliases
+
+| Alias | Original | Description |
+|-------|----------|-------------|
+| `print()` | `speak()` | Standard print |
+| `range()` | `sequence()` | Standard range |
+| `typeof()` | `gettype()` | Type checking |
+| `sleep()` | `delay()` | Pause (no-op in browser) |
+| `keys()` | `inscriptions()` | Dict keys |
+| `values()` | `contents()` | Dict values |
+| `freeze(obj)` | — | Make object immutable |
+| `isFrozen(obj)` | — | Check if frozen |
+| `hash(value)` | — | 32-bit hash code |
+
+---
+
 ## Higher-Order Functions
 
 ### `each` — Transform (Map)
