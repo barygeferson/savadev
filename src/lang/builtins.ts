@@ -2018,7 +2018,7 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
         return Array.from(data.slice(start, end));
       } } as SdevFunction;
       obj.toList = { type: 'builtin', call: () => Array.from(data) } as SdevFunction;
-      obj.toString = { type: 'builtin', call: () => new TextDecoder().decode(data) } as SdevFunction;
+      obj.toText = { type: 'builtin', call: () => new TextDecoder().decode(data) } as SdevFunction;
       obj.fromString = { type: 'builtin', call: (a: unknown[]) => {
         const bytes = new TextEncoder().encode(a[0] as string);
         data.set(bytes.slice(0, size));
