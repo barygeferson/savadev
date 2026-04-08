@@ -260,8 +260,11 @@ export class Parser {
         left = right;
       } else if (right.type === 'Identifier') {
         left = { type: 'CallExpr', callee: right, args: [left], line: left.line };
+      } else if (right.type === 'LambdaExpr') {
+        left = { type: 'CallExpr', callee: right, args: [left], line: left.line };
       } else {
-        throw new SdevError('Pipe target must be a function or call', right.line);
+        // Treat any other expression as a callable
+        left = { type: 'CallExpr', callee: right, args: [left], line: left.line };
       }
     }
     
