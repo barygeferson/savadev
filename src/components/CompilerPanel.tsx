@@ -5,7 +5,7 @@ import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
 import { Compiler } from '@/lang/compiler';
 import { VM } from '@/lang/vm';
-import { disassemble, Chunk } from '@/lang/bytecode';
+import { disassemble, Chunk, serializeChunk } from '@/lang/bytecode';
 import { SdevError } from '@/lang/errors';
 
 interface CompilerPanelProps {

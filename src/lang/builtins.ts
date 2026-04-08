@@ -2435,6 +2435,22 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     },
   });
 
+  // __tryCatch(tryFn, catchFn) - used by compiler for attempt/rescue
+  builtins.set('__tryCatch', {
+    type: 'builtin',
+    call: (args: unknown[], line: number) => {
+      const tryFn = args[0] as SdevFunction;
+      const catchFn = args[1] as SdevFunction;
+      if (!tryFn || !catchFn) throw new SdevError('__tryCatch requires 2 function arguments', line);
+      try {
+        return tryFn.call([], line);
+      } catch (e) {
+        const msg = e instanceof SdevError ? e.message : String(e);
+        return catchFn.call([msg], line);
+      }
+    },
+  });
+
   return builtins;
 }
 
