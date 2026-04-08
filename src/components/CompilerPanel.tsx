@@ -5,7 +5,7 @@ import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
 import { Compiler } from '@/lang/compiler';
 import { VM } from '@/lang/vm';
-import { disassemble, Chunk } from '@/lang/bytecode';
+import { disassemble, Chunk, serializeChunk } from '@/lang/bytecode';
 import { SdevError } from '@/lang/errors';
 
 interface CompilerPanelProps {
@@ -63,8 +63,8 @@ export function CompilerPanel({ code, onOutput }: CompilerPanelProps) {
 
   const handleDownloadBytecode = useCallback(() => {
     if (!chunk) return;
-    const json = JSON.stringify(chunk, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+    const binary = serializeChunk(chunk);
+    const blob = new Blob([binary], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

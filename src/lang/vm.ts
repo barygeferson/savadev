@@ -1,14 +1,15 @@
 // ============================================================
-// sdev Bytecode Virtual Machine
+// sdev Bytecode Virtual Machine (v2 - OS-capable)
 // ============================================================
 import { OpCode, Instruction, FunctionDef, Chunk } from './bytecode';
 import { SdevError, ReturnException } from './errors';
 import { createBuiltins, isTruthy, stringify, SdevFunction, OutputCallback } from './builtins';
 import { Environment } from './environment';
+import { createKernelBuiltins, Kernel } from './kernel';
 
 interface CallFrame {
   def: FunctionDef;
-  ip: number;         // instruction pointer
+  ip: number;
   env: Environment;
 }
 
@@ -17,17 +18,29 @@ export class VM {
   private frames: CallFrame[] = [];
   private globals: Environment;
   private output: OutputCallback;
-  private maxSteps = 1_000_000;
+  private maxSteps = 5_000_000;
   private steps = 0;
+  kernel: Kernel;
 
   constructor(output: OutputCallback) {
     this.output = output;
     this.globals = new Environment();
+
+    // Standard builtins
     const builtins = createBuiltins(output);
     builtins.forEach((fn, name) => this.globals.define(name, fn));
+
+    // OS kernel builtins
+    const { builtins: kernelBuiltins, kernel } = createKernelBuiltins(output);
+    this.kernel = kernel;
+    kernelBuiltins.forEach((fn, name) => this.globals.define(name, fn));
+
+    // Constants
     this.globals.define('PI', Math.PI);
     this.globals.define('TAU', Math.PI * 2);
     this.globals.define('E', Math.E);
+    this.globals.define('INFINITY', Infinity);
+    this.globals.define('NAN', NaN);
   }
 
   run(chunk: Chunk): unknown {
@@ -82,6 +95,13 @@ export class VM {
       case OpCode.DUP:
         this.push(this.peek());
         break;
+      case OpCode.SWAP: {
+        const a = this.pop();
+        const b = this.pop();
+        this.push(a);
+        this.push(b);
+        break;
+      }
 
       case OpCode.LOAD: {
         const name = ins.operand as string;
@@ -122,6 +142,14 @@ export class VM {
       case OpCode.MOD: { const r = this.pop(); const l = this.pop(); this.push((l as number) % (r as number)); break; }
       case OpCode.POW: { const r = this.pop(); const l = this.pop(); this.push(Math.pow(l as number, r as number)); break; }
       case OpCode.NEG: { this.push(-(this.pop() as number)); break; }
+
+      // Bitwise
+      case OpCode.BIT_AND: { const r = this.pop(); const l = this.pop(); this.push((l as number) & (r as number)); break; }
+      case OpCode.BIT_OR: { const r = this.pop(); const l = this.pop(); this.push((l as number) | (r as number)); break; }
+      case OpCode.BIT_XOR: { const r = this.pop(); const l = this.pop(); this.push((l as number) ^ (r as number)); break; }
+      case OpCode.BIT_NOT: { this.push(~(this.pop() as number)); break; }
+      case OpCode.BIT_SHL: { const r = this.pop(); const l = this.pop(); this.push((l as number) << (r as number)); break; }
+      case OpCode.BIT_SHR: { const r = this.pop(); const l = this.pop(); this.push((l as number) >> (r as number)); break; }
 
       // Comparison
       case OpCode.EQ:  { const r = this.pop(); const l = this.pop(); this.push(this.isEqual(l, r)); break; }
@@ -195,7 +223,6 @@ export class VM {
         } else {
           throw new SdevError('Cannot set index on this type', ins.line);
         }
-        // Note: we don't push back - index assign is a statement
         break;
       }
       case OpCode.MEMBER_GET: {
@@ -208,11 +235,21 @@ export class VM {
         }
         break;
       }
+      case OpCode.MEMBER_SET: {
+        const val = this.pop();
+        const obj = this.pop();
+        const prop = ins.operand as string;
+        if (obj && typeof obj === 'object') {
+          (obj as Record<string, unknown>)[prop] = val;
+        } else {
+          throw new SdevError(`Cannot set property '${prop}'`, ins.line);
+        }
+        break;
+      }
 
       // Functions
       case OpCode.MAKE_FUNC: {
         const def = frame.def.functions[ins.operand as number];
-        // Capture current env as closure environment
         const capturedEnv = frame.env;
         const fn: SdevFunction = {
           type: 'user',
@@ -250,8 +287,75 @@ export class VM {
         break;
       }
 
+      // OS opcodes
+      case OpCode.SYSCALL: {
+        const name = ins.operand as string;
+        const argCount = this.pop() as number;
+        const args = this.stack.splice(this.stack.length - argCount, argCount);
+        const result = this.kernel.syscalls.call(name, args, ins.line, this.kernel.getPrivilege());
+        this.push(result ?? null);
+        break;
+      }
+
+      case OpCode.ALLOC: {
+        const size = this.pop() as number;
+        const addr = this.kernel.heap.alloc(size, ins.line);
+        this.push(addr);
+        break;
+      }
+
+      case OpCode.FREE: {
+        const addr = this.pop() as number;
+        this.kernel.heap.free(addr, ins.line);
+        break;
+      }
+
+      case OpCode.HEAP_LOAD: {
+        const addr = this.pop() as number;
+        this.push(this.kernel.heap.load(addr, ins.line));
+        break;
+      }
+
+      case OpCode.HEAP_STORE: {
+        const val = this.pop();
+        const addr = this.pop() as number;
+        this.kernel.heap.store(addr, val, ins.line);
+        break;
+      }
+
+      case OpCode.INTERRUPT: {
+        const num = ins.operand as number;
+        this.kernel.hal.triggerInterrupt(num);
+        this.kernel.hal.processPendingInterrupts(ins.line);
+        break;
+      }
+
+      case OpCode.TASK_CREATE: {
+        const fn = this.pop() as SdevFunction;
+        const id = this.kernel.scheduler.createTask(fn);
+        this.push(id);
+        break;
+      }
+
+      case OpCode.TASK_YIELD: {
+        this.kernel.scheduler.yieldCurrent();
+        break;
+      }
+
+      case OpCode.TASK_KILL: {
+        const id = this.pop() as number;
+        this.push(this.kernel.scheduler.killTask(id));
+        break;
+      }
+
+      case OpCode.NOP:
+        break;
+
+      case OpCode.DEBUG_BREAK:
+        this.output(`[DEBUG] IP=${frame.ip} Stack=[${this.stack.map(v => stringify(v)).join(', ')}]`);
+        break;
+
       case OpCode.HALT:
-        // Clear remaining frames
         this.frames.length = 0;
         break;
 
@@ -261,7 +365,6 @@ export class VM {
   }
 
   private callFunction(def: FunctionDef, args: unknown[], closureEnv: Environment, callLine: number): unknown {
-    // Save current stack and frame state
     const savedStack = [...this.stack];
     const savedFrames = [...this.frames];
     this.stack = [];
@@ -271,7 +374,6 @@ export class VM {
     for (let i = 0; i < def.params.length; i++) {
       funcEnv.define(def.params[i], args[i]);
     }
-    // Add params to function's own env as local defines
     this.pushFrame(def, funcEnv);
 
     try {
@@ -312,5 +414,14 @@ export class VM {
       return a.every((v, i) => this.isEqual(v, (b as unknown[])[i]));
     }
     return a === b;
+  }
+
+  // Debug: inspect VM state
+  inspectStack(): string[] {
+    return this.stack.map(v => stringify(v));
+  }
+
+  inspectFrames(): string[] {
+    return this.frames.map(f => `${f.def.name || '<main>'} @${f.ip}`);
   }
 }
