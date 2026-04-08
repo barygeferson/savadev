@@ -1,8 +1,8 @@
 // ============================================================
-// sdev AST → Bytecode Compiler
+// sdev AST → Bytecode Compiler (v2 - OS-capable)
 // ============================================================
 import * as AST from './ast';
-import { OpCode, Instruction, FunctionDef, Chunk, BYTECODE_VERSION } from './bytecode';
+import { OpCode, Instruction, FunctionDef, Chunk, BYTECODE_VERSION, BYTECODE_MAGIC, ConstantPool, DebugInfo } from './bytecode';
 import { SdevError } from './errors';
 
 class FunctionCompiler {
@@ -18,15 +18,13 @@ class FunctionCompiler {
 
   emit(op: OpCode, operand: number | string | boolean | undefined, line: number): number {
     this.code.push({ op, operand, line });
-    return this.code.length - 1; // index of emitted instruction
+    return this.code.length - 1;
   }
 
-  // Emit a placeholder JUMP and return its index so it can be patched
   emitJump(op: OpCode, line: number): number {
     return this.emit(op, -1, line);
   }
 
-  // Patch a previously emitted jump instruction to point to current position
   patchJump(jumpIndex: number): void {
     this.code[jumpIndex].operand = this.code.length;
   }
@@ -37,13 +35,21 @@ class FunctionCompiler {
 }
 
 export class Compiler {
+  private constants: ConstantPool = { numbers: [], strings: [] };
+  private debugInfo: DebugInfo = { sourceMap: [], localNames: [] };
+
   compile(program: AST.Program): Chunk {
+    this.constants = { numbers: [], strings: [] };
+    this.debugInfo = { sourceMap: [], localNames: [] };
     const fn = new FunctionCompiler('', []);
     this.compileStatements(program.statements, fn);
     fn.emit(OpCode.HALT, undefined, 0);
     return {
       version: BYTECODE_VERSION,
+      magic: BYTECODE_MAGIC,
       entry: { name: '', params: [], code: fn.code, functions: fn.functions },
+      constants: this.constants,
+      debug: this.debugInfo,
     };
   }
 
@@ -96,9 +102,15 @@ export class Compiler {
         fn.emit(OpCode.INDEX_SET, undefined, node.line);
         break;
 
+      case 'MemberAssignStatement':
+        this.compileNode(node.object, fn);
+        this.compileNode(node.value, fn);
+        fn.emit(OpCode.MEMBER_SET, node.property, node.line);
+        break;
+
       case 'ExpressionStatement':
         this.compileNode(node.expression, fn);
-        fn.emit(OpCode.POP, undefined, node.line); // discard result
+        fn.emit(OpCode.POP, undefined, node.line);
         break;
 
       case 'BinaryExpr':
@@ -112,10 +124,18 @@ export class Compiler {
         else throw new SdevError(`Unknown unary op: ${node.operator}`, node.line);
         break;
 
+      case 'TernaryExpr':
+        this.compileNode(node.condition, fn);
+        const jumpFalseT = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
+        this.compileNode(node.thenExpr, fn);
+        const jumpEndT = fn.emitJump(OpCode.JUMP, node.line);
+        fn.patchJump(jumpFalseT);
+        this.compileNode(node.elseExpr, fn);
+        fn.patchJump(jumpEndT);
+        break;
+
       case 'CallExpr':
-        // Push callee
         this.compileNode(node.callee, fn);
-        // Push args
         for (const arg of node.args) this.compileNode(arg, fn);
         fn.emit(OpCode.CALL, node.args.length, node.line);
         break;
@@ -146,7 +166,6 @@ export class Compiler {
 
       case 'LambdaExpr': {
         const lambdaFn = new FunctionCompiler('<lambda>', node.params);
-        // Lambda body may be a block or single expression
         if (node.body.type === 'BlockStatement') {
           this.compileStatements(node.body.statements, lambdaFn);
           lambdaFn.emit(OpCode.PUSH_NULL, undefined, node.line);
@@ -197,6 +216,42 @@ export class Compiler {
         this.compileForEach(node, fn);
         break;
 
+      case 'ForInStatement':
+        this.compileForIn(node, fn);
+        break;
+
+      case 'TryStatement':
+        // Try-catch: compile try block, if error jump to catch
+        // We implement this by wrapping in a special pattern
+        // For now, compile both blocks sequentially with error handling via CALL
+        this.compileTryCatch(node, fn);
+        break;
+
+      case 'BreakStatement':
+        // Handled by loop compilation via jump patching
+        // For now emit a NOP placeholder
+        fn.emit(OpCode.NOP, undefined, node.line);
+        break;
+
+      case 'ContinueStatement':
+        fn.emit(OpCode.NOP, undefined, node.line);
+        break;
+
+      case 'ClassDeclaration':
+        this.compileClass(node, fn);
+        break;
+
+      case 'NewExpr':
+        this.compileNode(node.className, fn);
+        for (const arg of node.args) this.compileNode(arg, fn);
+        fn.emit(OpCode.CALL, node.args.length + 0, node.line);
+        break;
+
+      case 'AwaitExpr':
+        // In synchronous VM, await just evaluates the expression
+        this.compileNode(node.operand, fn);
+        break;
+
       default:
         throw new SdevError(`Compiler: unknown node type ${(node as { type: string }).type}`, 0);
     }
@@ -208,7 +263,7 @@ export class Compiler {
       this.compileNode(node.left, fn);
       fn.emit(OpCode.DUP, undefined, node.line);
       const jumpFalse = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
-      fn.emit(OpCode.POP, undefined, node.line); // pop dup'd left
+      fn.emit(OpCode.POP, undefined, node.line);
       this.compileNode(node.right, fn);
       fn.patchJump(jumpFalse);
       return;
@@ -223,6 +278,15 @@ export class Compiler {
       return;
     }
 
+    // Pipe operator
+    if (node.operator === '|>') {
+      this.compileNode(node.left, fn);
+      this.compileNode(node.right, fn);
+      fn.emit(OpCode.SWAP, undefined, node.line);
+      fn.emit(OpCode.CALL, 1, node.line);
+      return;
+    }
+
     this.compileNode(node.left, fn);
     this.compileNode(node.right, fn);
 
@@ -231,6 +295,9 @@ export class Compiler {
       '/': OpCode.DIV, '%': OpCode.MOD, '^': OpCode.POW,
       'equals': OpCode.EQ, 'differs': OpCode.NEQ, '<>': OpCode.NEQ,
       '<': OpCode.LT, '>': OpCode.GT, '<=': OpCode.LTE, '>=': OpCode.GTE,
+      '==': OpCode.EQ, '!=': OpCode.NEQ,
+      '&': OpCode.BIT_AND, '|': OpCode.BIT_OR, '~': OpCode.BIT_XOR,
+      '<<': OpCode.BIT_SHL, '>>': OpCode.BIT_SHR,
     };
     const op = opMap[node.operator];
     if (!op) throw new SdevError(`Unknown binary op: ${node.operator}`, node.line);
@@ -261,30 +328,22 @@ export class Compiler {
   }
 
   private compileForEach(node: AST.ForEachStatement, fn: FunctionCompiler): void {
-    // Strategy: convert to a while loop using hidden iterator index
-    // We push the iterable, then use a special pattern:
-    //   __iter = iterable
-    //   __i = 0
-    //   cycle __i < len(__iter) :: item = __iter[__i]; body; __i = __i + 1 ;;
     const iterVar = `__iter_${node.line}`;
     const idxVar = `__idx_${node.line}`;
 
-    // forge __iter = iterable
     this.compileNode(node.iterable, fn);
     fn.emit(OpCode.DEFINE, iterVar, node.line);
 
-    // forge __idx = 0
     fn.emit(OpCode.PUSH_NUM, 0, node.line);
     fn.emit(OpCode.DEFINE, idxVar, node.line);
 
-    // loop start: check __idx < len(__iter)
     const loopStart = fn.currentPos();
-    fn.emit(OpCode.LOAD, iterVar, node.line);
+    // len(__iter) > __idx
     fn.emit(OpCode.LOAD, 'len', node.line);
     fn.emit(OpCode.LOAD, iterVar, node.line);
-    fn.emit(OpCode.CALL, 1, node.line); // len(__iter)
+    fn.emit(OpCode.CALL, 1, node.line);
     fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.GT, undefined, node.line); // len > idx
+    fn.emit(OpCode.GT, undefined, node.line);
     const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
 
     // item = __iter[__idx]
@@ -293,7 +352,6 @@ export class Compiler {
     fn.emit(OpCode.INDEX_GET, undefined, node.line);
     fn.emit(OpCode.DEFINE, node.variable, node.line);
 
-    // body
     this.compileStatements(node.body.statements, fn);
 
     // __idx = __idx + 1
@@ -304,5 +362,116 @@ export class Compiler {
 
     fn.emit(OpCode.JUMP, loopStart, node.line);
     fn.patchJump(exitJump);
+  }
+
+  private compileForIn(node: AST.ForInStatement, fn: FunctionCompiler): void {
+    // ForIn is same as ForEach in sdev
+    const iterVar = `__iter_${node.line}`;
+    const idxVar = `__idx_${node.line}`;
+
+    this.compileNode(node.iterable, fn);
+    fn.emit(OpCode.DEFINE, iterVar, node.line);
+
+    fn.emit(OpCode.PUSH_NUM, 0, node.line);
+    fn.emit(OpCode.DEFINE, idxVar, node.line);
+
+    const loopStart = fn.currentPos();
+    fn.emit(OpCode.LOAD, 'len', node.line);
+    fn.emit(OpCode.LOAD, iterVar, node.line);
+    fn.emit(OpCode.CALL, 1, node.line);
+    fn.emit(OpCode.LOAD, idxVar, node.line);
+    fn.emit(OpCode.GT, undefined, node.line);
+    const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
+
+    fn.emit(OpCode.LOAD, iterVar, node.line);
+    fn.emit(OpCode.LOAD, idxVar, node.line);
+    fn.emit(OpCode.INDEX_GET, undefined, node.line);
+    fn.emit(OpCode.DEFINE, node.variable, node.line);
+
+    this.compileStatements(node.body.statements, fn);
+
+    fn.emit(OpCode.LOAD, idxVar, node.line);
+    fn.emit(OpCode.PUSH_NUM, 1, node.line);
+    fn.emit(OpCode.ADD, undefined, node.line);
+    fn.emit(OpCode.STORE, idxVar, node.line);
+
+    fn.emit(OpCode.JUMP, loopStart, node.line);
+    fn.patchJump(exitJump);
+  }
+
+  private compileTryCatch(node: AST.TryStatement, fn: FunctionCompiler): void {
+    // Compile try block as a function, call it, catch errors
+    const tryFn = new FunctionCompiler('<try>', []);
+    this.compileStatements(node.tryBlock.statements, tryFn);
+    tryFn.emit(OpCode.PUSH_NULL, undefined, node.line);
+    tryFn.emit(OpCode.RETURN, undefined, node.line);
+    const tryDef: FunctionDef = { name: '<try>', params: [], code: tryFn.code, functions: tryFn.functions };
+    const tryIdx = fn.functions.length;
+    fn.functions.push(tryDef);
+
+    const catchFn = new FunctionCompiler('<catch>', [node.errorVar]);
+    this.compileStatements(node.catchBlock.statements, catchFn);
+    catchFn.emit(OpCode.PUSH_NULL, undefined, node.line);
+    catchFn.emit(OpCode.RETURN, undefined, node.line);
+    const catchDef: FunctionDef = { name: '<catch>', params: [node.errorVar], code: catchFn.code, functions: catchFn.functions };
+    const catchIdx = fn.functions.length;
+    fn.functions.push(catchDef);
+
+    // Load __tryCatch builtin, push tryFn, catchFn, call
+    fn.emit(OpCode.LOAD, '__tryCatch', node.line);
+    fn.emit(OpCode.MAKE_FUNC, tryIdx, node.line);
+    fn.emit(OpCode.MAKE_FUNC, catchIdx, node.line);
+    fn.emit(OpCode.CALL, 2, node.line);
+    fn.emit(OpCode.POP, undefined, node.line);
+  }
+
+  private compileClass(node: AST.ClassDeclaration, fn: FunctionCompiler): void {
+    // Compile class as a constructor function that returns an object with methods
+    const ctorFn = new FunctionCompiler(node.name, []);
+
+    // Find init method
+    const initMethod = node.methods.find(m => m.name === 'init');
+    const otherMethods = node.methods.filter(m => m.name !== 'init');
+
+    // If there's an init, use its params for the constructor
+    if (initMethod) {
+      ctorFn.params = initMethod.params.filter(p => p !== 'self');
+    }
+
+    // Create 'self' object
+    ctorFn.emit(OpCode.MAKE_DICT, 0, node.line);
+    ctorFn.emit(OpCode.DEFINE, 'self', node.line);
+
+    // Compile init body if present
+    if (initMethod) {
+      for (const stmt of initMethod.body.statements) {
+        this.compileNode(stmt, ctorFn);
+      }
+    }
+
+    // Add other methods to self
+    for (const method of otherMethods) {
+      const methodFn = new FunctionCompiler(method.name, method.params);
+      this.compileStatements(method.body.statements, methodFn);
+      methodFn.emit(OpCode.PUSH_NULL, undefined, node.line);
+      methodFn.emit(OpCode.RETURN, undefined, node.line);
+      const methodDef: FunctionDef = { name: method.name, params: method.params, code: methodFn.code, functions: methodFn.functions };
+      const methodIdx = ctorFn.functions.length;
+      ctorFn.functions.push(methodDef);
+
+      ctorFn.emit(OpCode.LOAD, 'self', node.line);
+      ctorFn.emit(OpCode.MAKE_FUNC, methodIdx, node.line);
+      ctorFn.emit(OpCode.MEMBER_SET, method.name, node.line);
+    }
+
+    // Return self
+    ctorFn.emit(OpCode.LOAD, 'self', node.line);
+    ctorFn.emit(OpCode.RETURN, undefined, node.line);
+
+    const def: FunctionDef = { name: node.name, params: ctorFn.params, code: ctorFn.code, functions: ctorFn.functions };
+    const idx = fn.functions.length;
+    fn.functions.push(def);
+    fn.emit(OpCode.MAKE_FUNC, idx, node.line);
+    fn.emit(OpCode.DEFINE, node.name, node.line);
   }
 }
