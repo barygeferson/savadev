@@ -123,7 +123,10 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
       if (!fn || typeof fn !== 'object' || !('call' in fn)) {
         throw new SdevError('Second argument must be a function', line);
       }
-      return arr.map((item, idx) => fn.call([item, idx], line));
+      return arr.map((item, idx) => {
+        try { return fn.call([item, idx], line); }
+        catch { return fn.call([item], line); }
+      });
     },
   });
 
