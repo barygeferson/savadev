@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown } from 'lucide-react';
+import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown, Puzzle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DownloadablesDropdownProps {
@@ -177,6 +177,35 @@ explorer "C:\\sdev"
     toast.success('Opening documentation');
   };
 
+  const downloadVsix = () => {
+    fetch('/sdev-language-1.0.0.vsix')
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'sdev-language-1.0.0.vsix'; a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Downloaded VS Code extension (.vsix)', {
+          description: 'In VS Code: Extensions ⋯ → Install from VSIX…',
+          duration: 6000,
+        });
+      })
+      .catch((err) => toast.error(err.message));
+  };
+
+  const downloadVsixZip = () => {
+    fetch('/sdev-vscode-extension.zip')
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'sdev-vscode-extension.zip'; a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Downloaded extension source (.zip)');
+      })
+      .catch((err) => toast.error(err.message));
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -238,9 +267,29 @@ explorer "C:\\sdev"
             <div className="text-xs text-muted-foreground">Quick setup script</div>
           </div>
         </DropdownMenuItem>
-        
+
         <DropdownMenuSeparator className="bg-border/30" />
-        
+
+        <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+          Editor Tools
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={downloadVsix} className="gap-3 cursor-pointer">
+          <Puzzle className="w-4 h-4 text-neon-cyan" />
+          <div>
+            <div className="font-medium">VS Code Extension (.vsix)</div>
+            <div className="text-xs text-muted-foreground">Syntax + snippets + Run command</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={downloadVsixZip} className="gap-3 cursor-pointer">
+          <FileCode className="w-4 h-4 text-neon-violet" />
+          <div>
+            <div className="font-medium">Extension Source (.zip)</div>
+            <div className="text-xs text-muted-foreground">Unpacked folder for dev</div>
+          </div>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="bg-border/30" />
+
         <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
           Tutorials
         </DropdownMenuLabel>

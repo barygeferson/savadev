@@ -1,0 +1,120 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "sdev",
+  "scopeName": "source.sdev",
+  "fileTypes": ["sdev", "sdv"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#number" },
+    { "include": "#keyword" },
+    { "include": "#constant" },
+    { "include": "#operator" },
+    { "include": "#class-decl" },
+    { "include": "#function-decl" },
+    { "include": "#function-call" },
+    { "include": "#identifier" },
+    { "include": "#block" }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        { "name": "comment.line.double-slash.sdev", "match": "//.*$" },
+        { "name": "comment.line.number-sign.sdev",  "match": "#.*$" },
+        { "name": "comment.block.sdev", "begin": "/\\*", "end": "\\*/" }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.sdev",
+          "begin": "\"", "end": "\"",
+          "patterns": [{ "name": "constant.character.escape.sdev", "match": "\\\\." }]
+        },
+        {
+          "name": "string.quoted.single.sdev",
+          "begin": "'", "end": "'",
+          "patterns": [{ "name": "constant.character.escape.sdev", "match": "\\\\." }]
+        },
+        {
+          "name": "string.quoted.template.sdev",
+          "begin": "`", "end": "`",
+          "patterns": [{ "name": "constant.character.escape.sdev", "match": "\\\\." }]
+        }
+      ]
+    },
+    "number": {
+      "patterns": [
+        { "name": "constant.numeric.hex.sdev",        "match": "\\b0[xX][0-9a-fA-F]+\\b" },
+        { "name": "constant.numeric.scientific.sdev", "match": "\\b\\d+\\.?\\d*[eE][+-]?\\d+\\b" },
+        { "name": "constant.numeric.float.sdev",      "match": "\\b\\d+\\.\\d+\\b" },
+        { "name": "constant.numeric.integer.sdev",    "match": "\\b\\d+\\b" }
+      ]
+    },
+    "keyword": {
+      "patterns": [
+        {
+          "name": "keyword.control.sdev",
+          "match": "\\b(ponder|otherwise|cycle|iterate|through|within|yeet|skip|yield|attempt|rescue|await|spawn)\\b"
+        },
+        {
+          "name": "keyword.declaration.sdev",
+          "match": "\\b(forge|conjure|essence|extend|summon|async|new)\\b"
+        },
+        {
+          "name": "keyword.operator.word.sdev",
+          "match": "\\b(be|also|either|isnt|equals|differs)\\b"
+        },
+        {
+          "name": "variable.language.sdev",
+          "match": "\\b(self|super)\\b"
+        }
+      ]
+    },
+    "constant": {
+      "patterns": [
+        { "name": "constant.language.boolean.sdev", "match": "\\b(yep|nope)\\b" },
+        { "name": "constant.language.null.sdev",    "match": "\\bvoid\\b" },
+        { "name": "constant.language.math.sdev",    "match": "\\b(PI|TAU|E|INFINITY)\\b" }
+      ]
+    },
+    "operator": {
+      "patterns": [
+        { "name": "keyword.operator.arrow.sdev",    "match": "->" },
+        { "name": "keyword.operator.pipe.sdev",     "match": "\\|>" },
+        { "name": "keyword.operator.ternary.sdev",  "match": "~" },
+        { "name": "keyword.operator.block.sdev",    "match": "::|;;" },
+        { "name": "keyword.operator.compare.sdev",  "match": "<=|>=|<>|<|>" },
+        { "name": "keyword.operator.arithmetic.sdev","match": "\\+|-|\\*|/|%|\\^" }
+      ]
+    },
+    "class-decl": {
+      "match": "\\b(essence)\\s+([A-Z][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.sdev" },
+        "2": { "name": "entity.name.type.class.sdev" }
+      }
+    },
+    "function-decl": {
+      "match": "\\b(conjure)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.sdev" },
+        "2": { "name": "entity.name.function.sdev" }
+      }
+    },
+    "function-call": {
+      "match": "([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+      "captures": { "1": { "name": "entity.name.function.call.sdev" } }
+    },
+    "identifier": {
+      "name": "variable.other.sdev",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+    },
+    "block": {
+      "begin": "::", "end": ";;",
+      "beginCaptures": { "0": { "name": "keyword.operator.block.begin.sdev" } },
+      "endCaptures":   { "0": { "name": "keyword.operator.block.end.sdev" } },
+      "patterns": [{ "include": "$self" }]
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "Variable declaration": {
+    "prefix": "forge",
+    "body": ["forge ${1:name} be ${2:value}"],
+    "description": "Declare a variable with `forge … be …`"
+  },
+  "Function declaration": {
+    "prefix": "conjure",
+    "body": [
+      "conjure ${1:name}(${2:args}) ::",
+      "  $0",
+      ";;"
+    ],
+    "description": "Define a function"
+  },
+  "Async function": {
+    "prefix": "async",
+    "body": [
+      "async conjure ${1:name}(${2:args}) ::",
+      "  $0",
+      ";;"
+    ],
+    "description": "Define an async function"
+  },
+  "If / ponder": {
+    "prefix": "ponder",
+    "body": [
+      "ponder ${1:cond} ::",
+      "  $0",
+      ";;"
+    ],
+    "description": "Conditional branch"
+  },
+  "If / else": {
+    "prefix": "ponder-otherwise",
+    "body": [
+      "ponder ${1:cond} ::",
+      "  $2",
+      ";;",
+      "otherwise ::",
+      "  $0",
+      ";;"
+    ]
+  },
+  "While loop / cycle": {
+    "prefix": "cycle",
+    "body": [
+      "cycle ${1:cond} ::",
+      "  $0",
+      ";;"
+    ]
+  },
+  "For-each loop / iterate": {
+    "prefix": "iterate",
+    "body": [
+      "iterate ${1:i} through ${2:list} ::",
+      "  $0",
+      ";;"
+    ]
+  },
+  "For-in / within": {
+    "prefix": "within",
+    "body": [
+      "within ${1:item} be ${2:list} ::",
+      "  $0",
+      ";;"
+    ]
+  },
+  "Class / essence": {
+    "prefix": "essence",
+    "body": [
+      "essence ${1:Name} ::",
+      "  conjure init(self${2:, args}) ::",
+      "    $0",
+      "  ;;",
+      ";;"
+    ]
+  },
+  "Try / attempt-rescue": {
+    "prefix": "attempt",
+    "body": [
+      "attempt ::",
+      "  $1",
+      ";;",
+      "rescue ${2:err} ::",
+      "  $0",
+      ";;"
+    ]
+  },
+  "Print": {
+    "prefix": "speak",
+    "body": ["speak($0)"]
+  },
+  "Lambda / arrow": {
+    "prefix": "lambda",
+    "body": ["${1:x} -> ${0:expr}"]
+  },
+  "Ternary": {
+    "prefix": "ternary",
+    "body": ["${1:cond} ~ ${2:then} : ${0:else}"]
+  },
+  "Pipe": {
+    "prefix": "pipe",
+    "body": ["${1:value} |> ${0:fn}"]
+  },
+  "Import / summon": {
+    "prefix": "summon",
+    "body": ["summon \"${1:path}\""]
+  },
+  "Hello, World!": {
+    "prefix": "hello",
+    "body": [
+      "forge message be \"Hello, World!\"",
+      "speak(message)"
+    ]
+  }
+}
