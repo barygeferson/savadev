@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown } from 'lucide-react';
+import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown, Puzzle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DownloadablesDropdownProps {
