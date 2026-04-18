@@ -177,6 +177,35 @@ explorer "C:\\sdev"
     toast.success('Opening documentation');
   };
 
+  const downloadVsix = () => {
+    fetch('/sdev-language-1.0.0.vsix')
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'sdev-language-1.0.0.vsix'; a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Downloaded VS Code extension (.vsix)', {
+          description: 'In VS Code: Extensions ⋯ → Install from VSIX…',
+          duration: 6000,
+        });
+      })
+      .catch((err) => toast.error(err.message));
+  };
+
+  const downloadVsixZip = () => {
+    fetch('/sdev-vscode-extension.zip')
+      .then((res) => { if (!res.ok) throw new Error(`Download failed: ${res.status}`); return res.blob(); })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'sdev-vscode-extension.zip'; a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Downloaded extension source (.zip)');
+      })
+      .catch((err) => toast.error(err.message));
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
