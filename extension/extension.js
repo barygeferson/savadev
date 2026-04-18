@@ -49,16 +49,15 @@ function buildRunner(context, sourceFile) {
     return { cmd: py, args: [interpreter, sourceFile] };
   }
 
-  // bundled & node both use the JS interpreter; the only difference is
-  // which `node` binary we invoke (configured via sdev.nodePath).
+  // bundled & node both invoke the bundled JS interpreter directly via Node.
+  // The interpreter has a built-in CLI that reads a .sdev file and prints output.
   const node = cfg.get('nodePath', 'node');
   const interpreter = path.join(ext, 'interpreter', 'sdev-interpreter.js');
-  const runnerScript = path.join(ext, 'run-sdev.js');
-  if (!fs.existsSync(interpreter) || !fs.existsSync(runnerScript)) {
+  if (!fs.existsSync(interpreter)) {
     vscode.window.showErrorMessage('Bundled sdev interpreter is missing from the extension package.');
     return null;
   }
-  return { cmd: node, args: [runnerScript, interpreter, sourceFile] };
+  return { cmd: node, args: [interpreter, sourceFile] };
 }
 
 async function runSource(context, source, label) {
