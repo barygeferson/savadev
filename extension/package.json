@@ -1,0 +1,85 @@
+{
+  "name": "sdev-language",
+  "displayName": "sdev Language",
+  "description": "Official VS Code support for the sdev programming language — syntax highlighting, snippets, and a built-in run command.",
+  "version": "1.0.0",
+  "publisher": "sdev-lang",
+  "author": { "name": "sdev" },
+  "license": "MIT",
+  "icon": "icon.png",
+  "homepage": "https://s-dev.lovable.app",
+  "repository": { "type": "git", "url": "https://s-dev.lovable.app" },
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Snippets", "Formatters"],
+  "keywords": ["sdev", "interpreter", "language", "esoteric", "fantasy"],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:sdev",
+    "onCommand:sdev.run",
+    "onCommand:sdev.runSelection",
+    "onCommand:sdev.openPlayground"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sdev",
+        "aliases": ["sdev", "Sdev"],
+        "extensions": [".sdev", ".sdv"],
+        "configuration": "./language-configuration.json",
+        "icon": { "light": "./icon.png", "dark": "./icon.png" }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sdev",
+        "scopeName": "source.sdev",
+        "path": "./syntaxes/sdev.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      { "language": "sdev", "path": "./snippets/sdev.json" }
+    ],
+    "commands": [
+      { "command": "sdev.run", "title": "sdev: Run File", "icon": "$(play)" },
+      { "command": "sdev.runSelection", "title": "sdev: Run Selection" },
+      { "command": "sdev.openPlayground", "title": "sdev: Open Online Playground" }
+    ],
+    "menus": {
+      "editor/title/run": [
+        { "command": "sdev.run", "when": "resourceLangId == sdev", "group": "navigation" }
+      ],
+      "editor/context": [
+        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection", "group": "z_sdev" }
+      ],
+      "commandPalette": [
+        { "command": "sdev.run", "when": "resourceLangId == sdev" },
+        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection" }
+      ]
+    },
+    "keybindings": [
+      { "command": "sdev.run", "key": "ctrl+enter", "mac": "cmd+enter", "when": "resourceLangId == sdev && editorTextFocus" },
+      { "command": "sdev.runSelection", "key": "ctrl+shift+enter", "mac": "cmd+shift+enter", "when": "resourceLangId == sdev && editorHasSelection" }
+    ],
+    "configuration": {
+      "title": "sdev",
+      "properties": {
+        "sdev.runner": {
+          "type": "string",
+          "enum": ["bundled", "node", "python"],
+          "default": "bundled",
+          "description": "Which runtime to use when running .sdev files. 'bundled' uses the interpreter shipped with this extension (no install required)."
+        },
+        "sdev.nodePath": {
+          "type": "string",
+          "default": "node",
+          "description": "Path to the Node.js executable (used by 'bundled' and 'node' runners)."
+        },
+        "sdev.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Path to the Python executable (used by the 'python' runner)."
+        }
+      }
+    }
+  }
+}
