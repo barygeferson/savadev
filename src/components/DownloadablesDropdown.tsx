@@ -238,9 +238,29 @@ explorer "C:\\sdev"
             <div className="text-xs text-muted-foreground">Quick setup script</div>
           </div>
         </DropdownMenuItem>
-        
+
         <DropdownMenuSeparator className="bg-border/30" />
-        
+
+        <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+          Editor Tools
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={downloadVsix} className="gap-3 cursor-pointer">
+          <Puzzle className="w-4 h-4 text-neon-cyan" />
+          <div>
+            <div className="font-medium">VS Code Extension (.vsix)</div>
+            <div className="text-xs text-muted-foreground">Syntax + snippets + Run command</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={downloadVsixZip} className="gap-3 cursor-pointer">
+          <FileCode className="w-4 h-4 text-neon-violet" />
+          <div>
+            <div className="font-medium">Extension Source (.zip)</div>
+            <div className="text-xs text-muted-foreground">Unpacked folder for dev</div>
+          </div>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator className="bg-border/30" />
+
         <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">
           Tutorials
         </DropdownMenuLabel>
