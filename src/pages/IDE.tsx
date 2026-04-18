@@ -387,45 +387,25 @@ export default function IDEPage() {
   const runCode = useCallback(async () => {
     if (!activeFile) return;
 
-    let code = activeFile.content;
+    const code = activeFile.content;
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
     setIsRunning(true);
     setStatusMsg('Running…');
 
-    // Auto-translate if needed
-    const needsTranslation = selectedLanguage !== 'English' &&
-      (selectedLanguage !== 'auto' || mightNeedTranslation(code));
-
-    if (needsTranslation) {
-      setStatusMsg('Translating…');
-      const result = await translate(code, selectedLanguage);
-      if (result) {
-        // Cache translated version per file
-        setTranslatedContent(prev => {
-          const next = new Map(prev);
-          next.set(activeFile.id + ':' + code.slice(0, 40), result.translated);
-          return next;
-        });
-        code = result.translated;
-        if (!result.fromCache) {
-          toast.success(`Translated from ${result.detectedLanguage} → English`, {
-            description: 'Translation cached for next run',
-            duration: 3000,
-          });
-        }
-      } else {
-        toast.error('Translation failed — running original code');
-      }
-    }
+    // Translation is now built into the language core (Lexer).
+    // No network call, no async wait — fully deterministic and instant.
+    const lexerOpts = { sourceLanguage: selectedLanguage };
 
     const t0 = performance.now();
 
     try {
+      let detectedLanguage: string | null = null;
       if (runMode === 'interpreter') {
-        const lexer = new Lexer(code);
+        const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
+        detectedLanguage = lexer.detectedLanguage;
         const parser = new Parser(tokens);
         const ast = parser.parse();
         const env = new Environment();
@@ -445,14 +425,26 @@ export default function IDEPage() {
         (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
         interpreter.interpret(ast);
       } else {
-        const lexer = new Lexer(code);
+        const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
+        detectedLanguage = lexer.detectedLanguage;
         const parser = new Parser(tokens);
         const ast = parser.parse();
         const compiler = new Compiler();
         const chunk = compiler.compile(ast);
         const vm = new VM((msg) => outputLines.push(msg));
         vm.run(chunk);
+      }
+
+      // Stash the translated source so the "view translated" toggle works.
+      if (detectedLanguage && detectedLanguage !== 'English') {
+        const { translateSource } = await import('@/lang/translator');
+        const result = translateSource(code, selectedLanguage);
+        setTranslatedContent(prev => {
+          const next = new Map(prev);
+          next.set(activeFile.id, result.translated);
+          return next;
+        });
       }
 
       const elapsed = Math.round((performance.now() - t0) * 10) / 10;
@@ -475,7 +467,7 @@ export default function IDEPage() {
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode, selectedLanguage, translate]);
+  }, [activeFile, runMode, selectedLanguage]);
 
   const newFile = useCallback(() => {
     const id = String(++fileIdCounter);
