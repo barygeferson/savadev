@@ -1,5 +1,18 @@
 import { Token, TokenType, KEYWORDS } from './tokens';
 import { SdevError } from './errors';
+import { translateSource } from './translator';
+
+export interface LexerOptions {
+  /**
+   * Source language for built-in multilingual translation.
+   * - 'auto' (default): auto-detect; pure-English code is a no-op.
+   * - 'English' or null: skip translation entirely.
+   * - Any supported language name (e.g. 'Bulgarian'): force translation.
+   */
+  sourceLanguage?: string | null;
+  /** Set false to disable the built-in translator entirely. */
+  translate?: boolean;
+}
 
 export class Lexer {
   private source: string;
@@ -8,8 +21,19 @@ export class Lexer {
   private column: number = 1;
   private tokens: Token[] = [];
 
-  constructor(source: string) {
-    this.source = source;
+  /** Language detected (or used) by the built-in translator, if any. */
+  public readonly detectedLanguage: string | null;
+
+  constructor(source: string, options: LexerOptions = {}) {
+    const { sourceLanguage = 'auto', translate = true } = options;
+    if (translate && sourceLanguage !== 'English' && sourceLanguage !== null) {
+      const result = translateSource(source, sourceLanguage);
+      this.source = result.translated;
+      this.detectedLanguage = result.detectedLanguage;
+    } else {
+      this.source = source;
+      this.detectedLanguage = null;
+    }
   }
 
   tokenize(): Token[] {
