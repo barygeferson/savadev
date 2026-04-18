@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 /*
- * Thin wrapper that loads the bundled sdev JS interpreter and executes a
- * source file. Stays tiny so the extension boots fast.
+ * Thin wrapper that loads the bundled sdev JS interpreter and runs a source
+ * file. Stays tiny so the extension boots fast.
  *
  *   node run-sdev.js  <interpreter.js>  <source.sdev>
+ *
+ * The bundled interpreter exposes either:
+ *   - module.exports = { Interpreter, Lexer, Parser, ... }
+ *     (modern build — instantiated and `.run(code)` is called)
+ *   - module.exports = { execute }
+ *     (legacy build — called directly)
  */
 'use strict';
 const fs = require('fs');
@@ -23,33 +29,61 @@ try {
   process.exit(2);
 }
 
-// Load the interpreter into the current process. The bundled interpreter
-// exposes a `sdev` global (in browser) and module.exports = { execute } in Node.
-let sdev;
+let mod;
 try {
-  sdev = require(path.resolve(interpreterPath));
+  mod = require(path.resolve(interpreterPath));
 } catch (e) {
   console.error(`Failed to load sdev interpreter: ${e.message}`);
   process.exit(2);
 }
 
-const exec = (sdev && (sdev.execute || (sdev.sdev && sdev.sdev.execute))) || null;
-if (typeof exec !== 'function') {
-  console.error('Bundled interpreter does not expose an execute() function.');
-  process.exit(2);
+// Capture all output written via console.log (the interpreter's `speak`
+// builtin uses console.log under the hood) AND collect from a returned
+// `output` array if the interpreter provides one.
+const lines = [];
+const origLog = console.log;
+console.log = (...args) => {
+  lines.push(args.map(stringify).join(' '));
+};
+function stringify(v) {
+  if (v === null || v === undefined) return String(v);
+  if (typeof v === 'string') return v;
+  try { return JSON.stringify(v); } catch { return String(v); }
 }
 
 let result;
+let runtimeError = null;
 try {
-  // 2nd arg is canvas (browser-only); pass null in Node.
-  result = exec(source, null);
+  if (typeof mod.execute === 'function') {
+    result = mod.execute(source, null);
+  } else if (typeof mod.Interpreter === 'function') {
+    const interp = new mod.Interpreter();
+    if (typeof interp.run === 'function') {
+      result = interp.run(source);
+    } else if (typeof interp.execute === 'function') {
+      result = interp.execute(source);
+    } else {
+      throw new Error('Interpreter instance has no run()/execute() method');
+    }
+  } else {
+    throw new Error('Bundled interpreter does not expose execute() or Interpreter');
+  }
 } catch (e) {
-  console.error(`✗ ${e && e.message ? e.message : e}`);
-  process.exit(1);
+  runtimeError = e && e.message ? e.message : String(e);
 }
 
+console.log = origLog;
+
+// Some interpreter shapes also include `output` on the result object.
 if (result && Array.isArray(result.output)) {
-  for (const line of result.output) process.stdout.write(String(line) + '\n');
+  for (const line of result.output) lines.push(String(line));
+}
+
+for (const line of lines) process.stdout.write(line + '\n');
+
+if (runtimeError) {
+  process.stderr.write(`✗ ${runtimeError}\n`);
+  process.exit(1);
 }
 if (result && result.error) {
   process.stderr.write(`✗ ${result.error}\n`);
