@@ -87,7 +87,8 @@ const Index = () => {
 
     try {
       const t0 = performance.now();
-      const lexer = new Lexer(code);
+      // Lexer auto-detects & translates 26+ human languages built-in.
+      const lexer = new Lexer(code, { sourceLanguage: 'auto' });
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
       const ast = parser.parse();
