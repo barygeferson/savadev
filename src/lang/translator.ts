@@ -723,6 +723,7 @@ export function translateSource(
 
   const replace = compileReplacer(lang);
   const phraseNorms = buildPhraseNormalizations(lang);
+  const fuzzy = compileFuzzyReplacer(lang);
 
   const segments = segmentSource(source);
   const translated = segments
@@ -733,10 +734,96 @@ export function translateSource(
       for (const [re, repl] of phraseNorms) {
         t = t.replace(re, repl);
       }
-      // Then word-by-word replacement.
-      return replace(t);
+      // Then exact word-by-word replacement.
+      t = replace(t);
+      // Finally, fuzzy match anything that looks like an unconverted foreign keyword.
+      t = fuzzy(t);
+      return t;
     })
     .join('');
 
   return { translated, detectedLanguage: lang };
+}
+
+// ============================================================
+// Fuzzy matching — catches typos, conjugations, and synonyms
+// the strict dictionary missed. Uses Levenshtein distance.
+// ============================================================
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const al = a.length, bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+  // Single-row DP for memory efficiency.
+  let prev = new Array(bl + 1);
+  let curr = new Array(bl + 1);
+  for (let j = 0; j <= bl; j++) prev[j] = j;
+  for (let i = 1; i <= al; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[bl];
+}
+
+const FUZZY_REPLACERS: Record<string, (s: string) => string> = {};
+
+function compileFuzzyReplacer(lang: string): (s: string) => string {
+  if (FUZZY_REPLACERS[lang]) return FUZZY_REPLACERS[lang];
+  const table = KEYWORD_TABLES[lang];
+  if (!table) return (FUZZY_REPLACERS[lang] = (s) => s);
+
+  // Precompute keyword keys (only non-phrase, length ≥ 3 to avoid false positives).
+  const keys = Object.keys(table).filter(k => !k.includes('_') && [...k].length >= 3);
+  const keysByFirstChar = new Map<string, string[]>();
+  for (const k of keys) {
+    const c = k[0].toLowerCase();
+    if (!keysByFirstChar.has(c)) keysByFirstChar.set(c, []);
+    keysByFirstChar.get(c)!.push(k);
+  }
+
+  // Match runs of Unicode letters (any script). Skip pure-ASCII (already English).
+  const wordRe = /[\p{L}][\p{L}\p{N}_]*/gu;
+
+  const fn = (src: string): string => {
+    return src.replace(wordRe, (word) => {
+      // Skip pure ASCII — those are real identifiers or already-English keywords.
+      if (/^[\x00-\x7F]+$/.test(word)) return word;
+      // Skip if exact match already in table (handled by strict pass — but be safe).
+      if (table[word.toLowerCase()]) return table[word.toLowerCase()];
+
+      const lower = word.toLowerCase();
+      const candidates = keysByFirstChar.get(lower[0]) ?? [];
+      // Threshold: ≤2 edits for short words, up to 30% length for longer.
+      const threshold = Math.max(2, Math.floor(lower.length * 0.3));
+
+      let best: { key: string; dist: number } | null = null;
+      for (const k of candidates) {
+        // Length pre-filter — skip if length differs by more than threshold.
+        if (Math.abs(k.length - lower.length) > threshold) continue;
+        const d = levenshtein(lower, k);
+        if (d <= threshold && (!best || d < best.dist)) {
+          best = { key: k, dist: d };
+          if (d === 0) break;
+        }
+      }
+      // Also try other buckets if no match found (handles wrong first letter).
+      if (!best || best.dist > 1) {
+        for (const k of keys) {
+          if (Math.abs(k.length - lower.length) > threshold) continue;
+          const d = levenshtein(lower, k);
+          if (d <= threshold && (!best || d < best.dist)) {
+            best = { key: k, dist: d };
+          }
+        }
+      }
+      return best ? table[best.key] : word;
+    });
+  };
+  FUZZY_REPLACERS[lang] = fn;
+  return fn;
 }
