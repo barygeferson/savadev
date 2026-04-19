@@ -140,6 +140,8 @@ class BreakException {}
 class ContinueException {}
 
 
+
+
 // ─── sdev built-in translator (data extracted from translator.ts) ───
 const __sdevTranslator = (function () {
   const KEYWORD_TABLES = {
@@ -573,28 +575,85 @@ const __sdevTranslator = (function () {
     "vár": "await", "indít": "spawn",
   },
   Bulgarian: {
-    "изкова": "forge", "създай": "forge", "направи": "forge", "нека": "forge",
-    "бъде": "be", "да_бъде": "be", "е": "be", "да_е": "be",
-    "извикай": "conjure", "функция": "conjure",
-    "върни": "yield", "обмисли": "ponder", "ако": "ponder",
-    "иначе": "otherwise", "в_противен_случай": "otherwise",
-    "цикъл": "cycle", "докато": "cycle",
-    "обходи": "iterate", "за": "iterate",
-    "през": "through", "вътре": "within", "в": "within",
-    "хвърли": "yeet", "прескочи": "skip",
-    "кажи": "speak", "изкрещи": "speak", "покажи": "speak",
-    "изведи": "speak", "отпечатай": "speak", "изпиши": "speak",
-    "същност": "essence", "клас": "essence",
-    "разшири": "extend", "себе_си": "self", "родител": "super",
-    "нов": "new", "ново": "new", "нова": "new",
-    "опитай": "attempt", "спаси": "rescue", "хвани": "rescue",
-    "също": "also", "и": "also", "или": "either",
-    "не_е": "isnt", "равно": "equals", "различно": "differs",
-    "да": "yep", "вярно": "yep", "истина": "yep",
-    "не": "nope", "невярно": "nope", "лъжа": "nope",
-    "празно": "void", "нищо": "void",
-    "призови": "summon", "импортирай": "summon",
-    "асинхронен": "async", "изчакай": "await", "породи": "spawn",
+    // forge — create / declare a variable. Accept many natural verbs.
+    "изкова": "forge", "изковай": "forge", "създай": "forge", "създам": "forge",
+    "създавам": "forge", "създаване": "forge", "направи": "forge", "направя": "forge",
+    "правя": "forge", "нека": "forge", "дефинирай": "forge", "дефиниция": "forge",
+    "обяви": "forge", "обявявам": "forge", "приеми": "forge", "вземи": "forge",
+    "променлива": "forge", "имаме": "forge", "имам": "forge",
+    // be — assignment / equality binding
+    "бъде": "be", "да_бъде": "be", "бъда": "be", "е": "be", "да_е": "be",
+    "са": "be", "става": "be", "да_стане": "be", "стане": "be",
+    "равняване": "be", "присвой": "be", "присвоявам": "be",
+    "със_стойност": "be", "стойност": "be",
+    // conjure — function / method definition
+    "извикай": "conjure", "извикване": "conjure", "функция": "conjure",
+    "функцията": "conjure", "метод": "conjure", "процедура": "conjure",
+    "действие": "conjure", "задача": "conjure", "конструирай": "conjure",
+    // yield — return value
+    "върни": "yield", "връщам": "yield", "връщай": "yield", "резултат": "yield",
+    "отговори": "yield", "отговор": "yield", "дай": "yield",
+    // ponder — if / conditional
+    "обмисли": "ponder", "ако": "ponder", "когато": "ponder", "в_случай": "ponder",
+    "при_условие": "ponder", "проверка": "ponder", "провери": "ponder",
+    // otherwise — else
+    "иначе": "otherwise", "в_противен_случай": "otherwise", "иначе_ако": "otherwise",
+    "обратно": "otherwise", "ако_не": "otherwise",
+    // cycle — while loop
+    "цикъл": "cycle", "докато": "cycle", "повтаряй": "cycle", "повтори": "cycle",
+    "продължавай": "cycle", "върти": "cycle", "върти_се": "cycle",
+    // iterate — for loop
+    "обходи": "iterate", "обхождай": "iterate", "за_всеки": "iterate", "за": "iterate",
+    "всеки": "iterate", "итерирай": "iterate", "минавай_през": "iterate",
+    // through — over a collection
+    "през": "through", "по": "through", "над": "through",
+    // within — in / inside
+    "вътре": "within", "вътре_в": "within", "в": "within", "сред": "within",
+    // yeet — throw / break
+    "хвърли": "yeet", "хвърлям": "yeet", "счупи": "yeet", "прекъсни": "yeet",
+    "спри": "yeet", "излез": "yeet", "край": "yeet",
+    // skip — continue
+    "прескочи": "skip", "пропусни": "skip", "продължи": "skip", "следващ": "skip",
+    // speak — print / output
+    "кажи": "speak", "казвай": "speak", "изкрещи": "speak", "покажи": "speak",
+    "показвай": "speak", "изведи": "speak", "извеждай": "speak",
+    "отпечатай": "speak", "печатай": "speak", "изпиши": "speak", "пиши": "speak",
+    "напиши": "speak", "принтирай": "speak", "принт": "speak", "лог": "speak",
+    "логни": "speak", "съобщи": "speak", "съобщение": "speak",
+    // essence — class
+    "същност": "essence", "клас": "essence", "класа": "essence", "обект": "essence",
+    "тип": "essence", "структура": "essence",
+    // extend — inherit
+    "разшири": "extend", "разширяване": "extend", "наследи": "extend",
+    "наследяване": "extend", "произлиза": "extend",
+    // self / super
+    "себе_си": "self", "себе": "self", "аз": "self", "този": "self", "тази": "self",
+    "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
+    // new — instantiate
+    "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
+    // attempt / rescue
+    "опитай": "attempt", "опит": "attempt", "опитвай": "attempt", "пробвай": "attempt",
+    "проба": "attempt", "опит_за": "attempt",
+    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue", "грешка": "rescue",
+    "при_грешка": "rescue", "ако_грешка": "rescue", "улови": "rescue",
+    // logical
+    "също": "also", "и": "also", "както_и": "also",
+    "или": "either", "било_то": "either",
+    "не_е": "isnt", "не": "isnt",
+    "равно": "equals", "равно_на": "equals", "еднакво": "equals", "същото": "equals",
+    "различно": "differs", "различно_от": "differs", "не_равно": "differs",
+    // booleans
+    "да": "yep", "вярно": "yep", "истина": "yep", "истинно": "yep", "истинско": "yep",
+    "невярно": "nope", "лъжа": "nope", "грешно": "nope", "неистина": "nope",
+    // void / null
+    "празно": "void", "нищо": "void", "нула": "void", "нулева": "void", "липсва": "void",
+    // summon — import
+    "призови": "summon", "импортирай": "summon", "внеси": "summon", "вкарай": "summon",
+    "включи": "summon", "зареди": "summon", "използвай": "summon",
+    // async / await / spawn
+    "асинхронен": "async", "асинхронно": "async", "паралелно": "async",
+    "изчакай": "await", "чакай": "await", "почакай": "await",
+    "породи": "spawn", "стартирай": "spawn", "пусни": "spawn", "изпълни": "spawn",
   },
 };
   const SUPPORTED_LANGUAGES = Object.keys(KEYWORD_TABLES);
