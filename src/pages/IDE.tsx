@@ -387,16 +387,44 @@ export default function IDEPage() {
   const runCode = useCallback(async () => {
     if (!activeFile) return;
 
-    const code = activeFile.content;
+    let code = activeFile.content;
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
     setIsRunning(true);
     setStatusMsg('Running…');
 
-    // Translation is now built into the language core (Lexer).
-    // No network call, no async wait — fully deterministic and instant.
-    const lexerOpts = { sourceLanguage: selectedLanguage };
+    // ─── Hybrid translation pre-pass ───
+    // Stage 1: dictionary + fuzzy (sync, in Lexer). Stage 2: AI fallback
+    // only fires when foreign-script words remain after stage 1.
+    try {
+      const { translateSource } = await import('@/lang/translator');
+      const stage1 = translateSource(code, selectedLanguage);
+      const stripped = stage1.translated
+        .replace(/(["'`])(?:\\.|(?!\1).)*\1/g, '')
+        .replace(/(\/\/|#)[^\n]*/g, '');
+      if (/[\u00A0-\uFFFF]{3,}/.test(stripped)) {
+        setStatusMsg('Translating with AI…');
+        try {
+          const { data } = await supabase.functions.invoke('translate-fuzzy', {
+            body: { code: stage1.translated, original: code, sourceLanguage: stage1.detectedLanguage ?? selectedLanguage },
+          });
+          if (data?.translated) {
+            code = data.translated;
+            if (data.usedAI) toast.info('Translated with AI fallback');
+          } else {
+            code = stage1.translated;
+          }
+        } catch {
+          code = stage1.translated;
+        }
+      } else {
+        code = stage1.translated;
+      }
+    } catch {/* fallback to raw lexer */}
+
+    // Translation already applied above — disable Lexer's built-in pass.
+    const lexerOpts = { sourceLanguage: 'English' as const, translate: false };
 
     const t0 = performance.now();
 
