@@ -1057,7 +1057,7 @@ class Lexer {
   }
 
   isDigit(char) { return char >= '0' && char <= '9'; }
-  isAlpha(char) { return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_'; }
+  isAlpha(char) { return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_' || /\p{L}/u.test(char); }
   isAlphaNumeric(char) { return this.isAlpha(char) || this.isDigit(char); }
 }
 
