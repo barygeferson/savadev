@@ -18,6 +18,7 @@ import { Interpreter } from '@/lang/interpreter';
 import { Environment } from '@/lang/environment';
 import { createBuiltins } from '@/lang/builtins';
 import { SdevError } from '@/lang/errors';
+import { supabase } from '@/integrations/supabase/client';
 import { Compiler } from '@/lang/compiler';
 import { VM } from '@/lang/vm';
 import { Button } from '@/components/ui/button';
