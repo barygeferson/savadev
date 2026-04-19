@@ -450,28 +450,85 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "vár": "await", "indít": "spawn",
   },
   Bulgarian: {
-    "изкова": "forge", "създай": "forge", "направи": "forge", "нека": "forge",
-    "бъде": "be", "да_бъде": "be", "е": "be", "да_е": "be",
-    "извикай": "conjure", "функция": "conjure",
-    "върни": "yield", "обмисли": "ponder", "ако": "ponder",
-    "иначе": "otherwise", "в_противен_случай": "otherwise",
-    "цикъл": "cycle", "докато": "cycle",
-    "обходи": "iterate", "за": "iterate",
-    "през": "through", "вътре": "within", "в": "within",
-    "хвърли": "yeet", "прескочи": "skip",
-    "кажи": "speak", "изкрещи": "speak", "покажи": "speak",
-    "изведи": "speak", "отпечатай": "speak", "изпиши": "speak",
-    "същност": "essence", "клас": "essence",
-    "разшири": "extend", "себе_си": "self", "родител": "super",
-    "нов": "new", "ново": "new", "нова": "new",
-    "опитай": "attempt", "спаси": "rescue", "хвани": "rescue",
-    "също": "also", "и": "also", "или": "either",
-    "не_е": "isnt", "равно": "equals", "различно": "differs",
-    "да": "yep", "вярно": "yep", "истина": "yep",
-    "не": "nope", "невярно": "nope", "лъжа": "nope",
-    "празно": "void", "нищо": "void",
-    "призови": "summon", "импортирай": "summon",
-    "асинхронен": "async", "изчакай": "await", "породи": "spawn",
+    // forge — create / declare a variable. Accept many natural verbs.
+    "изкова": "forge", "изковай": "forge", "създай": "forge", "създам": "forge",
+    "създавам": "forge", "създаване": "forge", "направи": "forge", "направя": "forge",
+    "правя": "forge", "нека": "forge", "дефинирай": "forge", "дефиниция": "forge",
+    "обяви": "forge", "обявявам": "forge", "приеми": "forge", "вземи": "forge",
+    "променлива": "forge", "имаме": "forge", "имам": "forge",
+    // be — assignment / equality binding
+    "бъде": "be", "да_бъде": "be", "бъда": "be", "е": "be", "да_е": "be",
+    "са": "be", "става": "be", "да_стане": "be", "стане": "be",
+    "равняване": "be", "присвой": "be", "присвоявам": "be",
+    "със_стойност": "be", "стойност": "be",
+    // conjure — function / method definition
+    "извикай": "conjure", "извикване": "conjure", "функция": "conjure",
+    "функцията": "conjure", "метод": "conjure", "процедура": "conjure",
+    "действие": "conjure", "задача": "conjure", "конструирай": "conjure",
+    // yield — return value
+    "върни": "yield", "връщам": "yield", "връщай": "yield", "резултат": "yield",
+    "отговори": "yield", "отговор": "yield", "дай": "yield",
+    // ponder — if / conditional
+    "обмисли": "ponder", "ако": "ponder", "когато": "ponder", "в_случай": "ponder",
+    "при_условие": "ponder", "проверка": "ponder", "провери": "ponder",
+    // otherwise — else
+    "иначе": "otherwise", "в_противен_случай": "otherwise", "иначе_ако": "otherwise",
+    "обратно": "otherwise", "ако_не": "otherwise",
+    // cycle — while loop
+    "цикъл": "cycle", "докато": "cycle", "повтаряй": "cycle", "повтори": "cycle",
+    "продължавай": "cycle", "върти": "cycle", "върти_се": "cycle",
+    // iterate — for loop
+    "обходи": "iterate", "обхождай": "iterate", "за_всеки": "iterate", "за": "iterate",
+    "всеки": "iterate", "итерирай": "iterate", "минавай_през": "iterate",
+    // through — over a collection
+    "през": "through", "по": "through", "над": "through",
+    // within — in / inside
+    "вътре": "within", "вътре_в": "within", "в": "within", "сред": "within",
+    // yeet — throw / break
+    "хвърли": "yeet", "хвърлям": "yeet", "счупи": "yeet", "прекъсни": "yeet",
+    "спри": "yeet", "излез": "yeet", "край": "yeet",
+    // skip — continue
+    "прескочи": "skip", "пропусни": "skip", "продължи": "skip", "следващ": "skip",
+    // speak — print / output
+    "кажи": "speak", "казвай": "speak", "изкрещи": "speak", "покажи": "speak",
+    "показвай": "speak", "изведи": "speak", "извеждай": "speak",
+    "отпечатай": "speak", "печатай": "speak", "изпиши": "speak", "пиши": "speak",
+    "напиши": "speak", "принтирай": "speak", "принт": "speak", "лог": "speak",
+    "логни": "speak", "съобщи": "speak", "съобщение": "speak",
+    // essence — class
+    "същност": "essence", "клас": "essence", "класа": "essence", "обект": "essence",
+    "тип": "essence", "структура": "essence",
+    // extend — inherit
+    "разшири": "extend", "разширяване": "extend", "наследи": "extend",
+    "наследяване": "extend", "произлиза": "extend",
+    // self / super
+    "себе_си": "self", "себе": "self", "аз": "self", "този": "self", "тази": "self",
+    "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
+    // new — instantiate
+    "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
+    // attempt / rescue
+    "опитай": "attempt", "опит": "attempt", "опитвай": "attempt", "пробвай": "attempt",
+    "проба": "attempt", "опит_за": "attempt",
+    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue", "грешка": "rescue",
+    "при_грешка": "rescue", "ако_грешка": "rescue", "улови": "rescue",
+    // logical
+    "също": "also", "и": "also", "както_и": "also",
+    "или": "either", "било_то": "either",
+    "не_е": "isnt", "не": "isnt",
+    "равно": "equals", "равно_на": "equals", "еднакво": "equals", "същото": "equals",
+    "различно": "differs", "различно_от": "differs", "не_равно": "differs",
+    // booleans
+    "да": "yep", "вярно": "yep", "истина": "yep", "истинно": "yep", "истинско": "yep",
+    "невярно": "nope", "лъжа": "nope", "грешно": "nope", "неистина": "nope",
+    // void / null
+    "празно": "void", "нищо": "void", "нула": "void", "нулева": "void", "липсва": "void",
+    // summon — import
+    "призови": "summon", "импортирай": "summon", "внеси": "summon", "вкарай": "summon",
+    "включи": "summon", "зареди": "summon", "използвай": "summon",
+    // async / await / spawn
+    "асинхронен": "async", "асинхронно": "async", "паралелно": "async",
+    "изчакай": "await", "чакай": "await", "почакай": "await",
+    "породи": "spawn", "стартирай": "spawn", "пусни": "spawn", "изпълни": "spawn",
   },
 };
 
@@ -666,6 +723,7 @@ export function translateSource(
 
   const replace = compileReplacer(lang);
   const phraseNorms = buildPhraseNormalizations(lang);
+  const fuzzy = compileFuzzyReplacer(lang);
 
   const segments = segmentSource(source);
   const translated = segments
@@ -676,10 +734,96 @@ export function translateSource(
       for (const [re, repl] of phraseNorms) {
         t = t.replace(re, repl);
       }
-      // Then word-by-word replacement.
-      return replace(t);
+      // Then exact word-by-word replacement.
+      t = replace(t);
+      // Finally, fuzzy match anything that looks like an unconverted foreign keyword.
+      t = fuzzy(t);
+      return t;
     })
     .join('');
 
   return { translated, detectedLanguage: lang };
+}
+
+// ============================================================
+// Fuzzy matching — catches typos, conjugations, and synonyms
+// the strict dictionary missed. Uses Levenshtein distance.
+// ============================================================
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const al = a.length, bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+  // Single-row DP for memory efficiency.
+  let prev = new Array(bl + 1);
+  let curr = new Array(bl + 1);
+  for (let j = 0; j <= bl; j++) prev[j] = j;
+  for (let i = 1; i <= al; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[bl];
+}
+
+const FUZZY_REPLACERS: Record<string, (s: string) => string> = {};
+
+function compileFuzzyReplacer(lang: string): (s: string) => string {
+  if (FUZZY_REPLACERS[lang]) return FUZZY_REPLACERS[lang];
+  const table = KEYWORD_TABLES[lang];
+  if (!table) return (FUZZY_REPLACERS[lang] = (s) => s);
+
+  // Precompute keyword keys (only non-phrase, length ≥ 3 to avoid false positives).
+  const keys = Object.keys(table).filter(k => !k.includes('_') && [...k].length >= 3);
+  const keysByFirstChar = new Map<string, string[]>();
+  for (const k of keys) {
+    const c = k[0].toLowerCase();
+    if (!keysByFirstChar.has(c)) keysByFirstChar.set(c, []);
+    keysByFirstChar.get(c)!.push(k);
+  }
+
+  // Match runs of Unicode letters (any script). Skip pure-ASCII (already English).
+  const wordRe = /[\p{L}][\p{L}\p{N}_]*/gu;
+
+  const fn = (src: string): string => {
+    return src.replace(wordRe, (word) => {
+      // Skip pure ASCII — those are real identifiers or already-English keywords.
+      if (/^[\x00-\x7F]+$/.test(word)) return word;
+      // Skip if exact match already in table (handled by strict pass — but be safe).
+      if (table[word.toLowerCase()]) return table[word.toLowerCase()];
+
+      const lower = word.toLowerCase();
+      const candidates = keysByFirstChar.get(lower[0]) ?? [];
+      // Threshold: ≤2 edits for short words, up to 30% length for longer.
+      const threshold = Math.max(2, Math.floor(lower.length * 0.3));
+
+      let best: { key: string; dist: number } | null = null;
+      for (const k of candidates) {
+        // Length pre-filter — skip if length differs by more than threshold.
+        if (Math.abs(k.length - lower.length) > threshold) continue;
+        const d = levenshtein(lower, k);
+        if (d <= threshold && (!best || d < best.dist)) {
+          best = { key: k, dist: d };
+          if (d === 0) break;
+        }
+      }
+      // Also try other buckets if no match found (handles wrong first letter).
+      if (!best || best.dist > 1) {
+        for (const k of keys) {
+          if (Math.abs(k.length - lower.length) > threshold) continue;
+          const d = levenshtein(lower, k);
+          if (d <= threshold && (!best || d < best.dist)) {
+            best = { key: k, dist: d };
+          }
+        }
+      }
+      return best ? table[best.key] : word;
+    });
+  };
+  FUZZY_REPLACERS[lang] = fn;
+  return fn;
 }

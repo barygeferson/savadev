@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.translate-sdev]
 verify_jwt = false
+
+[functions.translate-fuzzy]
+verify_jwt = false
