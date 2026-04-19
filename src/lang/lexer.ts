@@ -306,7 +306,7 @@ export class Lexer {
   }
 
   private isAlpha(char: string): boolean {
-    return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_';
+    return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_' || /\p{L}/u.test(char);
   }
 
   private isAlphaNumeric(char: string): boolean {
