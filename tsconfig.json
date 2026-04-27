@@ -4,6 +4,7 @@
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
+    "jsx": "react-jsx",
     "paths": {
       "@/*": [
         "./src/*"
