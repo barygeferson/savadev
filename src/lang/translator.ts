@@ -455,22 +455,22 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "създавам": "forge", "създаване": "forge", "направи": "forge", "направя": "forge",
     "правя": "forge", "нека": "forge", "дефинирай": "forge", "дефиниция": "forge",
     "обяви": "forge", "обявявам": "forge", "приеми": "forge", "вземи": "forge",
-    "променлива": "forge", "имаме": "forge", "имам": "forge",
+    "имаме": "forge", "имам": "forge",
     // be — assignment / equality binding
     "бъде": "be", "да_бъде": "be", "бъда": "be", "е": "be", "да_е": "be",
     "са": "be", "става": "be", "да_стане": "be", "стане": "be",
     "равняване": "be", "присвой": "be", "присвоявам": "be",
-    "със_стойност": "be", "стойност": "be",
+    "със_стойност": "be",
     // conjure — function / method definition
     "извикай": "conjure", "извикване": "conjure", "функция": "conjure",
-    "функцията": "conjure", "метод": "conjure", "процедура": "conjure",
-    "действие": "conjure", "задача": "conjure", "конструирай": "conjure",
+    "метод": "conjure", "процедура": "conjure",
+    "конструирай": "conjure",
     // yield — return value
-    "върни": "yield", "връщам": "yield", "връщай": "yield", "резултат": "yield",
-    "отговори": "yield", "отговор": "yield", "дай": "yield",
+    "върни": "yield", "връщам": "yield", "връщай": "yield",
+    "отговори": "yield", "дай": "yield",
     // ponder — if / conditional
     "обмисли": "ponder", "ако": "ponder", "когато": "ponder", "в_случай": "ponder",
-    "при_условие": "ponder", "проверка": "ponder", "провери": "ponder",
+    "при_условие": "ponder", "провери": "ponder",
     // otherwise — else
     "иначе": "otherwise", "в_противен_случай": "otherwise", "иначе_ако": "otherwise",
     "обратно": "otherwise", "ако_не": "otherwise",
@@ -493,23 +493,23 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "кажи": "speak", "казвай": "speak", "изкрещи": "speak", "покажи": "speak",
     "показвай": "speak", "изведи": "speak", "извеждай": "speak",
     "отпечатай": "speak", "печатай": "speak", "изпиши": "speak", "пиши": "speak",
-    "напиши": "speak", "принтирай": "speak", "принт": "speak", "лог": "speak",
-    "логни": "speak", "съобщи": "speak", "съобщение": "speak",
+    "напиши": "speak", "принтирай": "speak", "принт": "speak",
+    "логни": "speak", "съобщи": "speak",
     // essence — class
-    "същност": "essence", "клас": "essence", "класа": "essence", "обект": "essence",
-    "тип": "essence", "структура": "essence",
+    "същност": "essence", "клас": "essence",
+    "структура": "essence",
     // extend — inherit
     "разшири": "extend", "разширяване": "extend", "наследи": "extend",
     "наследяване": "extend", "произлиза": "extend",
     // self / super
-    "себе_си": "self", "себе": "self", "аз": "self", "този": "self", "тази": "self",
+    "себе_си": "self", "себе": "self", "този": "self", "тази": "self",
     "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
     // new — instantiate
     "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
     // attempt / rescue
-    "опитай": "attempt", "опит": "attempt", "опитвай": "attempt", "пробвай": "attempt",
-    "проба": "attempt", "опит_за": "attempt",
-    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue", "грешка": "rescue",
+    "опитай": "attempt", "опитвай": "attempt", "пробвай": "attempt",
+    "опит_за": "attempt",
+    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue",
     "при_грешка": "rescue", "ако_грешка": "rescue", "улови": "rescue",
     // logical
     "също": "also", "и": "also", "както_и": "also",
@@ -789,21 +789,50 @@ function compileFuzzyReplacer(lang: string): (s: string) => string {
   // Match runs of Unicode letters (any script). Skip pure-ASCII (already English).
   const wordRe = /[\p{L}][\p{L}\p{N}_]*/gu;
 
+  // Words that introduce an identifier as their next token — we must NOT
+  // fuzzy-translate the following word, otherwise variable names like
+  // `съобщение` get rewritten to `speak`.
+  const IDENT_INTRODUCERS = new Set([
+    'forge', 'be', 'new', 'essence', 'conjure', 'extend', 'summon', 'within',
+  ]);
+
   const fn = (src: string): string => {
-    return src.replace(wordRe, (word) => {
+    // Track the previous emitted token (post-translation) so we know whether
+    // the current word is in identifier position.
+    let prevToken = '';
+    return src.replace(wordRe, (word, offset) => {
       // Skip pure ASCII — those are real identifiers or already-English keywords.
-      if (/^[\x00-\x7F]+$/.test(word)) return word;
+      if (/^[\x00-\x7F]+$/.test(word)) {
+        prevToken = word.toLowerCase();
+        return word;
+      }
       // Skip if exact match already in table (handled by strict pass — but be safe).
-      if (table[word.toLowerCase()]) return table[word.toLowerCase()];
-
       const lower = word.toLowerCase();
-      const candidates = keysByFirstChar.get(lower[0]) ?? [];
-      // Threshold: ≤2 edits for short words, up to 30% length for longer.
-      const threshold = Math.max(2, Math.floor(lower.length * 0.3));
+      if (table[lower]) {
+        const out = table[lower];
+        prevToken = out;
+        return out;
+      }
 
+      // Identifier-position guard — leave the word as a user identifier.
+      // Also skip when the previous char is `.` (member access).
+      const prevChar = offset > 0 ? src[offset - 1] : '';
+      if (prevChar === '.' || IDENT_INTRODUCERS.has(prevToken)) {
+        prevToken = lower;
+        return word;
+      }
+
+      // Conservative threshold: only swap on very close matches.
+      // ≤1 edit for 4-5 char words, ≤2 for 6+. Never for <4.
+      if ([...lower].length < 4) {
+        prevToken = lower;
+        return word;
+      }
+      const threshold = [...lower].length >= 6 ? 2 : 1;
+
+      const candidates = keysByFirstChar.get(lower[0]) ?? [];
       let best: { key: string; dist: number } | null = null;
       for (const k of candidates) {
-        // Length pre-filter — skip if length differs by more than threshold.
         if (Math.abs(k.length - lower.length) > threshold) continue;
         const d = levenshtein(lower, k);
         if (d <= threshold && (!best || d < best.dist)) {
@@ -811,17 +840,13 @@ function compileFuzzyReplacer(lang: string): (s: string) => string {
           if (d === 0) break;
         }
       }
-      // Also try other buckets if no match found (handles wrong first letter).
-      if (!best || best.dist > 1) {
-        for (const k of keys) {
-          if (Math.abs(k.length - lower.length) > threshold) continue;
-          const d = levenshtein(lower, k);
-          if (d <= threshold && (!best || d < best.dist)) {
-            best = { key: k, dist: d };
-          }
-        }
+      if (best) {
+        const out = table[best.key];
+        prevToken = out;
+        return out;
       }
-      return best ? table[best.key] : word;
+      prevToken = lower;
+      return word;
     });
   };
   FUZZY_REPLACERS[lang] = fn;
