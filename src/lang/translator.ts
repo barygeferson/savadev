@@ -789,21 +789,50 @@ function compileFuzzyReplacer(lang: string): (s: string) => string {
   // Match runs of Unicode letters (any script). Skip pure-ASCII (already English).
   const wordRe = /[\p{L}][\p{L}\p{N}_]*/gu;
 
+  // Words that introduce an identifier as their next token — we must NOT
+  // fuzzy-translate the following word, otherwise variable names like
+  // `съобщение` get rewritten to `speak`.
+  const IDENT_INTRODUCERS = new Set([
+    'forge', 'be', 'new', 'essence', 'conjure', 'extend', 'summon', 'within',
+  ]);
+
   const fn = (src: string): string => {
-    return src.replace(wordRe, (word) => {
+    // Track the previous emitted token (post-translation) so we know whether
+    // the current word is in identifier position.
+    let prevToken = '';
+    return src.replace(wordRe, (word, offset) => {
       // Skip pure ASCII — those are real identifiers or already-English keywords.
-      if (/^[\x00-\x7F]+$/.test(word)) return word;
+      if (/^[\x00-\x7F]+$/.test(word)) {
+        prevToken = word.toLowerCase();
+        return word;
+      }
       // Skip if exact match already in table (handled by strict pass — but be safe).
-      if (table[word.toLowerCase()]) return table[word.toLowerCase()];
-
       const lower = word.toLowerCase();
-      const candidates = keysByFirstChar.get(lower[0]) ?? [];
-      // Threshold: ≤2 edits for short words, up to 30% length for longer.
-      const threshold = Math.max(2, Math.floor(lower.length * 0.3));
+      if (table[lower]) {
+        const out = table[lower];
+        prevToken = out;
+        return out;
+      }
 
+      // Identifier-position guard — leave the word as a user identifier.
+      // Also skip when the previous char is `.` (member access).
+      const prevChar = offset > 0 ? src[offset - 1] : '';
+      if (prevChar === '.' || IDENT_INTRODUCERS.has(prevToken)) {
+        prevToken = lower;
+        return word;
+      }
+
+      // Conservative threshold: only swap on very close matches.
+      // ≤1 edit for 4-5 char words, ≤2 for 6+. Never for <4.
+      if ([...lower].length < 4) {
+        prevToken = lower;
+        return word;
+      }
+      const threshold = [...lower].length >= 6 ? 2 : 1;
+
+      const candidates = keysByFirstChar.get(lower[0]) ?? [];
       let best: { key: string; dist: number } | null = null;
       for (const k of candidates) {
-        // Length pre-filter — skip if length differs by more than threshold.
         if (Math.abs(k.length - lower.length) > threshold) continue;
         const d = levenshtein(lower, k);
         if (d <= threshold && (!best || d < best.dist)) {
@@ -811,17 +840,13 @@ function compileFuzzyReplacer(lang: string): (s: string) => string {
           if (d === 0) break;
         }
       }
-      // Also try other buckets if no match found (handles wrong first letter).
-      if (!best || best.dist > 1) {
-        for (const k of keys) {
-          if (Math.abs(k.length - lower.length) > threshold) continue;
-          const d = levenshtein(lower, k);
-          if (d <= threshold && (!best || d < best.dist)) {
-            best = { key: k, dist: d };
-          }
-        }
+      if (best) {
+        const out = table[best.key];
+        prevToken = out;
+        return out;
       }
-      return best ? table[best.key] : word;
+      prevToken = lower;
+      return word;
     });
   };
   FUZZY_REPLACERS[lang] = fn;
