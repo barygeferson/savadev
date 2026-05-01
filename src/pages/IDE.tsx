@@ -37,6 +37,10 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCodeTranslation, mightNeedTranslation } from '@/hooks/useCodeTranslation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserMenu } from '@/components/ide/UserMenu';
+import { useCloudFiles } from '@/hooks/useCloudFiles';
+import { useAuth } from '@/hooks/useAuth';
+import { useSearchParams } from 'react-router-dom';
 
 const STARTER_FILES: IdeFile[] = [
   {
