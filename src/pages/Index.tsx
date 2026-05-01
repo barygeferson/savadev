@@ -212,6 +212,15 @@ const Index = () => {
 
           <div className="flex items-center gap-2">
             <Button
+              onClick={() => navigate('/account')}
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <UserCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Account</span>
+            </Button>
+            <Button
               onClick={() => navigate('/ide')}
               variant="ghost"
               size="sm"
