@@ -580,22 +580,22 @@ const __sdevTranslator = (function () {
     "създавам": "forge", "създаване": "forge", "направи": "forge", "направя": "forge",
     "правя": "forge", "нека": "forge", "дефинирай": "forge", "дефиниция": "forge",
     "обяви": "forge", "обявявам": "forge", "приеми": "forge", "вземи": "forge",
-    "променлива": "forge", "имаме": "forge", "имам": "forge",
+    "имаме": "forge", "имам": "forge",
     // be — assignment / equality binding
     "бъде": "be", "да_бъде": "be", "бъда": "be", "е": "be", "да_е": "be",
     "са": "be", "става": "be", "да_стане": "be", "стане": "be",
     "равняване": "be", "присвой": "be", "присвоявам": "be",
-    "със_стойност": "be", "стойност": "be",
+    "със_стойност": "be",
     // conjure — function / method definition
     "извикай": "conjure", "извикване": "conjure", "функция": "conjure",
-    "функцията": "conjure", "метод": "conjure", "процедура": "conjure",
-    "действие": "conjure", "задача": "conjure", "конструирай": "conjure",
+    "метод": "conjure", "процедура": "conjure",
+    "конструирай": "conjure",
     // yield — return value
-    "върни": "yield", "връщам": "yield", "връщай": "yield", "резултат": "yield",
-    "отговори": "yield", "отговор": "yield", "дай": "yield",
+    "върни": "yield", "връщам": "yield", "връщай": "yield",
+    "отговори": "yield", "дай": "yield",
     // ponder — if / conditional
     "обмисли": "ponder", "ако": "ponder", "когато": "ponder", "в_случай": "ponder",
-    "при_условие": "ponder", "проверка": "ponder", "провери": "ponder",
+    "при_условие": "ponder", "провери": "ponder",
     // otherwise — else
     "иначе": "otherwise", "в_противен_случай": "otherwise", "иначе_ако": "otherwise",
     "обратно": "otherwise", "ако_не": "otherwise",
@@ -618,23 +618,23 @@ const __sdevTranslator = (function () {
     "кажи": "speak", "казвай": "speak", "изкрещи": "speak", "покажи": "speak",
     "показвай": "speak", "изведи": "speak", "извеждай": "speak",
     "отпечатай": "speak", "печатай": "speak", "изпиши": "speak", "пиши": "speak",
-    "напиши": "speak", "принтирай": "speak", "принт": "speak", "лог": "speak",
-    "логни": "speak", "съобщи": "speak", "съобщение": "speak",
+    "напиши": "speak", "принтирай": "speak", "принт": "speak",
+    "логни": "speak", "съобщи": "speak",
     // essence — class
-    "същност": "essence", "клас": "essence", "класа": "essence", "обект": "essence",
-    "тип": "essence", "структура": "essence",
+    "същност": "essence", "клас": "essence",
+    "структура": "essence",
     // extend — inherit
     "разшири": "extend", "разширяване": "extend", "наследи": "extend",
     "наследяване": "extend", "произлиза": "extend",
     // self / super
-    "себе_си": "self", "себе": "self", "аз": "self", "този": "self", "тази": "self",
+    "себе_си": "self", "себе": "self", "този": "self", "тази": "self",
     "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
     // new — instantiate
     "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
     // attempt / rescue
-    "опитай": "attempt", "опит": "attempt", "опитвай": "attempt", "пробвай": "attempt",
-    "проба": "attempt", "опит_за": "attempt",
-    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue", "грешка": "rescue",
+    "опитай": "attempt", "опитвай": "attempt", "пробвай": "attempt",
+    "опит_за": "attempt",
+    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue",
     "при_грешка": "rescue", "ако_грешка": "rescue", "улови": "rescue",
     // logical
     "също": "also", "и": "also", "както_и": "also",
