@@ -15,7 +15,7 @@ import {
   Play, Zap, Wand2, Terminal, Cpu, MonitorDot,
   ArrowRight, Code2, Palette, Box, BookOpen,
   Timer, Trash2, Share2, Copy, Check, ChevronDown,
-  Rocket, Shield, Globe2, Layers
+  Rocket, Shield, Globe2, Layers, UserCircle
 } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
