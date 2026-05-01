@@ -531,6 +531,7 @@ export default function IDEPage() {
         setBottomPanel('canvas');
       }
       setStatusMsg(`✓ Done in ${elapsed}ms`);
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n'), 'success', elapsed);
     } catch (e) {
       setOutput(outputLines);
       const msg = e instanceof SdevError ? e.message : String(e);
@@ -538,10 +539,11 @@ export default function IDEPage() {
       setExecTime(null);
       setStatusMsg('✗ Error');
       setBottomPanel('terminal');
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n') + '\nERROR: ' + msg, 'error', Math.round((performance.now() - t0) * 10) / 10);
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode, selectedLanguage]);
+  }, [activeFile, runMode, selectedLanguage, recordRun]);
 
   const newFile = useCallback(() => {
     const id = String(++fileIdCounter);
