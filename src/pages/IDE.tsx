@@ -37,6 +37,10 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCodeTranslation, mightNeedTranslation } from '@/hooks/useCodeTranslation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserMenu } from '@/components/ide/UserMenu';
+import { useCloudFiles } from '@/hooks/useCloudFiles';
+import { useAuth } from '@/hooks/useAuth';
+import { useSearchParams } from 'react-router-dom';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -343,8 +347,49 @@ export default function IDEPage() {
   const canvasRef = useRef<CanvasHandle>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auth + cloud sync
+  const { user } = useAuth();
+  const { recordRun } = useCloudFiles();
+  const [searchParams] = useSearchParams();
+  // Map of local file id → cloud file id (so "Save" updates instead of duplicates)
+  const [cloudIds, setCloudIds] = useState<Record<string, string>>({});
+
   const activeFile = files.find(f => f.id === activeId);
   const openFiles = openIds.map(id => files.find(f => f.id === id)).filter(Boolean) as IdeFile[];
+
+  // Import code from a Gist (sessionStorage) on mount
+  useEffect(() => {
+    const imported = sessionStorage.getItem('sdev:imported_code');
+    const importedName = sessionStorage.getItem('sdev:imported_name');
+    if (imported) {
+      sessionStorage.removeItem('sdev:imported_code');
+      sessionStorage.removeItem('sdev:imported_name');
+      const id = String(++fileIdCounter);
+      const name = (importedName || 'imported').replace(/[^\w.\-]/g, '_') + (importedName?.endsWith('.sdev') ? '' : '.sdev');
+      const file: IdeFile = { id, name, content: imported };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      toast.success('Imported gist into IDE');
+    }
+  }, []);
+
+  // Load a cloud file when ?cloud=<id> is present
+  useEffect(() => {
+    const cloudParam = searchParams.get('cloud');
+    if (!cloudParam || !user) return;
+    (async () => {
+      const { data } = await supabase.from('code_files').select('*').eq('id', cloudParam).maybeSingle();
+      if (!data) return;
+      const id = String(++fileIdCounter);
+      const file: IdeFile = { id, name: data.name, content: data.content };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      setCloudIds(prev => ({ ...prev, [id]: data.id }));
+      toast.success('Loaded ' + data.name);
+    })();
+  }, [searchParams, user]);
 
   // Persist to localStorage
   useEffect(() => {
@@ -486,6 +531,7 @@ export default function IDEPage() {
         setBottomPanel('canvas');
       }
       setStatusMsg(`✓ Done in ${elapsed}ms`);
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n'), 'success', elapsed);
     } catch (e) {
       setOutput(outputLines);
       const msg = e instanceof SdevError ? e.message : String(e);
@@ -493,10 +539,11 @@ export default function IDEPage() {
       setExecTime(null);
       setStatusMsg('✗ Error');
       setBottomPanel('terminal');
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n') + '\nERROR: ' + msg, 'error', Math.round((performance.now() - t0) * 10) / 10);
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode, selectedLanguage]);
+  }, [activeFile, runMode, selectedLanguage, recordRun]);
 
   const newFile = useCallback(() => {
     const id = String(++fileIdCounter);
@@ -918,6 +965,23 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <><Play className="w-3 h-3" /> Run</>
               )}
             </Button>
+
+            {activeFile && (
+              <UserMenu
+                currentName={activeFile.name}
+                currentContent={activeFile.content}
+                currentCloudId={cloudIds[activeFile.id] ?? null}
+                onCloudIdChange={(cid) => setCloudIds(prev => ({ ...prev, [activeFile.id]: cid }))}
+                onLoadFile={(name, content, cid) => {
+                  const id = String(++fileIdCounter);
+                  const file: IdeFile = { id, name, content };
+                  setFiles(prev => [...prev, file]);
+                  setOpenIds(prev => [...prev, id]);
+                  setActiveId(id);
+                  setCloudIds(prev => ({ ...prev, [id]: cid }));
+                }}
+              />
+            )}
           </div>
         </div>
 
