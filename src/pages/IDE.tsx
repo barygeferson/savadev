@@ -347,8 +347,49 @@ export default function IDEPage() {
   const canvasRef = useRef<CanvasHandle>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auth + cloud sync
+  const { user } = useAuth();
+  const { recordRun } = useCloudFiles();
+  const [searchParams] = useSearchParams();
+  // Map of local file id → cloud file id (so "Save" updates instead of duplicates)
+  const [cloudIds, setCloudIds] = useState<Record<string, string>>({});
+
   const activeFile = files.find(f => f.id === activeId);
   const openFiles = openIds.map(id => files.find(f => f.id === id)).filter(Boolean) as IdeFile[];
+
+  // Import code from a Gist (sessionStorage) on mount
+  useEffect(() => {
+    const imported = sessionStorage.getItem('sdev:imported_code');
+    const importedName = sessionStorage.getItem('sdev:imported_name');
+    if (imported) {
+      sessionStorage.removeItem('sdev:imported_code');
+      sessionStorage.removeItem('sdev:imported_name');
+      const id = String(++fileIdCounter);
+      const name = (importedName || 'imported').replace(/[^\w.\-]/g, '_') + (importedName?.endsWith('.sdev') ? '' : '.sdev');
+      const file: IdeFile = { id, name, content: imported };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      toast.success('Imported gist into IDE');
+    }
+  }, []);
+
+  // Load a cloud file when ?cloud=<id> is present
+  useEffect(() => {
+    const cloudParam = searchParams.get('cloud');
+    if (!cloudParam || !user) return;
+    (async () => {
+      const { data } = await supabase.from('code_files').select('*').eq('id', cloudParam).maybeSingle();
+      if (!data) return;
+      const id = String(++fileIdCounter);
+      const file: IdeFile = { id, name: data.name, content: data.content };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      setCloudIds(prev => ({ ...prev, [id]: data.id }));
+      toast.success('Loaded ' + data.name);
+    })();
+  }, [searchParams, user]);
 
   // Persist to localStorage
   useEffect(() => {
