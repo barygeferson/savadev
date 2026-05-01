@@ -493,23 +493,23 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "кажи": "speak", "казвай": "speak", "изкрещи": "speak", "покажи": "speak",
     "показвай": "speak", "изведи": "speak", "извеждай": "speak",
     "отпечатай": "speak", "печатай": "speak", "изпиши": "speak", "пиши": "speak",
-    "напиши": "speak", "принтирай": "speak", "принт": "speak", "лог": "speak",
-    "логни": "speak", "съобщи": "speak", "съобщение": "speak",
+    "напиши": "speak", "принтирай": "speak", "принт": "speak",
+    "логни": "speak", "съобщи": "speak",
     // essence — class
-    "същност": "essence", "клас": "essence", "класа": "essence", "обект": "essence",
-    "тип": "essence", "структура": "essence",
+    "същност": "essence", "клас": "essence",
+    "структура": "essence",
     // extend — inherit
     "разшири": "extend", "разширяване": "extend", "наследи": "extend",
     "наследяване": "extend", "произлиза": "extend",
     // self / super
-    "себе_си": "self", "себе": "self", "аз": "self", "този": "self", "тази": "self",
+    "себе_си": "self", "себе": "self", "този": "self", "тази": "self",
     "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
     // new — instantiate
     "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
     // attempt / rescue
-    "опитай": "attempt", "опит": "attempt", "опитвай": "attempt", "пробвай": "attempt",
-    "проба": "attempt", "опит_за": "attempt",
-    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue", "грешка": "rescue",
+    "опитай": "attempt", "опитвай": "attempt", "пробвай": "attempt",
+    "опит_за": "attempt",
+    "спаси": "rescue", "хвани": "rescue", "прихвани": "rescue",
     "при_грешка": "rescue", "ако_грешка": "rescue", "улови": "rescue",
     // logical
     "също": "also", "и": "also", "както_и": "also",
