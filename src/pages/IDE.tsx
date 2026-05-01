@@ -965,6 +965,23 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <><Play className="w-3 h-3" /> Run</>
               )}
             </Button>
+
+            {activeFile && (
+              <UserMenu
+                currentName={activeFile.name}
+                currentContent={activeFile.content}
+                currentCloudId={cloudIds[activeFile.id] ?? null}
+                onCloudIdChange={(cid) => setCloudIds(prev => ({ ...prev, [activeFile.id]: cid }))}
+                onLoadFile={(name, content, cid) => {
+                  const id = String(++fileIdCounter);
+                  const file: IdeFile = { id, name, content };
+                  setFiles(prev => [...prev, file]);
+                  setOpenIds(prev => [...prev, id]);
+                  setActiveId(id);
+                  setCloudIds(prev => ({ ...prev, [id]: cid }));
+                }}
+              />
+            )}
           </div>
         </div>
 
