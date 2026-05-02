@@ -520,9 +520,19 @@ export default function IDEPage() {
           (state) => { turtleState = { ...turtleState, ...state }; }
         );
         gfx.forEach((fn, name) => env.define(name, fn));
+        // ── UI toolkit builtins ──
+        uiHandlersRef.current.clear();
+        uiHandlerIdRef.current = 0;
+        let producedUi = false;
+        const ui = createUiBuiltins(
+          (s) => { producedUi = true; setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) }); },
+          (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
+        );
+        ui.forEach((fn, name) => env.define(name, fn));
         const interpreter = new Interpreter((msg) => outputLines.push(msg));
         (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
         interpreter.interpret(ast);
+        if (producedUi) { setBottomPanel('app'); }
       } else {
         const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
