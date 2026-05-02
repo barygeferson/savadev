@@ -401,10 +401,9 @@ export default function IDEPage() {
     })();
   }, [searchParams, user]);
 
-  // Persist to localStorage
-  useEffect(() => {
-    localStorage.setItem(LS_FILES, JSON.stringify(files));
-  }, [files]);
+  // Persist to localStorage (guests + as backup for logged-in users)
+  useEffect(() => { localStorage.setItem(LS_FILES, JSON.stringify(files)); }, [files]);
+  useEffect(() => { localStorage.setItem(LS_FOLDERS, JSON.stringify(folders)); }, [folders]);
   useEffect(() => {
     localStorage.setItem(LS_ACTIVE, JSON.stringify(activeId));
     localStorage.setItem(LS_OPEN, JSON.stringify(openIds));
@@ -412,6 +411,22 @@ export default function IDEPage() {
   useEffect(() => {
     localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
   }, [settings]);
+
+  // ─────── Cloud workspace sync (logged-in users) ───────
+  const workspaceSnapshot = user ? { files, folders, openIds, activeId } : null;
+  const { hydrated, isSyncing, lastSavedAt } = useWorkspaceSync(workspaceSnapshot, !!user);
+  const hydratedAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!hydrated || hydratedAppliedRef.current) return;
+    hydratedAppliedRef.current = true;
+    setFolders(hydrated.folders);
+    setFiles(hydrated.files);
+    if (hydrated.activeId) setActiveId(hydrated.activeId);
+    setOpenIds(hydrated.openIds);
+    if (hydrated.files.length > 0) toast.success(`Restored ${hydrated.files.length} files from cloud`);
+  }, [hydrated]);
+  // Reset hydration flag when user changes (logout/login)
+  useEffect(() => { hydratedAppliedRef.current = false; }, [user?.id]);
 
   // Global keyboard shortcuts
   useEffect(() => {
