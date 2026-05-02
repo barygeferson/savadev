@@ -580,13 +580,43 @@ export default function IDEPage() {
     }
   }, [activeFile, runMode, selectedLanguage, recordRun]);
 
-  const newFile = useCallback(() => {
+  const newFile = useCallback((folderId: string | null = null) => {
     const id = String(++fileIdCounter);
     const name = `untitled${fileIdCounter}.sdev`;
-    const file: IdeFile = { id, name, content: `// ${name}\n` };
+    const file: IdeFile = { id, name, content: `// ${name}\n`, folderId };
     setFiles(prev => [...prev, file]);
     setOpenIds(prev => [...prev, id]);
     setActiveId(id);
+  }, []);
+
+  const newFolder = useCallback((parentId: string | null = null) => {
+    const id = `f-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setFolders(prev => [...prev, { id, name: 'New Folder', parentId, expanded: true }]);
+  }, []);
+
+  const deleteFolder = useCallback((id: string) => {
+    if (!confirm('Delete this folder and everything inside it?')) return;
+    // Recursively gather all descendant folder ids
+    const toDelete = new Set<string>([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const f of folders) {
+        if (f.parentId && toDelete.has(f.parentId) && !toDelete.has(f.id)) {
+          toDelete.add(f.id); changed = true;
+        }
+      }
+    }
+    setFolders(prev => prev.filter(f => !toDelete.has(f.id)));
+    setFiles(prev => prev.filter(f => !f.folderId || !toDelete.has(f.folderId)));
+  }, [folders]);
+
+  const renameFolder = useCallback((id: string, name: string) => {
+    setFolders(prev => prev.map(f => f.id === id ? { ...f, name } : f));
+  }, []);
+
+  const toggleFolder = useCallback((id: string) => {
+    setFolders(prev => prev.map(f => f.id === id ? { ...f, expanded: !(f.expanded ?? true) } : f));
   }, []);
 
   const deleteFile = useCallback((id: string) => {
