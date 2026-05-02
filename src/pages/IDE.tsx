@@ -29,7 +29,10 @@ import {
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { IdeFile, SidePanel, IdeSettings } from '@/components/ide/types';
+import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
+import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
+import { AppPreviewPanel } from '@/components/ide/AppPreviewPanel';
+import { useWorkspaceSync } from '@/hooks/useWorkspaceSync';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -251,7 +254,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas';
+type BottomPanel = 'terminal' | 'canvas' | 'app';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
@@ -264,8 +267,9 @@ const DEFAULT_SETTINGS: IdeSettings = {
   fontFamily: 'JetBrains Mono',
 };
 
-// Load/save to localStorage
+// Load/save to localStorage (used for guests; logged-in users sync to cloud)
 const LS_FILES = 'sdev-ide-files';
+const LS_FOLDERS = 'sdev-ide-folders';
 const LS_ACTIVE = 'sdev-ide-active';
 const LS_OPEN = 'sdev-ide-open';
 const LS_SETTINGS = 'sdev-ide-settings';
@@ -314,6 +318,7 @@ export default function IDEPage() {
 
   // Persistent state
   const [files, setFiles] = useState<IdeFile[]>(() => loadFromStorage(LS_FILES, STARTER_FILES));
+  const [folders, setFolders] = useState<IdeFolder[]>(() => loadFromStorage(LS_FOLDERS, []));
   const [activeId, setActiveId] = useState<string>(() => loadFromStorage(LS_ACTIVE, '1'));
   const [openIds, setOpenIds] = useState<string[]>(() => loadFromStorage(LS_OPEN, ['1']));
   const [settings, setSettings] = useState<IdeSettings>(() => loadFromStorage(LS_SETTINGS, DEFAULT_SETTINGS));
@@ -339,6 +344,11 @@ export default function IDEPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [statusMsg, setStatusMsg] = useState('Ready');
   const [execTime, setExecTime] = useState<number | null>(null);
+
+  // UI app preview state
+  const [uiState, setUiState] = useState<UiState | null>(null);
+  const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
+  const uiHandlerIdRef = useRef(0);
 
   // Cursor position
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
