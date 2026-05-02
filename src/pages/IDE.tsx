@@ -774,7 +774,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">File</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
-                  <DropdownMenuItem onClick={newFile} className="text-xs gap-2 cursor-pointer">
+                  <DropdownMenuItem onClick={() => newFile()} className="text-xs gap-2 cursor-pointer">
                     <Code className="w-3.5 h-3.5" /> New File <span className="ml-auto text-muted-foreground">⌃N</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={uploadFile} className="text-xs gap-2 cursor-pointer">
@@ -1091,12 +1091,18 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
+                      folders={folders}
                       activeId={activeId}
                       onSelect={selectFile}
-                      onNew={newFile}
+                      onNewFile={(fid) => newFile(fid)}
+                      onNewFolder={(pid) => newFolder(pid)}
                       onDelete={deleteFile}
+                      onDeleteFolder={deleteFolder}
                       onRename={renameFile}
+                      onRenameFolder={renameFolder}
+                      onToggleFolder={toggleFolder}
                       onUpload={uploadFile}
+                      syncStatus={!user ? 'local' : (isSyncing ? 'syncing' : (lastSavedAt ? 'synced' : 'local'))}
                     />
                   )}
                   {sidePanel === 'search' && (
@@ -1170,7 +1176,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                             <div>No file open</div>
                             <div className="text-xs mt-1">Select a file from the Explorer or create a new one</div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={newFile} className="text-xs gap-2">
+                          <Button variant="outline" size="sm" onClick={() => newFile()} className="text-xs gap-2">
                             <Code className="w-3.5 h-3.5" /> New File
                           </Button>
                         </div>
