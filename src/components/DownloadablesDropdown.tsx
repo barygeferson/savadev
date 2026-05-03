@@ -173,8 +173,15 @@ explorer "C:\\sdev"
   };
 
   const openDocumentation = () => {
-    window.open('/SDEV_DOCUMENTATION.md', '_blank');
-    toast.success('Opening documentation');
+    window.open('/docs', '_blank');
+  };
+  const downloadBookEn = () => {
+    const a = document.createElement('a'); a.href = '/sdev-book-en.md'; a.download = 'sdev-book-en.md'; a.click();
+    toast.success('Downloaded sdev Book (EN)');
+  };
+  const downloadBookBg = () => {
+    const a = document.createElement('a'); a.href = '/sdev-book-bg.md'; a.download = 'sdev-book-bg.md'; a.click();
+    toast.success('Изтеглена книга на sdev (BG)');
   };
 
   const downloadVsix = () => {
@@ -296,8 +303,22 @@ explorer "C:\\sdev"
         <DropdownMenuItem onClick={openDocumentation} className="gap-3 cursor-pointer">
           <BookOpen className="w-4 h-4 text-green-400" />
           <div>
-            <div className="font-medium">Documentation</div>
-            <div className="text-xs text-muted-foreground">Complete reference guide</div>
+            <div className="font-medium">Docs Site</div>
+            <div className="text-xs text-muted-foreground">Browse /docs with search</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={downloadBookEn} className="gap-3 cursor-pointer">
+          <BookOpen className="w-4 h-4 text-green-400" />
+          <div>
+            <div className="font-medium">The sdev Book (EN)</div>
+            <div className="text-xs text-muted-foreground">Full downloadable book</div>
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={downloadBookBg} className="gap-3 cursor-pointer">
+          <BookOpen className="w-4 h-4 text-green-400" />
+          <div>
+            <div className="font-medium">Книга за sdev (BG)</div>
+            <div className="text-xs text-muted-foreground">Пълна изтегляема книга</div>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

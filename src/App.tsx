@@ -8,6 +8,7 @@ import IDEPage from "./pages/IDE";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import Gist from "./pages/Gist";
+import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,8 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/account" element={<Account />} />
           <Route path="/g/:slug" element={<Gist />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/docs/:section" element={<Docs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
