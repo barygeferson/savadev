@@ -176,11 +176,11 @@ explorer "C:\\sdev"
     window.open('/docs', '_blank');
   };
   const downloadBookEn = () => {
-    const a = document.createElement('a'); a.href = '/sdev-book-en.md'; a.download = 'sdev-book-en.md'; a.click();
-    toast.success('Downloaded sdev Book (EN)');
+    const a = document.createElement('a'); a.href = '/sdev-book-en.pdf'; a.download = 'sdev-book-en.pdf'; a.click();
+    toast.success('Downloaded sdev Book (EN, PDF)');
   };
   const downloadBookBg = () => {
-    const a = document.createElement('a'); a.href = '/sdev-book-bg.md'; a.download = 'sdev-book-bg.md'; a.click();
+    const a = document.createElement('a'); a.href = '/sdev-book-bg.pdf'; a.download = 'sdev-book-bg.pdf'; a.click();
     toast.success('Изтеглена книга на sdev (BG)');
   };
 
