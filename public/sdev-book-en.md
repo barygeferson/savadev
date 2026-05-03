@@ -5943,3 +5943,69 @@ A quick lookup of every keyword and built-in name introduced in this book.
 ## Colophon
 
 This book was generated from the sdev source repository on 2026-05-03. The body is set in DejaVu Serif, headings in DejaVu Sans Bold, code in DejaVu Sans Mono. The PDF is rendered with ReportLab. Source markdown lives in the project's `public/` directory.
+
+
+# Appendix F — Style guide
+
+Notes on writing readable sdev:
+
+### 1. Use forge for state
+
+Avoid hidden globals; declare with forge near use.
+
+### 2. Name widgets
+
+Always pass a stable name to inputs so uiget works after refresh.
+
+### 3. Group with group()
+
+Borders aid scanning of long forms.
+
+### 4. Prefer ghost over destructive
+
+Reserve red for irreversible actions.
+
+### 5. Cap line length
+
+Wrap at 100 columns to keep diffs readable.
+
+### 6. One window per file
+
+Easier to review, easier to ship as a Gist.
+
+### 7. Avoid eval
+
+Use a tome lookup instead of eval whenever possible.
+
+### 8. Comment intent
+
+// what + why beats // how.
+
+### 9. Use after for animation
+
+setInterval-style loops can starve the UI.
+
+### 10. Cache uiget
+
+Read once into a local forge if you use it 3+ times in a render.
+
+### 11. Keep functions small
+
+If a conjure is over 40 lines, split it.
+
+### 12. Lift state up
+
+Two windows that mirror data should share a uiget name.
+
+### 13. Tabs over deep nesting
+
+Reach for tabs() before piling more groups.
+
+### 14. Test in both runtimes
+
+JS and Python should behave identically — if not, file a bug.
+
+### 15. Document with paragraph()
+
+A short paragraph at the top of every window beats a README.
+
