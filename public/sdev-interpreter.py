@@ -3223,7 +3223,99 @@ class Interpreter:
             p.resolved = True
             return p
         builtins['Promise'] = SdevBuiltin('Promise', promise, 0, 1)
-        
+
+        # ───────── UI Toolkit (CLI: logs declarative commands) ─────────
+        ui_values: Dict[str, Any] = {}
+        def _s(v, fb=''):
+            if v is None: return fb
+            return v if isinstance(v, str) else str(v)
+        def _log(msg): self.output('[ui] ' + msg)
+        def _simple(fmt):
+            return lambda args: (_log(fmt(args)) or None)
+        ui_defs = {
+            'window':    (lambda a: f'window("{_s(a[0] if a else "sdev App")}", {a[1] if len(a)>1 else 480}, {a[2] if len(a)>2 else 600})', 0, 3),
+            'endwindow': (lambda a: 'endwindow', 0, 0),
+            'row':       (lambda a: 'row', 0, 0), 'endrow': (lambda a: 'endrow', 0, 0),
+            'column':    (lambda a: 'column', 0, 0), 'endcolumn': (lambda a: 'endcolumn', 0, 0),
+            'group':     (lambda a: f'group("{_s(a[0] if a else "")}")', 0, 1), 'endgroup': (lambda a: 'endgroup', 0, 0),
+            'tabs':      (lambda a: 'tabs', 0, 0), 'endtabs': (lambda a: 'endtabs', 0, 0),
+            'tab':       (lambda a: f'tab("{_s(a[0] if a else "Tab")}")', 0, 1), 'endtab': (lambda a: 'endtab', 0, 0),
+            'heading':   (lambda a: f'heading("{_s(a[0] if a else "")}", {a[1] if len(a)>1 else 1})', 1, 2),
+            'label':     (lambda a: f'label("{_s(a[0] if a else "")}")', 1, 1),
+            'paragraph': (lambda a: f'paragraph("{_s(a[0] if a else "")}")', 1, 1),
+            'image':     (lambda a: f'image("{_s(a[0] if a else "")}")', 1, 4),
+            'divider':   (lambda a: 'divider', 0, 0),
+            'spacer':    (lambda a: f'spacer({a[0] if a else 8})', 0, 1),
+            'progress':  (lambda a: f'progress({a[0] if a else 0}/{a[1] if len(a)>1 else 100})', 1, 2),
+            'menu':      (lambda a: f'menu("{_s(a[0] if a else "Menu")}")', 0, 1), 'endmenu': (lambda a: 'endmenu', 0, 0),
+            'show':      (lambda a: 'show()', 0, 0),
+        }
+        for nm, (fmt, mn, mx) in ui_defs.items():
+            builtins[nm] = SdevBuiltin(nm, _simple(fmt), mn, mx)
+        def _btn(args):
+            label = _s(args[0] if args else 'Button')
+            variant = _s(args[2] if len(args) > 2 else 'default')
+            _log(f'button("{label}", variant="{variant}")')
+            return None
+        builtins['button'] = SdevBuiltin('button', _btn, 1, 3)
+        def _menuitem(args):
+            _log(f'menuitem("{_s(args[0] if args else "")}")')
+            return None
+        builtins['menuitem'] = SdevBuiltin('menuitem', _menuitem, 1, 2)
+        def _input(args):
+            k = _s(args[0] if args else '')
+            if k and k not in ui_values: ui_values[k] = ''
+            _log(f'input(bind="{k}", placeholder="{_s(args[1] if len(args)>1 else "")}")')
+            return None
+        builtins['input'] = SdevBuiltin('input', _input, 1, 2)
+        def _textarea(args):
+            k = _s(args[0] if args else '')
+            if k and k not in ui_values: ui_values[k] = ''
+            _log(f'textarea(bind="{k}", rows={args[2] if len(args)>2 else 4})')
+            return None
+        builtins['textarea'] = SdevBuiltin('textarea', _textarea, 1, 3)
+        def _checkbox(args):
+            k = _s(args[0] if args else '')
+            if k and k not in ui_values: ui_values[k] = False
+            _log(f'checkbox(bind="{k}", label="{_s(args[1] if len(args)>1 else "")}")')
+            return None
+        builtins['checkbox'] = SdevBuiltin('checkbox', _checkbox, 1, 2)
+        def _slider(args):
+            k = _s(args[0] if args else '')
+            mn_ = args[1] if len(args) > 1 else 0
+            mx_ = args[2] if len(args) > 2 else 100
+            st_ = args[3] if len(args) > 3 else 1
+            if k and k not in ui_values: ui_values[k] = mn_
+            _log(f'slider(bind="{k}", {mn_}..{mx_} step {st_})')
+            return None
+        builtins['slider'] = SdevBuiltin('slider', _slider, 1, 4)
+        def _select(args):
+            k = _s(args[0] if args else '')
+            opts = args[1] if (len(args) > 1 and isinstance(args[1], list)) else []
+            opts = [str(o) for o in opts]
+            if k and k not in ui_values: ui_values[k] = opts[0] if opts else ''
+            _log(f'select(bind="{k}", options={opts})')
+            return None
+        builtins['select'] = SdevBuiltin('select', _select, 1, 2)
+        def _table(args):
+            headers = args[0] if (args and isinstance(args[0], list)) else []
+            rows = args[1] if (len(args) > 1 and isinstance(args[1], list)) else []
+            _log(f'table({headers}, rows={len(rows)})')
+            return None
+        builtins['table'] = SdevBuiltin('table', _table, 1, 2)
+        def _uiget(args):
+            k = _s(args[0] if args else '')
+            return ui_values.get(k)
+        builtins['uiget'] = SdevBuiltin('uiget', _uiget, 1, 1)
+        def _uiset(args):
+            ui_values[_s(args[0])] = args[1] if len(args) > 1 else None
+            return None
+        builtins['uiset'] = SdevBuiltin('uiset', _uiset, 2, 2)
+        def _alert(args):
+            self.output('[alert] ' + _s(args[0] if args else ''))
+            return None
+        builtins['alert'] = SdevBuiltin('alert', _alert, 1, 1)
+
         return builtins
     
     def _get_type(self, value: Any) -> str:
