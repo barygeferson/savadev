@@ -1246,9 +1246,25 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                       state={uiState}
                       invokeHandler={(id, args) => {
                         const cb = uiHandlersRef.current.get(id);
-                        if (cb) try { cb.fn(args ?? []); } catch (e) { toast.error(String(e)); }
+                        if (cb) {
+                          try {
+                            cb.fn(args ?? []);
+                            if (uiStateRef.current) {
+                              setUiState({
+                                nodes: new Map(uiStateRef.current.nodes),
+                                rootId: uiStateRef.current.rootId,
+                                values: new Map(uiStateRef.current.values),
+                              });
+                            }
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        }
                       }}
-                      setValue={(k, v) => setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev)}
+                      setValue={(k, v) => {
+                        if (uiStateRef.current) uiStateRef.current.values.set(k, v);
+                        setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev);
+                      }}
                     />
                   )}
                 </ResizablePanel>
