@@ -90,11 +90,30 @@ ITAL = re.compile(r'(?<!\*)\*([^\*]+)\*(?!\*)')
 LINK = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
 
 def inline(text):
+    # Extract inline code spans first as placeholders so other regex can't run inside them
+    placeholders = []
+    def _stash_code(m):
+        placeholders.append(m.group(1))
+        return f'\x00CODE{len(placeholders)-1}\x00'
+    text = INLINE_CODE.sub(_stash_code, text)
+    link_phs = []
+    def _stash_link(m):
+        link_phs.append((m.group(1), m.group(2)))
+        return f'\x00LINK{len(link_phs)-1}\x00'
+    text = LINK.sub(_stash_link, text)
+
     text = html.escape(text, quote=False)
-    text = LINK.sub(lambda m: f'<font color="#0891B2"><u>{m.group(1)}</u></font>', text)
-    text = INLINE_CODE.sub(lambda m: f'<font face="Mono" size="9" color="#6D28D9">{m.group(1)}</font>', text)
     text = BOLD.sub(r'<b>\1</b>', text)
     text = ITAL.sub(r'<i>\1</i>', text)
+
+    def _restore_code(m):
+        idx = int(m.group(1)); raw = placeholders[idx]
+        return f'<font face="Mono" size="9" color="#6D28D9">{html.escape(raw, quote=False)}</font>'
+    text = re.sub(r'\x00CODE(\d+)\x00', _restore_code, text)
+    def _restore_link(m):
+        idx = int(m.group(1)); label, url = link_phs[idx]
+        return f'<font color="#0891B2"><u>{html.escape(label, quote=False)}</u></font>'
+    text = re.sub(r'\x00LINK(\d+)\x00', _restore_link, text)
     return text
 
 def code_escape(text):
