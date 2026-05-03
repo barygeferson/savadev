@@ -1894,7 +1894,7 @@ def build_bg():
     parts = []
     parts.append(front_matter_bg())
     parts.append("# Част I — Езикът\n\nТази част е каноничният справочник за sdev. Изчерпателна е: всяка ключова дума, всяка вградена функция, всеки оператор. Ако прочетете само една част, нека е тази.\n\n---\n\n")
-    parts.append(read('public/sdev-book-bg.md').split('---', 1)[-1])  # body of the existing 1638-line BG book
+    parts.append(read('/tmp/bg-seed.md').replace('',''))  # body of the existing 1638-line BG book
     parts.append("\n\n---\n\n")
     parts.append("## Допълнение към Част I — Оригинален английски справочник\n\nЗа пълнота тук е приложен оригиналният английски справочник, тъй като той съдържа последните технически детайли (синтаксис на оператори, имена на вградени функции, които не се превеждат).\n\n---\n\n")
     parts.append(read('public/SDEV_DOCUMENTATION.md'))
