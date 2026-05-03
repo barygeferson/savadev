@@ -100,8 +100,8 @@ const CATEGORIES: DocCategory[] = [
       { id: 'book', title: 'The sdev Book', body: <>
         <p>The complete book — over 25 chapters covering every language feature, the standard library, the UI toolkit, advanced topics, a cookbook, and a glossary.</p>
         <div className="flex gap-3 flex-wrap mt-3">
-          <a href="/sdev-book-en.md" download className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 hover:border-primary transition"><BookOpen className="w-4 h-4" />English (.md)</a>
-          <a href="/sdev-book-bg.md" download className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 hover:border-primary transition"><BookOpen className="w-4 h-4" />Български (.md)</a>
+          <a href="/sdev-book-en.pdf" download className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 hover:border-primary transition"><BookOpen className="w-4 h-4" />English (PDF)</a>
+          <a href="/sdev-book-bg.pdf" download className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 hover:border-primary transition"><BookOpen className="w-4 h-4" />Български (PDF)</a>
           <a href="/SDEV_DOCUMENTATION.md" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 hover:border-primary transition"><FileCode className="w-4 h-4" />Full Reference</a>
         </div>
       </>},
