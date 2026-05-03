@@ -15,7 +15,7 @@ import {
   Play, Zap, Wand2, Terminal, Cpu, MonitorDot,
   ArrowRight, Code2, Palette, Box, BookOpen,
   Timer, Trash2, Share2, Copy, Check, ChevronDown,
-  Rocket, Shield, Globe2, Layers, UserCircle
+  Rocket, Shield, Globe2, Layers
 } from 'lucide-react';
 import { GraphicsCommand, TurtleState, createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
@@ -211,15 +211,6 @@ const Index = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => navigate('/account')}
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <UserCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Account</span>
-            </Button>
             <Button
               onClick={() => navigate('/ide')}
               variant="ghost"
