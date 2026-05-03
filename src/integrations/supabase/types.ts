@@ -18,86 +18,31 @@ export type Database = {
         Row: {
           content: string
           created_at: string
-          folder_id: string | null
           id: string
-          is_active: boolean
-          is_open: boolean
           language: string
           name: string
-          sort_order: number
           updated_at: string
           user_id: string
         }
         Insert: {
           content?: string
           created_at?: string
-          folder_id?: string | null
           id?: string
-          is_active?: boolean
-          is_open?: boolean
           language?: string
           name: string
-          sort_order?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
-          folder_id?: string | null
           id?: string
-          is_active?: boolean
-          is_open?: boolean
           language?: string
           name?: string
-          sort_order?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "code_files_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      folders: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          parent_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          parent_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          parent_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "folders_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       gists: {
         Row: {
