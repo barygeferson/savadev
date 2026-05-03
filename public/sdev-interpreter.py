@@ -3229,7 +3229,7 @@ class Interpreter:
         def _s(v, fb=''):
             if v is None: return fb
             return v if isinstance(v, str) else str(v)
-        def _log(msg): self.output_lines.append('[ui] ' + msg)
+        def _log(msg): self.output('[ui] ' + msg)
         def _simple(fmt):
             return lambda args: (_log(fmt(args)) or None)
         ui_defs = {
@@ -3312,7 +3312,7 @@ class Interpreter:
             return None
         builtins['uiset'] = SdevBuiltin('uiset', _uiset, 2, 2)
         def _alert(args):
-            self.output_lines.append('[alert] ' + _s(args[0] if args else ''))
+            self.output('[alert] ' + _s(args[0] if args else ''))
             return None
         builtins['alert'] = SdevBuiltin('alert', _alert, 1, 1)
 
