@@ -347,6 +347,7 @@ export default function IDEPage() {
 
   // UI app preview state
   const [uiState, setUiState] = useState<UiState | null>(null);
+  const uiStateRef = useRef<UiState | null>(null);
   const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
   const uiHandlerIdRef = useRef(0);
 
@@ -419,6 +420,7 @@ export default function IDEPage() {
   useEffect(() => {
     if (!hydrated || hydratedAppliedRef.current) return;
     hydratedAppliedRef.current = true;
+    if (!hydrated.hasRemoteData) return;
     setFolders(hydrated.folders);
     setFiles(hydrated.files);
     if (hydrated.activeId) setActiveId(hydrated.activeId);
@@ -525,7 +527,11 @@ export default function IDEPage() {
         uiHandlerIdRef.current = 0;
         let producedUi = false;
         const ui = createUiBuiltins(
-          (s) => { producedUi = true; setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) }); },
+          (s) => {
+            producedUi = true;
+            uiStateRef.current = s;
+            setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) });
+          },
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
         ui.forEach((fn, name) => env.define(name, fn));
