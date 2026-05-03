@@ -29,7 +29,10 @@ import {
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { IdeFile, SidePanel, IdeSettings } from '@/components/ide/types';
+import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
+import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
+import { AppPreviewPanel } from '@/components/ide/AppPreviewPanel';
+import { useWorkspaceSync } from '@/hooks/useWorkspaceSync';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -37,6 +40,10 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCodeTranslation, mightNeedTranslation } from '@/hooks/useCodeTranslation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserMenu } from '@/components/ide/UserMenu';
+import { useCloudFiles } from '@/hooks/useCloudFiles';
+import { useAuth } from '@/hooks/useAuth';
+import { useSearchParams } from 'react-router-dom';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -247,7 +254,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas';
+type BottomPanel = 'terminal' | 'canvas' | 'app';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
@@ -260,8 +267,9 @@ const DEFAULT_SETTINGS: IdeSettings = {
   fontFamily: 'JetBrains Mono',
 };
 
-// Load/save to localStorage
+// Load/save to localStorage (used for guests; logged-in users sync to cloud)
 const LS_FILES = 'sdev-ide-files';
+const LS_FOLDERS = 'sdev-ide-folders';
 const LS_ACTIVE = 'sdev-ide-active';
 const LS_OPEN = 'sdev-ide-open';
 const LS_SETTINGS = 'sdev-ide-settings';
@@ -310,6 +318,7 @@ export default function IDEPage() {
 
   // Persistent state
   const [files, setFiles] = useState<IdeFile[]>(() => loadFromStorage(LS_FILES, STARTER_FILES));
+  const [folders, setFolders] = useState<IdeFolder[]>(() => loadFromStorage(LS_FOLDERS, []));
   const [activeId, setActiveId] = useState<string>(() => loadFromStorage(LS_ACTIVE, '1'));
   const [openIds, setOpenIds] = useState<string[]>(() => loadFromStorage(LS_OPEN, ['1']));
   const [settings, setSettings] = useState<IdeSettings>(() => loadFromStorage(LS_SETTINGS, DEFAULT_SETTINGS));
@@ -336,6 +345,12 @@ export default function IDEPage() {
   const [statusMsg, setStatusMsg] = useState('Ready');
   const [execTime, setExecTime] = useState<number | null>(null);
 
+  // UI app preview state
+  const [uiState, setUiState] = useState<UiState | null>(null);
+  const uiStateRef = useRef<UiState | null>(null);
+  const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
+  const uiHandlerIdRef = useRef(0);
+
   // Cursor position
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [selection, setSelection] = useState(0);
@@ -343,13 +358,53 @@ export default function IDEPage() {
   const canvasRef = useRef<CanvasHandle>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auth + cloud sync
+  const { user } = useAuth();
+  const { recordRun } = useCloudFiles();
+  const [searchParams] = useSearchParams();
+  // Map of local file id → cloud file id (so "Save" updates instead of duplicates)
+  const [cloudIds, setCloudIds] = useState<Record<string, string>>({});
+
   const activeFile = files.find(f => f.id === activeId);
   const openFiles = openIds.map(id => files.find(f => f.id === id)).filter(Boolean) as IdeFile[];
 
-  // Persist to localStorage
+  // Import code from a Gist (sessionStorage) on mount
   useEffect(() => {
-    localStorage.setItem(LS_FILES, JSON.stringify(files));
-  }, [files]);
+    const imported = sessionStorage.getItem('sdev:imported_code');
+    const importedName = sessionStorage.getItem('sdev:imported_name');
+    if (imported) {
+      sessionStorage.removeItem('sdev:imported_code');
+      sessionStorage.removeItem('sdev:imported_name');
+      const id = String(++fileIdCounter);
+      const name = (importedName || 'imported').replace(/[^\w.\-]/g, '_') + (importedName?.endsWith('.sdev') ? '' : '.sdev');
+      const file: IdeFile = { id, name, content: imported };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      toast.success('Imported gist into IDE');
+    }
+  }, []);
+
+  // Load a cloud file when ?cloud=<id> is present
+  useEffect(() => {
+    const cloudParam = searchParams.get('cloud');
+    if (!cloudParam || !user) return;
+    (async () => {
+      const { data } = await supabase.from('code_files').select('*').eq('id', cloudParam).maybeSingle();
+      if (!data) return;
+      const id = String(++fileIdCounter);
+      const file: IdeFile = { id, name: data.name, content: data.content };
+      setFiles(prev => [...prev, file]);
+      setOpenIds(prev => [...prev, id]);
+      setActiveId(id);
+      setCloudIds(prev => ({ ...prev, [id]: data.id }));
+      toast.success('Loaded ' + data.name);
+    })();
+  }, [searchParams, user]);
+
+  // Persist to localStorage (guests + as backup for logged-in users)
+  useEffect(() => { localStorage.setItem(LS_FILES, JSON.stringify(files)); }, [files]);
+  useEffect(() => { localStorage.setItem(LS_FOLDERS, JSON.stringify(folders)); }, [folders]);
   useEffect(() => {
     localStorage.setItem(LS_ACTIVE, JSON.stringify(activeId));
     localStorage.setItem(LS_OPEN, JSON.stringify(openIds));
@@ -357,6 +412,23 @@ export default function IDEPage() {
   useEffect(() => {
     localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
   }, [settings]);
+
+  // ─────── Cloud workspace sync (logged-in users) ───────
+  const workspaceSnapshot = user ? { files, folders, openIds, activeId } : null;
+  const { hydrated, isSyncing, lastSavedAt } = useWorkspaceSync(workspaceSnapshot, !!user);
+  const hydratedAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!hydrated || hydratedAppliedRef.current) return;
+    hydratedAppliedRef.current = true;
+    if (!hydrated.hasRemoteData) return;
+    setFolders(hydrated.folders);
+    setFiles(hydrated.files);
+    if (hydrated.activeId) setActiveId(hydrated.activeId);
+    setOpenIds(hydrated.openIds);
+    if (hydrated.files.length > 0) toast.success(`Restored ${hydrated.files.length} files from cloud`);
+  }, [hydrated]);
+  // Reset hydration flag when user changes (logout/login)
+  useEffect(() => { hydratedAppliedRef.current = false; }, [user?.id]);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -450,9 +522,23 @@ export default function IDEPage() {
           (state) => { turtleState = { ...turtleState, ...state }; }
         );
         gfx.forEach((fn, name) => env.define(name, fn));
+        // ── UI toolkit builtins ──
+        uiHandlersRef.current.clear();
+        uiHandlerIdRef.current = 0;
+        let producedUi = false;
+        const ui = createUiBuiltins(
+          (s) => {
+            producedUi = true;
+            uiStateRef.current = s;
+            setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) });
+          },
+          (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
+        );
+        ui.forEach((fn, name) => env.define(name, fn));
         const interpreter = new Interpreter((msg) => outputLines.push(msg));
         (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
         interpreter.interpret(ast);
+        if (producedUi) { setBottomPanel('app'); }
       } else {
         const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
@@ -486,6 +572,7 @@ export default function IDEPage() {
         setBottomPanel('canvas');
       }
       setStatusMsg(`✓ Done in ${elapsed}ms`);
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n'), 'success', elapsed);
     } catch (e) {
       setOutput(outputLines);
       const msg = e instanceof SdevError ? e.message : String(e);
@@ -493,18 +580,49 @@ export default function IDEPage() {
       setExecTime(null);
       setStatusMsg('✗ Error');
       setBottomPanel('terminal');
+      recordRun(activeFile.name, activeFile.content, outputLines.join('\n') + '\nERROR: ' + msg, 'error', Math.round((performance.now() - t0) * 10) / 10);
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode, selectedLanguage]);
+  }, [activeFile, runMode, selectedLanguage, recordRun]);
 
-  const newFile = useCallback(() => {
+  const newFile = useCallback((folderId: string | null = null) => {
     const id = String(++fileIdCounter);
     const name = `untitled${fileIdCounter}.sdev`;
-    const file: IdeFile = { id, name, content: `// ${name}\n` };
+    const file: IdeFile = { id, name, content: `// ${name}\n`, folderId };
     setFiles(prev => [...prev, file]);
     setOpenIds(prev => [...prev, id]);
     setActiveId(id);
+  }, []);
+
+  const newFolder = useCallback((parentId: string | null = null) => {
+    const id = `f-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setFolders(prev => [...prev, { id, name: 'New Folder', parentId, expanded: true }]);
+  }, []);
+
+  const deleteFolder = useCallback((id: string) => {
+    if (!confirm('Delete this folder and everything inside it?')) return;
+    // Recursively gather all descendant folder ids
+    const toDelete = new Set<string>([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const f of folders) {
+        if (f.parentId && toDelete.has(f.parentId) && !toDelete.has(f.id)) {
+          toDelete.add(f.id); changed = true;
+        }
+      }
+    }
+    setFolders(prev => prev.filter(f => !toDelete.has(f.id)));
+    setFiles(prev => prev.filter(f => !f.folderId || !toDelete.has(f.folderId)));
+  }, [folders]);
+
+  const renameFolder = useCallback((id: string, name: string) => {
+    setFolders(prev => prev.map(f => f.id === id ? { ...f, name } : f));
+  }, []);
+
+  const toggleFolder = useCallback((id: string) => {
+    setFolders(prev => prev.map(f => f.id === id ? { ...f, expanded: !(f.expanded ?? true) } : f));
   }, []);
 
   const deleteFile = useCallback((id: string) => {
@@ -662,7 +780,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">File</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
-                  <DropdownMenuItem onClick={newFile} className="text-xs gap-2 cursor-pointer">
+                  <DropdownMenuItem onClick={() => newFile()} className="text-xs gap-2 cursor-pointer">
                     <Code className="w-3.5 h-3.5" /> New File <span className="ml-auto text-muted-foreground">⌃N</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={uploadFile} className="text-xs gap-2 cursor-pointer">
@@ -918,6 +1036,23 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <><Play className="w-3 h-3" /> Run</>
               )}
             </Button>
+
+            {activeFile && (
+              <UserMenu
+                currentName={activeFile.name}
+                currentContent={activeFile.content}
+                currentCloudId={cloudIds[activeFile.id] ?? null}
+                onCloudIdChange={(cid) => setCloudIds(prev => ({ ...prev, [activeFile.id]: cid }))}
+                onLoadFile={(name, content, cid) => {
+                  const id = String(++fileIdCounter);
+                  const file: IdeFile = { id, name, content };
+                  setFiles(prev => [...prev, file]);
+                  setOpenIds(prev => [...prev, id]);
+                  setActiveId(id);
+                  setCloudIds(prev => ({ ...prev, [id]: cid }));
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -962,12 +1097,18 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
+                      folders={folders}
                       activeId={activeId}
                       onSelect={selectFile}
-                      onNew={newFile}
+                      onNewFile={(fid) => newFile(fid)}
+                      onNewFolder={(pid) => newFolder(pid)}
                       onDelete={deleteFile}
+                      onDeleteFolder={deleteFolder}
                       onRename={renameFile}
+                      onRenameFolder={renameFolder}
+                      onToggleFolder={toggleFolder}
                       onUpload={uploadFile}
+                      syncStatus={!user ? 'local' : (isSyncing ? 'syncing' : (lastSavedAt ? 'synced' : 'local'))}
                     />
                   )}
                   {sidePanel === 'search' && (
@@ -1041,7 +1182,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                             <div>No file open</div>
                             <div className="text-xs mt-1">Select a file from the Explorer or create a new one</div>
                           </div>
-                          <Button variant="outline" size="sm" onClick={newFile} className="text-xs gap-2">
+                          <Button variant="outline" size="sm" onClick={() => newFile()} className="text-xs gap-2">
                             <Code className="w-3.5 h-3.5" /> New File
                           </Button>
                         </div>
@@ -1071,6 +1212,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         <Palette className="w-3 h-3" /> CANVAS
                       </button>
                     )}
+                    {uiState && uiState.rootId !== null && (
+                      <button
+                        onClick={() => setBottomPanel('app')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'app' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                      >
+                        <Code className="w-3 h-3" /> APP
+                      </button>
+                    )}
                     <div className="flex-1" />
                     {showCanvas && (
                       <button onClick={() => setShowCanvas(false)} className="p-1 mr-1 text-muted-foreground hover:text-foreground transition-colors rounded">
@@ -1091,6 +1240,32 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     <div className="h-full overflow-auto p-2 bg-background/30">
                       <CanvasPanel ref={canvasRef} commands={graphicsCommands} onClose={() => setShowCanvas(false)} />
                     </div>
+                  )}
+                  {bottomPanel === 'app' && (
+                    <AppPreviewPanel
+                      state={uiState}
+                      invokeHandler={(id, args) => {
+                        const cb = uiHandlersRef.current.get(id);
+                        if (cb) {
+                          try {
+                            cb.fn(args ?? []);
+                            if (uiStateRef.current) {
+                              setUiState({
+                                nodes: new Map(uiStateRef.current.nodes),
+                                rootId: uiStateRef.current.rootId,
+                                values: new Map(uiStateRef.current.values),
+                              });
+                            }
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        }
+                      }}
+                      setValue={(k, v) => {
+                        if (uiStateRef.current) uiStateRef.current.values.set(k, v);
+                        setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev);
+                      }}
+                    />
                   )}
                 </ResizablePanel>
               </ResizablePanelGroup>
