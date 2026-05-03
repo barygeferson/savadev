@@ -15,6 +15,7 @@ interface HydratedWorkspace {
   folders: IdeFolder[];
   openIds: string[];
   activeId: string | null;
+  hasRemoteData: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
   const [hydrated, setHydrated] = useState<HydratedWorkspace | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [hydrationDone, setHydrationDone] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Maps local id → cloud uuid so updates target the same row
   const fileCloudMap = useRef<Map<string, string>>(new Map());
@@ -37,7 +39,8 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
 
   // ──────────────────── Hydrate on login ────────────────────
   useEffect(() => {
-    if (!user) { setHydrated(null); return; }
+    if (!user) { setHydrated(null); setHydrationDone(false); return; }
+    setHydrationDone(false);
     (async () => {
       const [{ data: foldersData }, { data: filesData }] = await Promise.all([
         supabase.from('folders').select('*').eq('user_id', user.id).order('created_at'),
@@ -62,7 +65,14 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
       const openIds = files.filter(f => filesData!.find(x => x.id === f.cloudId)?.is_open).map(f => f.id);
       const activeRow = filesData?.find(x => x.is_active);
       const activeId = activeRow ? `c-${activeRow.id}` : (files[0]?.id ?? null);
-      setHydrated({ files, folders, openIds: openIds.length ? openIds : (files.length ? [files[0].id] : []), activeId });
+      setHydrated({
+        files,
+        folders,
+        openIds: openIds.length ? openIds : (files.length ? [files[0].id] : []),
+        activeId,
+        hasRemoteData: files.length > 0 || folders.length > 0,
+      });
+      setHydrationDone(true);
     })();
   }, [user]);
 
@@ -120,11 +130,11 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
   }, [user]);
 
   useEffect(() => {
-    if (!enabled || !user || !snapshot) return;
+    if (!enabled || !user || !snapshot || !hydrationDone) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => flush(snapshot), 1200);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [snapshot, enabled, user, flush]);
+  }, [snapshot, enabled, user, flush, hydrationDone]);
 
   return { hydrated, isSyncing, lastSavedAt };
 }

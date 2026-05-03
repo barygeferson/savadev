@@ -347,6 +347,7 @@ export default function IDEPage() {
 
   // UI app preview state
   const [uiState, setUiState] = useState<UiState | null>(null);
+  const uiStateRef = useRef<UiState | null>(null);
   const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
   const uiHandlerIdRef = useRef(0);
 
@@ -419,6 +420,7 @@ export default function IDEPage() {
   useEffect(() => {
     if (!hydrated || hydratedAppliedRef.current) return;
     hydratedAppliedRef.current = true;
+    if (!hydrated.hasRemoteData) return;
     setFolders(hydrated.folders);
     setFiles(hydrated.files);
     if (hydrated.activeId) setActiveId(hydrated.activeId);
@@ -525,7 +527,11 @@ export default function IDEPage() {
         uiHandlerIdRef.current = 0;
         let producedUi = false;
         const ui = createUiBuiltins(
-          (s) => { producedUi = true; setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) }); },
+          (s) => {
+            producedUi = true;
+            uiStateRef.current = s;
+            setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) });
+          },
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
         ui.forEach((fn, name) => env.define(name, fn));
@@ -1240,9 +1246,25 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                       state={uiState}
                       invokeHandler={(id, args) => {
                         const cb = uiHandlersRef.current.get(id);
-                        if (cb) try { cb.fn(args ?? []); } catch (e) { toast.error(String(e)); }
+                        if (cb) {
+                          try {
+                            cb.fn(args ?? []);
+                            if (uiStateRef.current) {
+                              setUiState({
+                                nodes: new Map(uiStateRef.current.nodes),
+                                rootId: uiStateRef.current.rootId,
+                                values: new Map(uiStateRef.current.values),
+                              });
+                            }
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        }
                       }}
-                      setValue={(k, v) => setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev)}
+                      setValue={(k, v) => {
+                        if (uiStateRef.current) uiStateRef.current.values.set(k, v);
+                        setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev);
+                      }}
                     />
                   )}
                 </ResizablePanel>
