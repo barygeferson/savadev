@@ -1041,11 +1041,18 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <UserMenu
                 currentName={activeFile.name}
                 currentContent={activeFile.content}
-                currentCloudId={cloudIds[activeFile.id] ?? null}
-                onCloudIdChange={(cid) => setCloudIds(prev => ({ ...prev, [activeFile.id]: cid }))}
+                currentCloudId={cloudIds[activeFile.id] ?? activeFile.cloudId ?? null}
+                onCloudIdChange={(cid) => {
+                  setCloudIds(prev => ({ ...prev, [activeFile.id]: cid }));
+                  // Tag the file itself so the workspace sync recognises it
+                  // and won't insert a duplicate or delete it on next flush.
+                  setFiles(prev => prev.map(f => f.id === activeFile.id ? { ...f, cloudId: cid } : f));
+                }}
                 onLoadFile={(name, content, cid) => {
                   const id = String(++fileIdCounter);
-                  const file: IdeFile = { id, name, content };
+                  // Tag the loaded file with its cloudId so workspace sync
+                  // updates this row instead of inserting a duplicate.
+                  const file: IdeFile = { id, name, content, cloudId: cid };
                   setFiles(prev => [...prev, file]);
                   setOpenIds(prev => [...prev, id]);
                   setActiveId(id);
