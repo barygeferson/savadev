@@ -38,7 +38,7 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
     setBusy(true);
     try {
       const result = await saveFile(saveName || 'untitled.sdev', currentContent, currentCloudId ?? undefined);
-      if (result && !currentCloudId && onCloudIdChange) onCloudIdChange(result.id);
+      if (result && onCloudIdChange && currentCloudId !== result.id) onCloudIdChange(result.id);
       toast.success('Saved to cloud');
       setOpenSave(false);
     } catch (e) {
