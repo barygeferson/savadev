@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { User, LogIn, LogOut, UserCircle, Cloud, Share2, Loader2, FolderOpen } from 'lucide-react';
@@ -42,6 +43,19 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       setOpenSave(false);
     } catch (e) {
       toast.error('Failed to save');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleOpenCloud = async () => {
+    if (!user) { navigate('/auth'); return; }
+    setBusy(true);
+    try {
+      await refresh();
+      setOpenOpen(true);
+    } catch (e) {
+      toast.error('Failed to load cloud files');
     } finally {
       setBusy(false);
     }
@@ -95,7 +109,7 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
           <DropdownMenuItem onClick={() => { setSaveName(currentName); setOpenSave(true); }} className="gap-2 text-xs cursor-pointer">
             <Cloud className="w-3.5 h-3.5 text-neon-cyan" /> {currentCloudId ? 'Update in cloud' : 'Save to cloud'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { refresh(); setOpenOpen(true); }} className="gap-2 text-xs cursor-pointer">
+          <DropdownMenuItem onClick={handleOpenCloud} className="gap-2 text-xs cursor-pointer" disabled={busy}>
             <FolderOpen className="w-3.5 h-3.5 text-neon-green" /> Open from cloud
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => { setGistTitle(currentName); setOpenShare(true); }} className="gap-2 text-xs cursor-pointer">
@@ -114,7 +128,10 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       {/* Save dialog */}
       <Dialog open={openSave} onOpenChange={setOpenSave}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{currentCloudId ? 'Update cloud file' : 'Save to cloud'}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{currentCloudId ? 'Update cloud file' : 'Save to cloud'}</DialogTitle>
+            <DialogDescription>Store the current file in your account so you can reopen it later.</DialogDescription>
+          </DialogHeader>
           <div className="space-y-2">
             <Label>File name</Label>
             <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} />
@@ -131,9 +148,13 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       {/* Open dialog */}
       <Dialog open={openOpen} onOpenChange={setOpenOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Open from cloud</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Open from cloud</DialogTitle>
+            <DialogDescription>Choose one of your saved files from the cloud workspace.</DialogDescription>
+          </DialogHeader>
           <div className="max-h-96 overflow-y-auto space-y-1">
-            {files.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No saved files yet.</p>}
+            {busy && <p className="text-sm text-muted-foreground text-center py-6">Loading saved files…</p>}
+            {!busy && files.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">No saved files yet.</p>}
             {files.map(f => (
               <button
                 key={f.id}
@@ -151,7 +172,10 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       {/* Share dialog */}
       <Dialog open={openShare} onOpenChange={setOpenShare}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Share as public gist</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Share as public gist</DialogTitle>
+            <DialogDescription>Create a public link for the current code.</DialogDescription>
+          </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Title</Label>
