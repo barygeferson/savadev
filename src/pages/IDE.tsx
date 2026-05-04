@@ -420,7 +420,11 @@ export default function IDEPage() {
   useEffect(() => {
     if (!hydrated || hydratedAppliedRef.current) return;
     hydratedAppliedRef.current = true;
-    if (!hydrated.hasRemoteData) return;
+    if (!hydrated.hasRemoteData) {
+      setCloudIds({});
+      setFiles(prev => prev.map(file => ({ ...file, cloudId: null })));
+      return;
+    }
     setFolders(hydrated.folders);
     setFiles(hydrated.files);
     if (hydrated.activeId) setActiveId(hydrated.activeId);
