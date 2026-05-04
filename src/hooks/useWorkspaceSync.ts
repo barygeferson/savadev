@@ -39,7 +39,15 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
 
   // ──────────────────── Hydrate on login ────────────────────
   useEffect(() => {
-    if (!user) { setHydrated(null); setHydrationDone(false); return; }
+    if (!user) {
+      fileCloudMap.current.clear();
+      folderCloudMap.current.clear();
+      setHydrated(null);
+      setHydrationDone(false);
+      return;
+    }
+    fileCloudMap.current.clear();
+    folderCloudMap.current.clear();
     setHydrationDone(false);
     (async () => {
       const [{ data: foldersData }, { data: filesData }] = await Promise.all([
@@ -86,7 +94,21 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
         const cloudId = folder.cloudId ?? folderCloudMap.current.get(folder.id);
         const parentCloudId = folder.parentId ? (snap.folders.find(f => f.id === folder.parentId)?.cloudId ?? folderCloudMap.current.get(folder.parentId) ?? null) : null;
         if (cloudId) {
-          await supabase.from('folders').update({ name: folder.name, parent_id: parentCloudId }).eq('id', cloudId);
+          const { data } = await supabase
+            .from('folders')
+            .update({ name: folder.name, parent_id: parentCloudId })
+            .eq('id', cloudId)
+            .eq('user_id', user.id)
+            .select('id')
+            .maybeSingle();
+          if (!data) {
+            const { data: inserted } = await supabase
+              .from('folders')
+              .insert({ user_id: user.id, name: folder.name, parent_id: parentCloudId })
+              .select('id')
+              .single();
+            if (inserted) folderCloudMap.current.set(folder.id, inserted.id);
+          }
         } else {
           const { data } = await supabase.from('folders').insert({ user_id: user.id, name: folder.name, parent_id: parentCloudId }).select('id').single();
           if (data) folderCloudMap.current.set(folder.id, data.id);
@@ -106,7 +128,21 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
           sort_order: i,
         };
         if (cloudId) {
-          await supabase.from('code_files').update(row).eq('id', cloudId);
+          const { data } = await supabase
+            .from('code_files')
+            .update(row)
+            .eq('id', cloudId)
+            .eq('user_id', user.id)
+            .select('id')
+            .maybeSingle();
+          if (!data) {
+            const { data: inserted } = await supabase
+              .from('code_files')
+              .insert({ ...row, user_id: user.id })
+              .select('id')
+              .single();
+            if (inserted) fileCloudMap.current.set(file.id, inserted.id);
+          }
         } else {
           const { data } = await supabase.from('code_files').insert({ ...row, user_id: user.id }).select('id').single();
           if (data) fileCloudMap.current.set(file.id, data.id);

@@ -393,7 +393,7 @@ export default function IDEPage() {
       const { data } = await supabase.from('code_files').select('*').eq('id', cloudParam).maybeSingle();
       if (!data) return;
       const id = String(++fileIdCounter);
-      const file: IdeFile = { id, name: data.name, content: data.content };
+      const file: IdeFile = { id, name: data.name, content: data.content, cloudId: data.id };
       setFiles(prev => [...prev, file]);
       setOpenIds(prev => [...prev, id]);
       setActiveId(id);
@@ -420,7 +420,11 @@ export default function IDEPage() {
   useEffect(() => {
     if (!hydrated || hydratedAppliedRef.current) return;
     hydratedAppliedRef.current = true;
-    if (!hydrated.hasRemoteData) return;
+    if (!hydrated.hasRemoteData) {
+      setCloudIds({});
+      setFiles(prev => prev.map(file => ({ ...file, cloudId: null })));
+      return;
+    }
     setFolders(hydrated.folders);
     setFiles(hydrated.files);
     if (hydrated.activeId) setActiveId(hydrated.activeId);

@@ -16,17 +16,26 @@ export function useCloudFiles() {
   const [loading, setLoading] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!user) { setFiles([]); return; }
+    if (!user) {
+      setFiles([]);
+      return [] as CloudFile[];
+    }
     setLoading(true);
     const { data, error } = await supabase
       .from('code_files')
       .select('id, name, content, language, updated_at')
+      .eq('user_id', user.id)
       .order('updated_at', { ascending: false });
     setLoading(false);
-    if (!error && data) setFiles(data as CloudFile[]);
+    if (error) throw error;
+    const nextFiles = (data ?? []) as CloudFile[];
+    setFiles(nextFiles);
+    return nextFiles;
   }, [user]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh().catch(() => undefined);
+  }, [refresh]);
 
   const saveFile = useCallback(async (name: string, content: string, id?: string) => {
     if (!user) return null;
@@ -35,11 +44,14 @@ export function useCloudFiles() {
         .from('code_files')
         .update({ name, content })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      await refresh();
-      return data;
+      if (data) {
+        await refresh();
+        return data;
+      }
     }
     const { data, error } = await supabase
       .from('code_files')
@@ -53,7 +65,7 @@ export function useCloudFiles() {
 
   const deleteFile = useCallback(async (id: string) => {
     if (!user) return;
-    await supabase.from('code_files').delete().eq('id', id);
+    await supabase.from('code_files').delete().eq('id', id).eq('user_id', user.id);
     await refresh();
   }, [user, refresh]);
 
