@@ -112,16 +112,29 @@ export function useWorkspaceSync(snapshot: SnapshotInput | null, enabled: boolea
           if (data) fileCloudMap.current.set(file.id, data.id);
         }
       }
-      // 3) Delete cloud rows that no longer exist locally
-      const localFileCloudIds = new Set(snap.files.map(f => f.cloudId ?? fileCloudMap.current.get(f.id)).filter(Boolean));
-      const localFolderCloudIds = new Set(snap.folders.map(f => f.cloudId ?? folderCloudMap.current.get(f.id)).filter(Boolean));
-      const { data: existingFiles } = await supabase.from('code_files').select('id').eq('user_id', user.id);
-      for (const row of existingFiles ?? []) {
-        if (!localFileCloudIds.has(row.id)) await supabase.from('code_files').delete().eq('id', row.id);
+      // 3) Delete only TRACKED cloud rows that no longer exist locally.
+      //    Never touch rows we don't know about — those may be created by the
+      //    manual "Save to cloud" dialog or other tabs and must be preserved.
+      const trackedFileIds = new Set(fileCloudMap.current.values());
+      const localFileCloudIds = new Set(snap.files.map(f => f.cloudId ?? fileCloudMap.current.get(f.id)).filter(Boolean) as string[]);
+      for (const cid of trackedFileIds) {
+        if (!localFileCloudIds.has(cid)) {
+          await supabase.from('code_files').delete().eq('id', cid);
+          // forget the mapping so we don't try again
+          for (const [local, cloud] of fileCloudMap.current.entries()) {
+            if (cloud === cid) fileCloudMap.current.delete(local);
+          }
+        }
       }
-      const { data: existingFolders } = await supabase.from('folders').select('id').eq('user_id', user.id);
-      for (const row of existingFolders ?? []) {
-        if (!localFolderCloudIds.has(row.id)) await supabase.from('folders').delete().eq('id', row.id);
+      const trackedFolderIds = new Set(folderCloudMap.current.values());
+      const localFolderCloudIds = new Set(snap.folders.map(f => f.cloudId ?? folderCloudMap.current.get(f.id)).filter(Boolean) as string[]);
+      for (const cid of trackedFolderIds) {
+        if (!localFolderCloudIds.has(cid)) {
+          await supabase.from('folders').delete().eq('id', cid);
+          for (const [local, cloud] of folderCloudMap.current.entries()) {
+            if (cloud === cid) folderCloudMap.current.delete(local);
+          }
+        }
       }
       setLastSavedAt(Date.now());
     } finally {
