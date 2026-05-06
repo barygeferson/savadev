@@ -847,13 +847,22 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <DropdownMenuTrigger asChild>
                   <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Edit</button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-52 bg-card border-border/50">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Snippets</DropdownMenuLabel>
+                <DropdownMenuContent className="w-56 bg-card border-border/50">
+                  <DropdownMenuItem onClick={formatCurrent} className="text-xs gap-2 cursor-pointer">
+                    <Wand2 className="w-3.5 h-3.5" /> Format Document <span className="ml-auto text-muted-foreground">⇧⌃I</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => editorRef.current?.openFind()} className="text-xs gap-2 cursor-pointer">
+                    <Search className="w-3.5 h-3.5" /> Find / Replace <span className="ml-auto text-muted-foreground">⌃F</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowGoToLine(true)} className="text-xs gap-2 cursor-pointer">
+                    <ArrowRight className="w-3.5 h-3.5" /> Go to Line… <span className="ml-auto text-muted-foreground">⌃G</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Snippets</DropdownMenuLabel>
                   {Object.entries(SNIPPETS).map(([name, snippet]) => (
                     <DropdownMenuItem key={name} onClick={() => {
                       if (!activeFile) return;
-                      updateActiveContent(activeFile.content + snippet.replace(/\$[0-9]/g, ''));
+                      editorRef.current?.insertAtCursor(snippet.replace(/\$[0-9]/g, ''));
                       toast.success(`Inserted ${name} snippet`);
                     }} className="text-xs gap-2 cursor-pointer font-mono">
                       {name}
