@@ -1098,6 +1098,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   setFiles(prev => prev.map(f => f.id === activeFile.id ? { ...f, cloudId: cid } : f));
                 }}
                 onLoadFile={(name, content, cid) => {
+                  const existing = files.find(f => (cloudIds[f.id] ?? f.cloudId ?? null) === cid);
+                  if (existing) {
+                    setFiles(prev => prev.map(f => f.id === existing.id ? { ...f, name, content, cloudId: cid } : f));
+                    setOpenIds(prev => prev.includes(existing.id) ? prev : [...prev, existing.id]);
+                    setActiveId(existing.id);
+                    setCloudIds(prev => ({ ...prev, [existing.id]: cid }));
+                    return;
+                  }
                   const id = String(++fileIdCounter);
                   // Tag the loaded file with its cloudId so workspace sync
                   // updates this row instead of inserting a duplicate.
