@@ -1157,10 +1157,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     />
                   )}
                   {sidePanel === 'search' && (
-                    <IdeSearchPanel
-                      files={files}
-                      onSelectFile={selectFile}
-                    />
+                    <IdeSearchPanel files={files} onSelectFile={selectFile} />
+                  )}
+                  {sidePanel === 'outline' && activeFile && (
+                    <IdeOutline code={activeFile.content} onJump={(line) => editorRef.current?.jumpToLine(line)} />
+                  )}
+                  {sidePanel === 'problems' && (
+                    <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
                   )}
                   {sidePanel === 'settings' && (
                     <IdeSettingsPanel settings={settings} onChange={setSettings} />
