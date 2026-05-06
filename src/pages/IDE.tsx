@@ -31,7 +31,8 @@ import {
   Play, Zap, ArrowLeft, Download, Cpu, Save, Settings,
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
-  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
+  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
