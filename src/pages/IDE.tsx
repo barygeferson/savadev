@@ -1360,6 +1360,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             onTogglePanel={(panel) => { setSidePanel(p => p === panel ? null : panel); setShowCommandPalette(false); }}
           />
         )}
+
+        <IdeGoToLine
+          open={showGoToLine}
+          totalLines={currentLines}
+          onClose={() => setShowGoToLine(false)}
+          onGo={(line) => editorRef.current?.jumpToLine(line)}
+        />
       </div>
     </TooltipProvider>
   );
