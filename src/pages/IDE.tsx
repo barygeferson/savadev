@@ -362,7 +362,12 @@ export default function IDEPage() {
   const [selection, setSelection] = useState(0);
 
   const canvasRef = useRef<CanvasHandle>(null);
+  const editorRef = useRef<IdeEditorHandle>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Pro IDE state
+  const [showGoToLine, setShowGoToLine] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   // Auth + cloud sync
   const { user } = useAuth();
