@@ -46,11 +46,11 @@ export function useCloudFiles() {
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
-        .maybeSingle();
+        .limit(1);
       if (error) throw error;
-      if (data) {
+      if (data?.[0]) {
         await refresh();
-        return data;
+        return data[0];
       }
     }
     const { data, error } = await supabase
