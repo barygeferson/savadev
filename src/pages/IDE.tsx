@@ -1,14 +1,19 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { IdeFileTree } from '@/components/ide/IdeFileTree';
-import { IdeEditor } from '@/components/ide/IdeEditor';
+import { IdeEditor, type IdeEditorHandle } from '@/components/ide/IdeEditor';
 import { IdeTabs } from '@/components/ide/IdeTabs';
 import { IdeTerminal } from '@/components/ide/IdeTerminal';
 import { IdeStatusBar } from '@/components/ide/IdeStatusBar';
 import { IdeCommandPalette } from '@/components/ide/IdeCommandPalette';
 import { IdeSearchPanel } from '@/components/ide/IdeSearchPanel';
 import { IdeSettingsPanel } from '@/components/ide/IdeSettingsPanel';
+import { IdeOutline } from '@/components/ide/IdeOutline';
+import { IdeProblems, lintSdev, type Problem } from '@/components/ide/IdeProblems';
+import { IdeBreadcrumbs } from '@/components/ide/IdeBreadcrumbs';
+import { IdeGoToLine } from '@/components/ide/IdeGoToLine';
+import { formatSdev } from '@/components/ide/formatSdev';
 import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
 import type { GraphicsCommand, TurtleState } from '@/lang/graphics';
 import { createGraphicsBuiltins } from '@/lang/graphics';
@@ -26,7 +31,8 @@ import {
   Play, Zap, ArrowLeft, Download, Cpu, Save, Settings,
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
-  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff
+  Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
@@ -254,7 +260,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas' | 'app';
+type BottomPanel = 'terminal' | 'canvas' | 'app' | 'problems';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
@@ -356,7 +362,12 @@ export default function IDEPage() {
   const [selection, setSelection] = useState(0);
 
   const canvasRef = useRef<CanvasHandle>(null);
+  const editorRef = useRef<IdeEditorHandle>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Pro IDE state
+  const [showGoToLine, setShowGoToLine] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
 
   // Auth + cloud sync
   const { user } = useAuth();
@@ -442,12 +453,33 @@ export default function IDEPage() {
       if (ctrl && e.key === 'Enter') { e.preventDefault(); runCode(); }
       if (ctrl && e.key === 's') { e.preventDefault(); downloadCurrentFile(); toast.success('File saved!'); }
       if (ctrl && e.key === 'b') { e.preventDefault(); setSidePanel(p => p === 'explorer' ? null : 'explorer'); }
-      if (ctrl && e.key === 'f') { e.preventDefault(); setSidePanel(p => p === 'search' ? null : 'search'); }
-      if (e.key === 'Escape') { setShowCommandPalette(false); }
+      if (ctrl && e.shiftKey && (e.key === 'F' || e.key === 'f')) { e.preventDefault(); setSidePanel(p => p === 'search' ? null : 'search'); }
+      if (ctrl && e.shiftKey && (e.key === 'O' || e.key === 'o')) { e.preventDefault(); setSidePanel(p => p === 'outline' ? null : 'outline'); }
+      if (ctrl && e.shiftKey && (e.key === 'M' || e.key === 'm')) { e.preventDefault(); setBottomPanel('problems'); }
+      if (ctrl && e.shiftKey && (e.key === 'P' || e.key === 'p')) { e.preventDefault(); setShowCommandPalette(true); }
+      if (ctrl && e.key === 'g') { e.preventDefault(); setShowGoToLine(true); }
+      if (e.key === 'F1') { e.preventDefault(); setShowCommandPalette(true); }
+      if (e.key === 'F11') { e.preventDefault(); setIsFullscreen(f => !f); }
+      if (ctrl && e.key === '`') { e.preventDefault(); setBottomPanel('terminal'); }
+      if (ctrl && e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); setZenMode(z => !z); }
+      if (e.key === 'Escape') { setShowCommandPalette(false); setShowGoToLine(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [activeFile]);
+
+  // Live linting (problems)
+  const problems: Problem[] = useMemo(
+    () => activeFile ? lintSdev(activeFile.content) : [],
+    [activeFile?.content]
+  );
+
+  const formatCurrent = useCallback(() => {
+    if (!activeFile) return;
+    const formatted = formatSdev(activeFile.content, settings.tabSize);
+    setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content: formatted, modified: true } : f));
+    toast.success('Formatted');
+  }, [activeFile, activeId, settings.tabSize]);
 
   const updateActiveContent = useCallback((content: string) => {
     setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content, modified: true } : f));
@@ -749,9 +781,11 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
   const currentChars = currentContent.length;
 
   const sidebarIcons = [
-    { id: 'explorer' as SidePanel, icon: FolderOpen, label: 'Explorer (Ctrl+B)', shortcut: '⌃B' },
-    { id: 'search' as SidePanel, icon: Search, label: 'Search (Ctrl+F)', shortcut: '⌃F' },
-    { id: 'settings' as SidePanel, icon: Settings, label: 'Settings', shortcut: '' },
+    { id: 'explorer' as SidePanel, icon: FolderOpen, label: 'Explorer (Ctrl+B)' },
+    { id: 'search'   as SidePanel, icon: Search,    label: 'Search (Ctrl+Shift+F)' },
+    { id: 'outline'  as SidePanel, icon: ListTree,  label: 'Outline (Ctrl+Shift+O)' },
+    { id: 'problems' as SidePanel, icon: AlertCircle, label: `Problems (${problems.length})` },
+    { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
   return (
@@ -813,13 +847,22 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <DropdownMenuTrigger asChild>
                   <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Edit</button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-52 bg-card border-border/50">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Snippets</DropdownMenuLabel>
+                <DropdownMenuContent className="w-56 bg-card border-border/50">
+                  <DropdownMenuItem onClick={formatCurrent} className="text-xs gap-2 cursor-pointer">
+                    <Wand2 className="w-3.5 h-3.5" /> Format Document <span className="ml-auto text-muted-foreground">⇧⌃I</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => editorRef.current?.openFind()} className="text-xs gap-2 cursor-pointer">
+                    <Search className="w-3.5 h-3.5" /> Find / Replace <span className="ml-auto text-muted-foreground">⌃F</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowGoToLine(true)} className="text-xs gap-2 cursor-pointer">
+                    <ArrowRight className="w-3.5 h-3.5" /> Go to Line… <span className="ml-auto text-muted-foreground">⌃G</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">Snippets</DropdownMenuLabel>
                   {Object.entries(SNIPPETS).map(([name, snippet]) => (
                     <DropdownMenuItem key={name} onClick={() => {
                       if (!activeFile) return;
-                      updateActiveContent(activeFile.content + snippet.replace(/\$[0-9]/g, ''));
+                      editorRef.current?.insertAtCursor(snippet.replace(/\$[0-9]/g, ''));
                       toast.success(`Inserted ${name} snippet`);
                     }} className="text-xs gap-2 cursor-pointer font-mono">
                       {name}
@@ -1123,10 +1166,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     />
                   )}
                   {sidePanel === 'search' && (
-                    <IdeSearchPanel
-                      files={files}
-                      onSelectFile={selectFile}
-                    />
+                    <IdeSearchPanel files={files} onSelectFile={selectFile} />
+                  )}
+                  {sidePanel === 'outline' && activeFile && (
+                    <IdeOutline code={activeFile.content} onJump={(line) => editorRef.current?.jumpToLine(line)} />
+                  )}
+                  {sidePanel === 'problems' && (
+                    <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
                   )}
                   {sidePanel === 'settings' && (
                     <IdeSettingsPanel settings={settings} onChange={setSettings} />
@@ -1175,16 +1221,21 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                             />
                           </div>
                         ) : (
-                          <IdeEditor
-                            key={activeFile.id}
-                            value={activeFile.content}
-                            onChange={updateActiveContent}
-                            onRun={runCode}
-                            fileName={activeFile.name}
-                            settings={settings}
-                            onCursorChange={setCursor}
-                            onSelectionChange={setSelection}
-                          />
+                          <>
+                            <IdeBreadcrumbs file={activeFile} folders={folders} />
+                            <IdeEditor
+                              ref={editorRef}
+                              key={activeFile.id}
+                              value={activeFile.content}
+                              onChange={updateActiveContent}
+                              onRun={runCode}
+                              onFormat={formatCurrent}
+                              fileName={activeFile.name}
+                              settings={settings}
+                              onCursorChange={setCursor}
+                              onSelectionChange={setSelection}
+                            />
+                          </>
                         )
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 gap-4">
@@ -1231,6 +1282,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         <Code className="w-3 h-3" /> APP
                       </button>
                     )}
+                    <button
+                      onClick={() => setBottomPanel('problems')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'problems' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <AlertCircle className="w-3 h-3" /> PROBLEMS
+                      {problems.length > 0 && <span className="ml-1 px-1 rounded bg-destructive/20 text-destructive text-[9px]">{problems.length}</span>}
+                    </button>
                     <div className="flex-1" />
                     {showCanvas && (
                       <button onClick={() => setShowCanvas(false)} className="p-1 mr-1 text-muted-foreground hover:text-foreground transition-colors rounded">
@@ -1278,6 +1336,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                       }}
                     />
                   )}
+                  {bottomPanel === 'problems' && (
+                    <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
+                  )}
                 </ResizablePanel>
               </ResizablePanelGroup>
             </ResizablePanel>
@@ -1308,6 +1369,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             onTogglePanel={(panel) => { setSidePanel(p => p === panel ? null : panel); setShowCommandPalette(false); }}
           />
         )}
+
+        <IdeGoToLine
+          open={showGoToLine}
+          totalLines={currentLines}
+          onClose={() => setShowGoToLine(false)}
+          onGo={(line) => editorRef.current?.jumpToLine(line)}
+        />
       </div>
     </TooltipProvider>
   );
