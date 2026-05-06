@@ -16,7 +16,7 @@ export interface IdeFolder {
 }
 
 export type RunMode = 'interpreter' | 'vm';
-export type SidePanel = 'explorer' | 'search' | 'outline' | 'problems' | 'settings' | null;
+export type SidePanel = 'explorer' | 'search' | 'outline' | 'problems' | 'assistant' | 'settings' | null;
 
 export interface IdeSettings {
   fontSize: number;

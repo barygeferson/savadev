@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.translate-fuzzy]
 verify_jwt = false
+
+[functions.sdev-fix]
+verify_jwt = false

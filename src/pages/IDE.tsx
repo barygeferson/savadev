@@ -13,6 +13,7 @@ import { IdeOutline } from '@/components/ide/IdeOutline';
 import { IdeProblems, lintSdev, type Problem } from '@/components/ide/IdeProblems';
 import { IdeBreadcrumbs } from '@/components/ide/IdeBreadcrumbs';
 import { IdeGoToLine } from '@/components/ide/IdeGoToLine';
+import { IdeAssistantPanel } from '@/components/ide/IdeAssistantPanel';
 import { formatSdev } from '@/components/ide/formatSdev';
 import { CanvasPanel, CanvasHandle } from '@/components/CanvasPanel';
 import type { GraphicsCommand, TurtleState } from '@/lang/graphics';
@@ -32,7 +33,7 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
@@ -785,6 +786,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'search'   as SidePanel, icon: Search,    label: 'Search (Ctrl+Shift+F)' },
     { id: 'outline'  as SidePanel, icon: ListTree,  label: 'Outline (Ctrl+Shift+O)' },
     { id: 'problems' as SidePanel, icon: AlertCircle, label: `Problems (${problems.length})` },
+    { id: 'assistant' as SidePanel, icon: Sparkles,  label: 'AI Doctor — fix & explain' },
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
@@ -1173,6 +1175,18 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   )}
                   {sidePanel === 'problems' && (
                     <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
+                  )}
+                  {sidePanel === 'assistant' && (
+                    <IdeAssistantPanel
+                      code={activeFile?.content ?? ''}
+                      fileName={activeFile?.name}
+                      error={error}
+                      problemSummary={problems.slice(0, 5).map(p => `Line ${p.line}: ${p.message}`).join('\n')}
+                      onApply={(fixed) => {
+                        if (!activeFile) return;
+                        setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content: fixed, modified: true } : f));
+                      }}
+                    />
                   )}
                   {sidePanel === 'settings' && (
                     <IdeSettingsPanel settings={settings} onChange={setSettings} />
