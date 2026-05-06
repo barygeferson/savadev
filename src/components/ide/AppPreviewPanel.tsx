@@ -117,12 +117,17 @@ function NodeView({ node, state, invokeHandler, setValue }: { node: UiNode; stat
       const lvl = Math.max(1, Math.min(4, (props.level as number) || 1));
       const sizes = ['text-2xl', 'text-xl', 'text-lg', 'text-base'];
       const Tag = (`h${lvl}`) as 'h1';
-      return <Tag className={`font-semibold tracking-tight my-2 ${sizes[lvl - 1]}`}>{String(props.text ?? '')}</Tag>;
+      const txt = props.bind ? String(state.values.get(String(props.bind)) ?? '') : String(props.text ?? '');
+      return <Tag className={`font-semibold tracking-tight my-2 ${sizes[lvl - 1]}`}>{txt}</Tag>;
     }
-    case 'label':
-      return <div className="text-sm">{String(props.text ?? '')}</div>;
-    case 'paragraph':
-      return <p className="text-sm text-muted-foreground my-1 leading-relaxed">{String(props.text ?? '')}</p>;
+    case 'label': {
+      const txt = props.bind ? String(state.values.get(String(props.bind)) ?? '') : String(props.text ?? '');
+      return <div className="text-sm">{txt}</div>;
+    }
+    case 'paragraph': {
+      const txt = props.bind ? String(state.values.get(String(props.bind)) ?? '') : String(props.text ?? '');
+      return <p className="text-sm text-muted-foreground my-1 leading-relaxed">{txt}</p>;
+    }
     case 'divider':
       return <hr className="my-3 border-border/40" />;
     case 'spacer':
@@ -132,8 +137,12 @@ function NodeView({ node, state, invokeHandler, setValue }: { node: UiNode; stat
       const h = (props.height as number) || undefined;
       return <img src={String(props.src ?? '')} alt={String(props.alt ?? '')} style={{ width: w, height: h }} className="rounded-md my-1" />;
     }
-    case 'progress':
-      return <Progress value={Math.max(0, Math.min(100, ((props.value as number) / (props.max as number || 1)) * 100))} className="my-2" />;
+    case 'progress': {
+      const raw = props.bind ? Number(state.values.get(String(props.bind))) : (props.value as number);
+      const val = Number.isFinite(raw) ? raw : 0;
+      const max = (props.max as number) || 1;
+      return <Progress value={Math.max(0, Math.min(100, (val / max) * 100))} className="my-2" />;
+    }
     case 'button': {
       const variant = (props.variant as string) || 'default';
       const validVariants = ['default', 'secondary', 'outline', 'ghost', 'destructive'];

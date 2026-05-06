@@ -123,18 +123,37 @@ export function createUiBuiltins(
   builtins.set('endtab', { type: 'builtin', call: () => { pop(); return null; }});
 
   // ───────────────────────── Display widgets ─────────────────────────
+  // Text widgets accept either a literal string OR a bind key. If the first
+  // argument matches an existing reactive key (registered via `uiset` or an
+  // input's bind), the widget reactively reads from `state.values[key]`.
+  // You can also force a binding by prefixing the string with "@" (e.g. "@count").
+  function resolveTextArg(raw: unknown): { text: string; bind?: string } {
+    const s = asString(raw, '');
+    if (s.startsWith('@') && s.length > 1) {
+      const key = s.slice(1);
+      return { text: asString(state.values.get(key), ''), bind: key };
+    }
+    if (state.values.has(s)) {
+      return { text: asString(state.values.get(s), ''), bind: s };
+    }
+    return { text: s };
+  }
+
   builtins.set('heading', { type: 'builtin', call: (args: unknown[]) => {
-    pushNode('heading', { text: asString(args[0], ''), level: asNumber(args[1], 1) });
+    const { text, bind } = resolveTextArg(args[0]);
+    pushNode('heading', { text, bind, level: asNumber(args[1], 1) });
     return null;
   }});
 
   builtins.set('label', { type: 'builtin', call: (args: unknown[]) => {
-    pushNode('label', { text: asString(args[0], '') });
+    const { text, bind } = resolveTextArg(args[0]);
+    pushNode('label', { text, bind });
     return null;
   }});
 
   builtins.set('paragraph', { type: 'builtin', call: (args: unknown[]) => {
-    pushNode('paragraph', { text: asString(args[0], '') });
+    const { text, bind } = resolveTextArg(args[0]);
+    pushNode('paragraph', { text, bind });
     return null;
   }});
 
@@ -147,7 +166,16 @@ export function createUiBuiltins(
   builtins.set('spacer', { type: 'builtin', call: (args: unknown[]) => { pushNode('spacer', { size: asNumber(args[0], 8) }); return null; }});
 
   builtins.set('progress', { type: 'builtin', call: (args: unknown[]) => {
-    pushNode('progress', { value: asNumber(args[0], 0), max: asNumber(args[1], 100) });
+    // value can be a number OR a bind key (string of an existing reactive value)
+    const raw = args[0];
+    let bind: string | undefined;
+    let value = 0;
+    if (typeof raw === 'string') {
+      const k = raw.startsWith('@') ? raw.slice(1) : raw;
+      if (state.values.has(k)) { bind = k; value = asNumber(state.values.get(k), 0); }
+      else value = asNumber(raw, 0);
+    } else value = asNumber(raw, 0);
+    pushNode('progress', { value, bind, max: asNumber(args[1], 100) });
     return null;
   }});
 
@@ -236,6 +264,14 @@ export function createUiBuiltins(
   builtins.set('uiset', { type: 'builtin', call: (args: unknown[]) => {
     const k = asString(args[0]);
     state.values.set(k, args[1]);
+    // Reactively refresh any text/progress nodes bound to this key
+    for (const node of state.nodes.values()) {
+      const b = (node.props as Record<string, unknown>).bind;
+      if (typeof b === 'string' && b === k) {
+        if (node.type === 'progress') (node.props as Record<string, unknown>).value = asNumber(args[1], 0);
+        else (node.props as Record<string, unknown>).text = asString(args[1], '');
+      }
+    }
     emit(state);
     return null;
   }});
@@ -259,5 +295,18 @@ export function createUiBuiltins(
 // External setter so the React panel can update reactive values when an input changes.
 export function setUiValue(state: UiState, key: string, value: unknown): UiState {
   state.values.set(key, value);
+  // Mirror the new value into any text/progress widgets bound to this key,
+  // so labels/headings/paragraphs stay in sync with input/slider/checkbox edits.
+  for (const node of state.nodes.values()) {
+    const b = (node.props as Record<string, unknown>).bind;
+    if (typeof b === 'string' && b === key) {
+      if (node.type === 'progress') {
+        const n = Number(value);
+        (node.props as Record<string, unknown>).value = Number.isFinite(n) ? n : 0;
+      } else if (node.type === 'label' || node.type === 'heading' || node.type === 'paragraph') {
+        (node.props as Record<string, unknown>).text = value == null ? '' : String(value);
+      }
+    }
+  }
   return state;
 }
