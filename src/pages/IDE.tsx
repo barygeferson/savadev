@@ -1327,7 +1327,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                       }}
                     />
                   )}
-                </ResizablePanel>
+                  {bottomPanel === 'problems' && (
+                    <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
+                  )}
               </ResizablePanelGroup>
             </ResizablePanel>
           </ResizablePanelGroup>
