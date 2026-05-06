@@ -260,7 +260,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas' | 'app';
+type BottomPanel = 'terminal' | 'canvas' | 'app' | 'problems';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
