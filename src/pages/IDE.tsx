@@ -781,9 +781,11 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
   const currentChars = currentContent.length;
 
   const sidebarIcons = [
-    { id: 'explorer' as SidePanel, icon: FolderOpen, label: 'Explorer (Ctrl+B)', shortcut: '⌃B' },
-    { id: 'search' as SidePanel, icon: Search, label: 'Search (Ctrl+F)', shortcut: '⌃F' },
-    { id: 'settings' as SidePanel, icon: Settings, label: 'Settings', shortcut: '' },
+    { id: 'explorer' as SidePanel, icon: FolderOpen, label: 'Explorer (Ctrl+B)' },
+    { id: 'search'   as SidePanel, icon: Search,    label: 'Search (Ctrl+Shift+F)' },
+    { id: 'outline'  as SidePanel, icon: ListTree,  label: 'Outline (Ctrl+Shift+O)' },
+    { id: 'problems' as SidePanel, icon: AlertCircle, label: `Problems (${problems.length})` },
+    { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
   return (
