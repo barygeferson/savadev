@@ -295,5 +295,18 @@ export function createUiBuiltins(
 // External setter so the React panel can update reactive values when an input changes.
 export function setUiValue(state: UiState, key: string, value: unknown): UiState {
   state.values.set(key, value);
+  // Mirror the new value into any text/progress widgets bound to this key,
+  // so labels/headings/paragraphs stay in sync with input/slider/checkbox edits.
+  for (const node of state.nodes.values()) {
+    const b = (node.props as Record<string, unknown>).bind;
+    if (typeof b === 'string' && b === key) {
+      if (node.type === 'progress') {
+        const n = Number(value);
+        (node.props as Record<string, unknown>).value = Number.isFinite(n) ? n : 0;
+      } else if (node.type === 'label' || node.type === 'heading' || node.type === 'paragraph') {
+        (node.props as Record<string, unknown>).text = value == null ? '' : String(value);
+      }
+    }
+  }
   return state;
 }
