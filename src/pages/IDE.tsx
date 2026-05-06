@@ -1273,6 +1273,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         <Code className="w-3 h-3" /> APP
                       </button>
                     )}
+                    <button
+                      onClick={() => setBottomPanel('problems')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'problems' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <AlertCircle className="w-3 h-3" /> PROBLEMS
+                      {problems.length > 0 && <span className="ml-1 px-1 rounded bg-destructive/20 text-destructive text-[9px]">{problems.length}</span>}
+                    </button>
                     <div className="flex-1" />
                     {showCanvas && (
                       <button onClick={() => setShowCanvas(false)} className="p-1 mr-1 text-muted-foreground hover:text-foreground transition-colors rounded">
