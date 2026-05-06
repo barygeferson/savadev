@@ -453,12 +453,33 @@ export default function IDEPage() {
       if (ctrl && e.key === 'Enter') { e.preventDefault(); runCode(); }
       if (ctrl && e.key === 's') { e.preventDefault(); downloadCurrentFile(); toast.success('File saved!'); }
       if (ctrl && e.key === 'b') { e.preventDefault(); setSidePanel(p => p === 'explorer' ? null : 'explorer'); }
-      if (ctrl && e.key === 'f') { e.preventDefault(); setSidePanel(p => p === 'search' ? null : 'search'); }
-      if (e.key === 'Escape') { setShowCommandPalette(false); }
+      if (ctrl && e.shiftKey && (e.key === 'F' || e.key === 'f')) { e.preventDefault(); setSidePanel(p => p === 'search' ? null : 'search'); }
+      if (ctrl && e.shiftKey && (e.key === 'O' || e.key === 'o')) { e.preventDefault(); setSidePanel(p => p === 'outline' ? null : 'outline'); }
+      if (ctrl && e.shiftKey && (e.key === 'M' || e.key === 'm')) { e.preventDefault(); setBottomPanel('problems'); }
+      if (ctrl && e.shiftKey && (e.key === 'P' || e.key === 'p')) { e.preventDefault(); setShowCommandPalette(true); }
+      if (ctrl && e.key === 'g') { e.preventDefault(); setShowGoToLine(true); }
+      if (e.key === 'F1') { e.preventDefault(); setShowCommandPalette(true); }
+      if (e.key === 'F11') { e.preventDefault(); setIsFullscreen(f => !f); }
+      if (ctrl && e.key === '`') { e.preventDefault(); setBottomPanel('terminal'); }
+      if (ctrl && e.altKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); setZenMode(z => !z); }
+      if (e.key === 'Escape') { setShowCommandPalette(false); setShowGoToLine(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [activeFile]);
+
+  // Live linting (problems)
+  const problems: Problem[] = useMemo(
+    () => activeFile ? lintSdev(activeFile.content) : [],
+    [activeFile?.content]
+  );
+
+  const formatCurrent = useCallback(() => {
+    if (!activeFile) return;
+    const formatted = formatSdev(activeFile.content, settings.tabSize);
+    setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content: formatted, modified: true } : f));
+    toast.success('Formatted');
+  }, [activeFile, activeId, settings.tabSize]);
 
   const updateActiveContent = useCallback((content: string) => {
     setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content, modified: true } : f));
