@@ -1212,16 +1212,21 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                             />
                           </div>
                         ) : (
-                          <IdeEditor
-                            key={activeFile.id}
-                            value={activeFile.content}
-                            onChange={updateActiveContent}
-                            onRun={runCode}
-                            fileName={activeFile.name}
-                            settings={settings}
-                            onCursorChange={setCursor}
-                            onSelectionChange={setSelection}
-                          />
+                          <>
+                            <IdeBreadcrumbs file={activeFile} folders={folders} />
+                            <IdeEditor
+                              ref={editorRef}
+                              key={activeFile.id}
+                              value={activeFile.content}
+                              onChange={updateActiveContent}
+                              onRun={runCode}
+                              onFormat={formatCurrent}
+                              fileName={activeFile.name}
+                              settings={settings}
+                              onCursorChange={setCursor}
+                              onSelectionChange={setSelection}
+                            />
+                          </>
                         )
                       ) : (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 gap-4">
