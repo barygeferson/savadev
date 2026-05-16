@@ -84,6 +84,7 @@ export default function Gist() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title={`${gist.title} — sdev gist`} description={gist.description || `View and run "${gist.title}", a public sdev code gist shared by the community.`} path={`/g/${gist.slug}`} />
       <header className="border-b border-border/50">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">

@@ -89,6 +89,7 @@ export default function Docs() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <SEO title="Documentation — sdev" description="Complete sdev language documentation: syntax reference, the sdev Book, Leaflet & GIS guide, and standard library docs in English and Bulgarian." path="/docs" />
       <header className="border-b border-border/60 backdrop-blur-xl sticky top-0 z-40 bg-background/80">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center gap-4">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">

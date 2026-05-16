@@ -793,6 +793,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 
   return (
     <TooltipProvider delayDuration={400}>
+      <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
       <div className={`flex flex-col h-screen bg-background overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
 
         {/* ── Title / Menu Bar ── */}
