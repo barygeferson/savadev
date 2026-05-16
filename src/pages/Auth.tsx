@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
@@ -62,6 +63,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <SEO title="Sign in — sdev" description="Sign in or create an sdev account to save files to the cloud, share gists, and sync your workspace across devices." path="/auth" />
       <div className="w-full max-w-md">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Back home

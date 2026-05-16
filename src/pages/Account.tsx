@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -110,6 +111,7 @@ export default function Account() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Account — sdev" description="Manage your sdev profile, cloud-saved files, public gists, and recent runs from your personal account dashboard." path="/account" />
       <header className="border-b border-border/50">
         <div className="container max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/ide" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
