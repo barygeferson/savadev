@@ -243,6 +243,7 @@ const Index = () => {
         </nav>
       </header>
 
+      <main id="main">
       {/* ===== HERO ===== */}
       <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -509,6 +510,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      </main>
 
       {/* AI Chatbot */}
       <SdevChatbot onInsertCode={(code) => {

@@ -93,7 +93,7 @@ export default function Gist() {
         </div>
       </header>
 
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <main className="container max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold tracking-tight">{gist.title}</h1>
         {gist.description && <p className="text-muted-foreground mt-2">{gist.description}</p>}
         <div className="text-sm text-muted-foreground mt-3">
@@ -112,7 +112,7 @@ export default function Gist() {
         <Card className="p-0 overflow-hidden">
           <pre className="text-sm font-mono p-4 overflow-x-auto bg-muted/20"><code>{gist.content}</code></pre>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }

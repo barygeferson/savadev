@@ -121,7 +121,7 @@ export default function Account() {
         </div>
       </header>
 
-      <div className="container max-w-5xl mx-auto px-4 py-8">
+      <main className="container max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold tracking-tight mb-1">{profile.display_name || user.email}</h1>
         <p className="text-sm text-muted-foreground mb-8">{user.email}</p>
 
@@ -220,7 +220,7 @@ export default function Account() {
             ))}
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 }
