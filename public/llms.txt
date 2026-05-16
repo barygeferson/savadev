@@ -1,0 +1,24 @@
+# sdev
+
+> sdev is a modern programming language with a browser-based IDE, dual Python/JavaScript runtimes, and built-in graphics, mapping, and GIS capabilities.
+
+sdev features a radically unique syntax (keywords like `forge`, `be`, `conjure`) designed to differ from Python, JavaScript, and Go. It ships with parity across a Python interpreter (for professional/desktop use) and a JS/TS interpreter (for the web IDE and Leaflet integration). The language includes a standard library, bytecode VM, virtual kernel, multi-language keyword support (26 languages), and a decentralized package system that loads libraries from GitHub Gists via the `summon` keyword.
+
+## Pages
+
+- [Home](/): Try sdev in your browser — language overview, live playground, examples, and downloads.
+- [IDE](/ide): Full-featured web IDE with file tree, terminal, debugger, and live canvas preview.
+- [Documentation](/docs): Complete language reference, the sdev Book (EN/BG), and Leaflet/GIS guide.
+- [Sign in](/auth): Create an account to save files to the cloud and share gists.
+- [Account](/account): Manage profile, cloud files, public gists, and run history.
+
+## Docs
+
+- [Language Reference](/SDEV_DOCUMENTATION.md): Full syntax, keywords, OOP, concurrency, and standard library reference.
+- [Leaflet & GIS Reference](/SDEV_LEAFLET_DOCUMENTATION.md): Mapping, geospatial, and Leaflet interop documentation.
+- [The sdev Book (EN)](/sdev-book-en.md): Long-form tutorial and language guide in English.
+- [Книгата за sdev (BG)](/sdev-book-bg.md): Long-form tutorial and language guide in Bulgarian.
+
+## Optional
+
+- [Gists](/g/): Community-shared sdev code snippets, viewable and runnable in the browser.
