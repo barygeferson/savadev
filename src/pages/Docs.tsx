@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { SEO } from '@/components/SEO';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -90,6 +91,19 @@ export default function Docs() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <SEO title="Documentation — sdev" description="Complete sdev language documentation: syntax reference, the sdev Book, Leaflet & GIS guide, and standard library docs in English and Bulgarian." path="/docs" />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "TechArticle",
+          headline: "sdev Programming Language Documentation",
+          description: "Complete language reference, the sdev Book, and Leaflet/GIS guide for the sdev programming language.",
+          inLanguage: ["en", "bg"],
+          author: { "@type": "Organization", name: "sdev" },
+          publisher: { "@type": "Organization", name: "sdev" },
+          url: "https://web.sdev.codes/docs",
+          mainEntityOfPage: "https://web.sdev.codes/docs"
+        })}</script>
+      </Helmet>
       <header className="border-b border-border/60 backdrop-blur-xl sticky top-0 z-40 bg-background/80">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center gap-4">
           <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
