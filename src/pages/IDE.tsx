@@ -34,8 +34,9 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github,
 } from 'lucide-react';
+import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
@@ -369,6 +370,7 @@ export default function IDEPage() {
 
   // Pro IDE state
   const [showGoToLine, setShowGoToLine] = useState(false);
+  const [showGitHubPush, setShowGitHubPush] = useState(false);
   const [zenMode, setZenMode] = useState(false);
 
   // Auth + cloud sync
@@ -834,6 +836,10 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={downloadAllFiles} className="text-xs gap-2 cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Save All Files
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowGitHubPush(true)} className="text-xs gap-2 cursor-pointer">
+                    <Github className="w-3.5 h-3.5" /> Push to GitHub…
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={downloadElectron} className="text-xs gap-2 cursor-pointer">
@@ -1399,6 +1405,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           totalLines={currentLines}
           onClose={() => setShowGoToLine(false)}
           onGo={(line) => editorRef.current?.jumpToLine(line)}
+        />
+
+        <GitHubPushDialog
+          open={showGitHubPush}
+          onOpenChange={setShowGitHubPush}
+          files={files}
         />
       </div>
     </TooltipProvider>
