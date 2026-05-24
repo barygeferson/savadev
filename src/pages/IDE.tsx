@@ -370,6 +370,7 @@ export default function IDEPage() {
 
   // Pro IDE state
   const [showGoToLine, setShowGoToLine] = useState(false);
+  const [showGitHubPush, setShowGitHubPush] = useState(false);
   const [zenMode, setZenMode] = useState(false);
 
   // Auth + cloud sync
