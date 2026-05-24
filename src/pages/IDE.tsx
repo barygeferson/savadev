@@ -838,6 +838,10 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     <Download className="w-3.5 h-3.5" /> Save All Files
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowGitHubPush(true)} className="text-xs gap-2 cursor-pointer">
+                    <Github className="w-3.5 h-3.5" /> Push to GitHub…
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={downloadElectron} className="text-xs gap-2 cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Download Desktop App
                   </DropdownMenuItem>
