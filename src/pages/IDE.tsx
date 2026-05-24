@@ -34,8 +34,9 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github,
 } from 'lucide-react';
+import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
