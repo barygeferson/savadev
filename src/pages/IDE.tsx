@@ -1406,6 +1406,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           onClose={() => setShowGoToLine(false)}
           onGo={(line) => editorRef.current?.jumpToLine(line)}
         />
+
+        <GitHubPushDialog
+          open={showGitHubPush}
+          onOpenChange={setShowGitHubPush}
+          files={files}
+        />
       </div>
     </TooltipProvider>
   );
