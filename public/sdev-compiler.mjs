@@ -7752,9 +7752,9 @@ var Interpreter = class {
 };
 
 // scripts/_compiler-entry.ts
-var import_fs = require("fs");
-var import_path = require("path");
-var import_readline = require("readline");
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve, extname } from "path";
+import { createInterface } from "readline";
 var VERSION = "3.0.0";
 var args = process.argv.slice(2);
 function help() {
@@ -7814,20 +7814,20 @@ var fileArg = args.find((a, i) => i > 0 && !a.startsWith("-") && args[i - 1] !==
 var sourceLang = readFlag("--lang") ?? "auto";
 var outPath = readFlag("-o") ?? readFlag("--out");
 function loadSource(file) {
-  const path = (0, import_path.resolve)(process.cwd(), file);
-  if (!(0, import_fs.existsSync)(path)) {
+  const path = resolve(process.cwd(), file);
+  if (!existsSync(path)) {
     console.error(`File not found: ${path}`);
     process.exit(1);
   }
-  return (0, import_fs.readFileSync)(path, "utf-8");
+  return readFileSync(path, "utf-8");
 }
 function loadBytecode(file) {
-  const path = (0, import_path.resolve)(process.cwd(), file);
-  if (!(0, import_fs.existsSync)(path)) {
+  const path = resolve(process.cwd(), file);
+  if (!existsSync(path)) {
     console.error(`File not found: ${path}`);
     process.exit(1);
   }
-  const buf = (0, import_fs.readFileSync)(path);
+  const buf = readFileSync(path);
   const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
   return deserializeChunk(ab);
 }
@@ -7881,7 +7881,7 @@ try {
       const { chunk } = compileSource(loadSource(fileArg));
       const out = outPath ?? fileArg.replace(/\.sdev$/, "") + ".sdevc";
       const ab = serializeChunk(chunk);
-      (0, import_fs.writeFileSync)(out, Buffer.from(ab));
+      writeFileSync(out, Buffer.from(ab));
       console.log(`compiled -> ${out} (${(ab.byteLength / 1024).toFixed(2)} KB, magic=0x${BYTECODE_MAGIC.toString(16)})`);
       break;
     }
@@ -7891,11 +7891,11 @@ try {
         process.exit(1);
       }
       let chunk;
-      if ((0, import_path.extname)(fileArg) === ".sdevc") chunk = loadBytecode(fileArg);
+      if (extname(fileArg) === ".sdevc") chunk = loadBytecode(fileArg);
       else chunk = compileSource(loadSource(fileArg)).chunk;
       const out = disassemble(chunk.entry);
       if (outPath) {
-        (0, import_fs.writeFileSync)(outPath, out);
+        writeFileSync(outPath, out);
         console.log("wrote", outPath);
       } else console.log(out);
       break;
@@ -7922,14 +7922,14 @@ try {
       const src = loadSource(fileArg);
       const { translated } = translateSource(src, sourceLang === "auto" ? detectLanguage(src) ?? "English" : sourceLang, to);
       if (outPath) {
-        (0, import_fs.writeFileSync)(outPath, translated);
+        writeFileSync(outPath, translated);
         console.log("wrote", outPath);
       } else process.stdout.write(translated);
       break;
     }
     case "repl": {
       console.log(`sdev REPL v${VERSION} \u2014 type :q to quit, :vm to toggle VM mode`);
-      const rl = (0, import_readline.createInterface)({ input: process.stdin, output: process.stdout, prompt: "sdev> " });
+      const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "sdev> " });
       let useVm = false;
       let buffer = "";
       rl.prompt();
@@ -7974,7 +7974,7 @@ try {
       break;
     }
     default: {
-      if ((0, import_fs.existsSync)((0, import_path.resolve)(process.cwd(), cmd))) {
+      if (existsSync(resolve(process.cwd(), cmd))) {
         const src = loadSource(cmd);
         const ast = new Parser(new Lexer(src, { sourceLanguage: sourceLang }).tokenize()).parse();
         new Interpreter((m) => console.log(m)).interpret(ast);
