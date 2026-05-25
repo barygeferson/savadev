@@ -135,6 +135,7 @@ export default function Account() {
           </TabsList>
 
           <TabsContent value="profile" className="mt-6">
+            <h2 className="text-xl font-semibold tracking-tight mb-3">Profile</h2>
             <Card className="p-6 space-y-4 max-w-xl">
               <div>
                 <Label>Display name</Label>
@@ -160,6 +161,7 @@ export default function Account() {
           </TabsContent>
 
           <TabsContent value="files" className="mt-6 space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight mb-3">Cloud files</h2>
             {files.length === 0 && <p className="text-sm text-muted-foreground">No saved files yet. Save one from the IDE.</p>}
             {files.map(f => (
               <Card key={f.id} className="p-3 flex items-center justify-between">
@@ -169,13 +171,14 @@ export default function Account() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => navigate(`/ide?cloud=${f.id}`)}>Open</Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDeleteFile(f.id, f.name)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDeleteFile(f.id, f.name)} aria-label={`Delete ${f.name}`}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </Card>
             ))}
           </TabsContent>
 
           <TabsContent value="gists" className="mt-6 space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight mb-3">Public gists</h2>
             {gists.length === 0 && <p className="text-sm text-muted-foreground">No public gists yet.</p>}
             {gists.map(g => (
               <Card key={g.id} className="p-3 flex items-center justify-between">
@@ -184,15 +187,16 @@ export default function Account() {
                   <div className="text-xs text-muted-foreground">{g.view_count} views · /g/{g.slug}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => copyGistLink(g.slug)}><Copy className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="outline" onClick={() => copyGistLink(g.slug)} aria-label="Copy gist link"><Copy className="h-4 w-4" /></Button>
                   <Button size="sm" variant="outline" onClick={() => navigate(`/g/${g.slug}`)}>View</Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDeleteGist(g.id)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDeleteGist(g.id)} aria-label="Delete gist"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </Card>
             ))}
           </TabsContent>
 
           <TabsContent value="stars" className="mt-6 space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight mb-3">Starred gists</h2>
             {stars.length === 0 && <p className="text-sm text-muted-foreground">No starred gists yet.</p>}
             {stars.map(s => s.gists && (
               <Card key={s.id} className="p-3 flex items-center justify-between">
@@ -206,6 +210,7 @@ export default function Account() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-6 space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight mb-3">Run history</h2>
             {history.length === 0 && <p className="text-sm text-muted-foreground">No runs yet.</p>}
             {history.map(h => (
               <Card key={h.id} className="p-3">
