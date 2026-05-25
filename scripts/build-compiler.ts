@@ -1,5 +1,5 @@
 // Bundles the sdev compiler + VM + interpreter into a single Node.js CLI.
-// Output: public/sdev-compiler.js — fully self-contained, no dependencies.
+// Output: public/sdev-compiler.mjs — fully self-contained, no dependencies.
 import { build } from 'esbuild';
 import { writeFileSync, readFileSync } from 'fs';
 
@@ -219,5 +219,5 @@ await build({
   legalComments: 'none',
 });
 
-const out = readFileSync('public/sdev-compiler.js', 'utf-8');
-console.log(`Built public/sdev-compiler.js (${(out.length/1024).toFixed(1)} KB)`);
+const out = readFileSync('public/sdev-compiler.mjs', 'utf-8');
+console.log(`Built public/sdev-compiler.mjs (${(out.length/1024).toFixed(1)} KB)`);
