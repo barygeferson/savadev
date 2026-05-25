@@ -1489,10 +1489,10 @@ const __sdevTranslator = (function () {
     "нова": "new",
     "създай_нов": "new",
     "инстанция": "new",
-    "инит": "init",
-    "конструктор": "init",
-    "създаване_на": "init",
-    "начало": "init",
+    "инит": "conjure init",
+    "конструктор": "conjure init",
+    "създаване_на": "conjure init",
+    "начало": "conjure init",
     "опитай": "attempt",
     "опитвай": "attempt",
     "пробвай": "attempt",
@@ -1719,6 +1719,7 @@ const __sdevTranslator = (function () {
 
   return { translateSource, detectLanguage, hasNonAscii, SUPPORTED_LANGUAGES, KEYWORD_TABLES };
 })();
+
 
 
 // ============= LEXER =============
