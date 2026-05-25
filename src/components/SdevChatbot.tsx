@@ -268,6 +268,7 @@ export function SdevChatbot({ onInsertCode }: SdevChatbotProps) {
       {/* Chat toggle button */}
       <button
         onClick={() => setIsOpen(true)}
+        aria-label="Open SDev Assistant chat"
         className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-r from-neon-cyan to-neon-violet shadow-neon-cyan flex items-center justify-center transition-all hover:scale-110 ${isOpen ? 'hidden' : ''}`}
       >
         <MessageCircle className="w-6 h-6 text-primary-foreground" />
@@ -289,6 +290,7 @@ export function SdevChatbot({ onInsertCode }: SdevChatbotProps) {
             </div>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="Close chat"
               className="w-8 h-8 rounded-lg hover:bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
@@ -389,6 +391,7 @@ export function SdevChatbot({ onInsertCode }: SdevChatbotProps) {
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
                 size="icon"
+                aria-label="Send message"
                 className="bg-gradient-to-r from-neon-cyan to-neon-violet hover:shadow-neon-cyan border-0"
               >
                 {isLoading ? (

@@ -220,6 +220,13 @@ export default function Docs() {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeSlug, [rehypeAutolinkHeadings, { behavior: 'wrap' }]]}
+                  components={{
+                    // Demote markdown headings so the page keeps a single <h1> (the page title in the header).
+                    h1: ({ node, ...props }) => <h2 {...props} />,
+                    h2: ({ node, ...props }) => <h3 {...props} />,
+                    h3: ({ node, ...props }) => <h4 {...props} />,
+                    h4: ({ node, ...props }) => <h5 {...props} />,
+                  }}
                 >
                   {content}
                 </ReactMarkdown>

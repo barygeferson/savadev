@@ -254,7 +254,7 @@ const Index = () => {
               v1.0.0 — now with multi-language support
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1]">
-              Code becomes{' '}
+              sdev — Code becomes{' '}
               <span className="gradient-text">poetry.</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
