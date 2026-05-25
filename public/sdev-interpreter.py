@@ -354,7 +354,15 @@ class ContinueException(Exception):
 # ============= Lexer =============
 
 class Lexer:
-    def __init__(self, source: str):
+    def __init__(self, source: str, source_language: str = 'auto', translate: bool = True):
+        self.detected_language = None
+        if translate and source_language != 'English' and source_language is not None:
+            try:
+                translated, detected = sdev_translate_source(source, source_language)
+                source = translated
+                self.detected_language = detected
+            except Exception:
+                pass
         self.source = source
         self.pos = 0
         self.line = 1
