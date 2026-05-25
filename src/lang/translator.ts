@@ -497,7 +497,7 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "логни": "speak", "съобщи": "speak",
     // essence — class
     "същност": "essence", "клас": "essence",
-    "структура": "essence",
+    "структура": "essence", "есенция": "essence", "есенция_на": "essence",
     // extend — inherit
     "разшири": "extend", "разширяване": "extend", "наследи": "extend",
     "наследяване": "extend", "произлиза": "extend",
