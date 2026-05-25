@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown, Puzzle } from 'lucide-react';
+import { Download, FileCode, Terminal, Monitor, BookOpen, Code2, ChevronDown, Puzzle, Cpu } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DownloadablesDropdownProps {
@@ -423,6 +423,31 @@ endlocal
             <div className="text-xs text-muted-foreground">Quick setup script</div>
           </div>
         </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            fetch('/sdev-compiler.mjs')
+              .then((r) => { if (!r.ok) throw new Error(`Download failed: ${r.status}`); return r.blob(); })
+              .then((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'sdev-compiler.mjs'; a.click();
+                URL.revokeObjectURL(url);
+                toast.success('Downloaded sdev compiler v3.0', {
+                  description: 'Run: node sdev-compiler.mjs run file.sdev  •  compile  •  run-bc  •  disasm  •  repl',
+                  duration: 7000,
+                });
+              })
+              .catch((e) => toast.error(e.message));
+          }}
+          className="gap-3 cursor-pointer"
+        >
+          <Cpu className="w-4 h-4 text-neon-green" />
+          <div>
+            <div className="font-medium">sdev Compiler (.mjs)</div>
+            <div className="text-xs text-muted-foreground">Full bytecode compiler + VM CLI</div>
+          </div>
+        </DropdownMenuItem>
+
 
         <DropdownMenuSeparator className="bg-border/30" />
 
