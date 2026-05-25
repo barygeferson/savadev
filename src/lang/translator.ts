@@ -738,6 +738,13 @@ export function translateSource(
       t = replace(t);
       // Finally, fuzzy match anything that looks like an unconverted foreign keyword.
       t = fuzzy(t);
+      // Context fix: `forge name(` is really a method/function declaration in
+      // most natural languages where "create" covers both vars and functions
+      // (e.g. Bulgarian `създай`). Rewrite to `conjure name(`.
+      t = t.replace(
+        /\bforge(\s+[\p{L}_][\p{L}\p{N}_]*\s*\()/gu,
+        'conjure$1'
+      );
       return t;
     })
     .join('');
