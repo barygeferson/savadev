@@ -32,6 +32,182 @@ __author__ = "sdev Team"
 
 # ============= Token Types =============
 
+# ─── sdev built-in translator (synced from src/lang/translator.ts) ───
+import re as _sdev_re
+import json as _sdev_json
+
+_SDEV_KEYWORD_TABLES = _sdev_json.loads(r'''{"Spanish":{"forjar":"forge","ser":"be","conjurar":"conjure","rendir":"yield","ponderar":"ponder","sino":"otherwise","ciclo":"cycle","iterar":"iterate","través":"through","por":"through","dentro":"within","lanzar":"yeet","saltar":"skip","hablar":"speak","mostrar":"speak","decir":"speak","esencia":"essence","extender":"extend","propio":"self","padre":"super","nuevo":"new","intento":"attempt","intentar":"attempt","rescatar":"rescue","también":"also","cualquiera":"either","o":"either","no_es":"isnt","igual":"equals","difiere":"differs","sí":"yep","no":"nope","vacío":"void","invocar":"summon","asíncrono":"async","esperar":"await","generar":"spawn","verdadero":"yep","falso":"nope","nulo":"void","clase":"essence","retornar":"yield","devolver":"yield","mientras":"cycle","para":"iterate","si":"ponder","romper":"yeet","continuar":"skip","y":"also","importar":"summon","función":"conjure","crear":"new"},"French":{"forger":"forge","être":"be","est":"be","évoquer":"conjure","rendre":"yield","retourner":"yield","réfléchir":"ponder","si":"ponder","sinon":"otherwise","boucle":"cycle","tantque":"cycle","itérer":"iterate","pour":"iterate","à_travers":"through","dans":"within","jeter":"yeet","sauter":"skip","parler":"speak","dire":"speak","afficher":"speak","classe":"essence","étendre":"extend","soi":"self","parent":"super","nouveau":"new","essayer":"attempt","tenter":"attempt","secourir":"rescue","attraper":"rescue","aussi":"also","et":"also","soit":"either","ou":"either","nest_pas":"isnt","pas":"isnt","égal":"equals","diffère":"differs","oui":"yep","vrai":"yep","non":"nope","faux":"nope","vide":"void","nul":"void","invoquer":"summon","importer":"summon","asynchrone":"async","attendre":"await","engendrer":"spawn","fonction":"conjure","créer":"new"},"German":{"schmieden":"forge","erstellen":"forge","sein":"be","ist":"be","beschwören":"conjure","funktion":"conjure","ergeben":"yield","zurückgeben":"yield","überlegen":"ponder","wenn":"ponder","sonst":"otherwise","ansonsten":"otherwise","schleife":"cycle","solange":"cycle","iterieren":"iterate","für":"iterate","durch":"through","innerhalb":"within","werfen":"yeet","überspringen":"skip","sprechen":"speak","sagen":"speak","ausgeben":"speak","zeigen":"speak","wesen":"essence","klasse":"essence","erweitern":"extend","selbst":"self","eltern":"super","neu":"new","versuch":"attempt","versuchen":"attempt","retten":"rescue","fangen":"rescue","auch":"also","und":"also","oder":"either","nicht":"isnt","gleich":"equals","unterscheidet":"differs","ja":"yep","wahr":"yep","nein":"nope","falsch":"nope","leer":"void","null":"void","herbeirufen":"summon","importieren":"summon","asynchron":"async","warten":"await","erzeugen":"spawn"},"Portuguese":{"forjar":"forge","criar":"forge","ser":"be","é":"be","conjurar":"conjure","função":"conjure","render":"yield","retornar":"yield","devolver":"yield","ponderar":"ponder","se":"ponder","senão":"otherwise","ciclo":"cycle","enquanto":"cycle","iterar":"iterate","para":"iterate","através":"through","dentro":"within","em":"within","lançar":"yeet","pular":"skip","falar":"speak","mostrar":"speak","exibir":"speak","dizer":"speak","essência":"essence","classe":"essence","estender":"extend","próprio":"self","pai":"super","novo":"new","tentar":"attempt","resgatar":"rescue","capturar":"rescue","também":"also","e":"also","ou":"either","não_é":"isnt","igual":"equals","difere":"differs","sim":"yep","verdadeiro":"yep","não":"nope","falso":"nope","vazio":"void","nulo":"void","invocar":"summon","importar":"summon","assíncrono":"async","aguardar":"await","gerar":"spawn"},"Italian":{"forgiare":"forge","creare":"forge","essere":"be","è":"be","evocare":"conjure","funzione":"conjure","cedere":"yield","restituire":"yield","ritornare":"yield","ponderare":"ponder","se":"ponder","altrimenti":"otherwise","ciclo":"cycle","mentre":"cycle","iterare":"iterate","per":"iterate","attraverso":"through","dentro":"within","in":"within","lanciare":"yeet","saltare":"skip","parlare":"speak","mostrare":"speak","dire":"speak","stampare":"speak","essenza":"essence","classe":"essence","estendere":"extend","sé":"self","genitore":"super","nuovo":"new","tentare":"attempt","provare":"attempt","salvare":"rescue","catturare":"rescue","anche":"also","e":"also","oppure":"either","o":"either","non_è":"isnt","uguale":"equals","diverso":"differs","sì":"yep","vero":"yep","no":"nope","falso":"nope","vuoto":"void","nullo":"void","invocare":"summon","importare":"summon","asincrono":"async","attendere":"await","generare":"spawn"},"Dutch":{"smeden":"forge","maken":"forge","zijn":"be","is":"be","oproepen":"conjure","functie":"conjure","opleveren":"yield","teruggeven":"yield","overdenken":"ponder","als":"ponder","anders":"otherwise","lus":"cycle","zolang":"cycle","itereren":"iterate","voor":"iterate","door":"through","binnen":"within","in":"within","gooien":"yeet","overslaan":"skip","spreken":"speak","zeggen":"speak","tonen":"speak","wezen":"essence","klasse":"essence","uitbreiden":"extend","zelf":"self","ouder":"super","nieuw":"new","proberen":"attempt","redden":"rescue","vangen":"rescue","ook":"also","en":"also","of":"either","niet":"isnt","gelijk":"equals","verschilt":"differs","ja":"yep","waar":"yep","nee":"nope","onwaar":"nope","leeg":"void","nul":"void","aanroepen":"summon","importeren":"summon","asynchroon":"async","wachten":"await","voortbrengen":"spawn"},"Russian":{"ковать":"forge","создать":"forge","быть":"be","есть":"be","вызвать":"conjure","функция":"conjure","вернуть":"yield","обдумать":"ponder","если":"ponder","иначе":"otherwise","цикл":"cycle","пока":"cycle","перебрать":"iterate","для":"iterate","через":"through","внутри":"within","в":"within","бросить":"yeet","пропустить":"skip","сказать":"speak","говорить":"speak","показать":"speak","вывести":"speak","печать":"speak","сущность":"essence","класс":"essence","расширить":"extend","себя":"self","предок":"super","родитель":"super","новый":"new","попытка":"attempt","попробовать":"attempt","спасти":"rescue","поймать":"rescue","также":"also","и":"also","или":"either","не":"isnt","равно":"equals","отличается":"differs","да":"yep","истина":"yep","нет":"nope","ложь":"nope","пусто":"void","ничто":"void","призвать":"summon","импорт":"summon","асинхронный":"async","ждать":"await","породить":"spawn"},"Chinese":{"铸造":"forge","创建":"forge","是":"be","赋值":"be","召唤":"conjure","函数":"conjure","产出":"yield","返回":"yield","思考":"ponder","如果":"ponder","否则":"otherwise","循环":"cycle","当":"cycle","遍历":"iterate","为":"iterate","通过":"through","在内":"within","在":"within","抛出":"yeet","跳过":"skip","说":"speak","输出":"speak","打印":"speak","显示":"speak","本质":"essence","类":"essence","扩展":"extend","自己":"self","父类":"super","新":"new","尝试":"attempt","拯救":"rescue","捕获":"rescue","并且":"also","和":"also","或者":"either","或":"either","不是":"isnt","等于":"equals","不同":"differs","是的":"yep","真":"yep","不":"nope","假":"nope","空":"void","无":"void","导入":"summon","异步":"async","等待":"await","生成":"spawn"},"Japanese":{"鍛造":"forge","作成":"forge","である":"be","は":"be","召喚":"conjure","関数":"conjure","返す":"yield","考える":"ponder","もし":"ponder","それ以外":"otherwise","ループ":"cycle","間":"cycle","反復":"iterate","繰り返す":"iterate","通して":"through","の中で":"within","投げる":"yeet","スキップ":"skip","言う":"speak","表示":"speak","出力":"speak","印刷":"speak","本質":"essence","クラス":"essence","拡張":"extend","自分":"self","親":"super","新しい":"new","試す":"attempt","救出":"rescue","また":"also","かつ":"also","または":"either","ではない":"isnt","等しい":"equals","異なる":"differs","はい":"yep","真":"yep","いいえ":"nope","偽":"nope","空":"void","インポート":"summon","非同期":"async","待つ":"await","生成":"spawn"},"Korean":{"단조":"forge","만들다":"forge","이다":"be","소환":"conjure","함수":"conjure","반환":"yield","돌려주다":"yield","생각":"ponder","만약":"ponder","아니면":"otherwise","순환":"cycle","동안":"cycle","반복":"iterate","위해":"iterate","통해":"through","안에서":"within","던지다":"yeet","건너뛰기":"skip","말하다":"speak","출력":"speak","보여주다":"speak","본질":"essence","클래스":"essence","확장":"extend","자신":"self","부모":"super","새":"new","새로운":"new","시도":"attempt","구출":"rescue","그리고":"also","또는":"either","아니다":"isnt","같다":"equals","다르다":"differs","예":"yep","참":"yep","아니오":"nope","거짓":"nope","비어있다":"void","가져오기":"summon","비동기":"async","기다리다":"await","생성":"spawn"},"Arabic":{"صنع":"forge","إنشاء":"forge","يكون":"be","هو":"be","استدعاء":"conjure","دالة":"conjure","إرجاع":"yield","رد":"yield","تأمل":"ponder","إذا":"ponder","وإلا":"otherwise","خلاف":"otherwise","حلقة":"cycle","طالما":"cycle","تكرار":"iterate","لكل":"iterate","عبر":"through","خلال":"through","داخل":"within","في":"within","رمي":"yeet","تخطي":"skip","قل":"speak","تحدث":"speak","اطبع":"speak","اعرض":"speak","جوهر":"essence","فئة":"essence","صنف":"essence","توسيع":"extend","ذات":"self","نفس":"self","أب":"super","جديد":"new","محاولة":"attempt","حاول":"attempt","إنقاذ":"rescue","التقاط":"rescue","أيضا":"also","و":"also","أو":"either","ليس":"isnt","يساوي":"equals","يختلف":"differs","نعم":"yep","صحيح":"yep","لا":"nope","خطأ":"nope","فارغ":"void","عدم":"void","استيراد":"summon","غير_متزامن":"async","انتظار":"await","توليد":"spawn"},"Hindi":{"गढ़ना":"forge","बनाना":"forge","होना":"be","है":"be","बुलाना":"conjure","फलन":"conjure","कार्य":"conjure","लौटाना":"yield","वापसी":"yield","सोचना":"ponder","अगर":"ponder","यदि":"ponder","वरना":"otherwise","अन्यथा":"otherwise","चक्र":"cycle","जबतक":"cycle","दोहराना":"iterate","हेतु":"iterate","द्वारा":"through","अंदर":"within","में":"within","फेंकना":"yeet","छोड़ना":"skip","बोलना":"speak","दिखाना":"speak","छापना":"speak","सार":"essence","वर्ग":"essence","विस्तार":"extend","स्वयं":"self","अभिभावक":"super","नया":"new","प्रयास":"attempt","कोशिश":"attempt","बचाना":"rescue","पकड़ना":"rescue","भी":"also","और":"also","या":"either","नहीं":"isnt","बराबर":"equals","भिन्न":"differs","हां":"yep","सत्य":"yep","असत्य":"nope","रिक्त":"void","शून्य":"void","आयात":"summon","असमकालिक":"async","प्रतीक्षा":"await","उत्पन्न":"spawn"},"Turkish":{"dövmek":"forge","oluştur":"forge","olmak":"be","olsun":"be","çağır":"conjure","fonksiyon":"conjure","işlev":"conjure","döndür":"yield","ver":"yield","düşün":"ponder","eğer":"ponder","yoksa":"otherwise","değilse":"otherwise","döngü":"cycle","iken":"cycle","tekrarla":"iterate","için":"iterate","boyunca":"through","içinde":"within","at":"yeet","atla":"skip","söyle":"speak","göster":"speak","yazdır":"speak","öz":"essence","sınıf":"essence","genişlet":"extend","kendi":"self","üst":"super","yeni":"new","dene":"attempt","kurtar":"rescue","yakala":"rescue","da":"also","ve":"also","veya":"either","değil":"isnt","eşit":"equals","farklı":"differs","evet":"yep","doğru":"yep","hayır":"nope","yanlış":"nope","boş":"void","çağırmak":"summon","içeaktar":"summon","eşzamansız":"async","bekle":"await","üret":"spawn"},"Polish":{"kuć":"forge","utwórz":"forge","być":"be","jest":"be","przywołaj":"summon","funkcja":"conjure","zwróć":"yield","oddaj":"yield","rozważ":"ponder","jeśli":"ponder","jeżeli":"ponder","inaczej":"otherwise","pętla":"cycle","dopóki":"cycle","iteruj":"iterate","dla":"iterate","przez":"through","wewnątrz":"within","w":"within","rzuć":"yeet","pomiń":"skip","mów":"speak","powiedz":"speak","pokaż":"speak","wypisz":"speak","istota":"essence","klasa":"essence","rozszerz":"extend","sam":"self","rodzic":"super","nowy":"new","nowe":"new","próbuj":"attempt","spróbuj":"attempt","ratuj":"rescue","złap":"rescue","też":"also","i":"also","lub":"either","albo":"either","nie":"isnt","równe":"equals","różni":"differs","tak":"yep","prawda":"yep","fałsz":"nope","pusty":"void","importuj":"summon","asynchroniczny":"async","czekaj":"await","stwórz":"spawn"},"Swedish":{"smida":"forge","skapa":"forge","vara":"be","är":"be","framkalla":"conjure","funktion":"conjure","ge":"yield","returnera":"yield","fundera":"ponder","om":"ponder","annars":"otherwise","slinga":"cycle","medan":"cycle","iterera":"iterate","för":"iterate","genom":"through","inom":"within","i":"within","kasta":"yeet","hoppa":"skip","tala":"speak","visa":"speak","skriv":"speak","väsen":"essence","klass":"essence","utöka":"extend","själv":"self","förälder":"super","ny":"new","försök":"attempt","rädda":"rescue","fånga":"rescue","också":"also","och":"also","eller":"either","inte":"isnt","lika":"equals","skiljer":"differs","ja":"yep","sant":"yep","nej":"nope","falskt":"nope","tom":"void","åkalla":"summon","importera":"summon","asynkron":"async","vänta":"await","skapa_process":"spawn"},"Norwegian":{"smi":"forge","lage":"forge","være":"be","er":"be","fremkalle":"conjure","funksjon":"conjure","gi":"yield","returnere":"yield","tenke":"ponder","hvis":"ponder","ellers":"otherwise","sløyfe":"cycle","mens":"cycle","iterere":"iterate","for":"iterate","gjennom":"through","innen":"within","i":"within","kaste":"yeet","hoppe":"skip","snakke":"speak","vise":"speak","skriv":"speak","vesen":"essence","klasse":"essence","utvide":"extend","selv":"self","forelder":"super","ny":"new","forsøk":"attempt","redde":"rescue","fange":"rescue","også":"also","og":"also","eller":"either","ikke":"isnt","lik":"equals","forskjellig":"differs","ja":"yep","sant":"yep","nei":"nope","usant":"nope","tom":"void","påkalle":"summon","importere":"summon","asynkron":"async","vente":"await","starte":"spawn"},"Danish":{"smede":"forge","skabe":"forge","være":"be","er":"be","fremkalde":"conjure","funktion":"conjure","give":"yield","returnere":"yield","overveje":"ponder","hvis":"ponder","ellers":"otherwise","sløjfe":"cycle","mens":"cycle","iterere":"iterate","for":"iterate","igennem":"through","inden":"within","i":"within","kaste":"yeet","springe":"skip","tale":"speak","vise":"speak","skriv":"speak","væsen":"essence","klasse":"essence","udvide":"extend","selv":"self","forælder":"super","ny":"new","forsøg":"attempt","redde":"rescue","fange":"rescue","også":"also","og":"also","eller":"either","ikke":"isnt","lig":"equals","anderledes":"differs","ja":"yep","sand":"yep","nej":"nope","falsk":"nope","tom":"void","påkalde":"summon","importere":"summon","asynkron":"async","vente":"await","starte":"spawn"},"Finnish":{"takoa":"forge","luoda":"forge","olla":"be","on":"be","loitsia":"conjure","funktio":"conjure","tuottaa":"yield","palauttaa":"yield","pohtia":"ponder","jos":"ponder","muuten":"otherwise","silmukka":"cycle","kun":"cycle","iteroida":"iterate","jokaiselle":"iterate","läpi":"through","sisällä":"within","kohdassa":"within","heittää":"yeet","ohittaa":"skip","puhua":"speak","näyttää":"speak","tulostaa":"speak","olemus":"essence","luokka":"essence","laajentaa":"extend","itse":"self","ylempi":"super","uusi":"new","yritä":"attempt","pelasta":"rescue","kiinni":"rescue","myös":"also","ja":"also","tai":"either","ei":"isnt","yhtäsuuri":"equals","eroaa":"differs","kyllä":"yep","tosi":"yep","epätosi":"nope","tyhjä":"void","kutsu":"summon","tuo":"summon","asynkroninen":"async","odota":"await","synnytä":"spawn"},"Greek":{"σφυρηλατώ":"forge","δημιουργώ":"forge","είναι":"be","καλώ":"conjure","συνάρτηση":"conjure","επιστρέφω":"yield","σκέφτομαι":"ponder","αν":"ponder","αλλιώς":"otherwise","βρόχος":"cycle","όσο":"cycle","επαναλαμβάνω":"iterate","για":"iterate","μέσω":"through","μέσα":"within","σε":"within","πετάω":"yeet","παρακάμπτω":"skip","μιλάω":"speak","εμφάνισε":"speak","τύπωσε":"speak","ουσία":"essence","κλάση":"essence","επεκτείνω":"extend","εαυτός":"self","γονέας":"super","νέο":"new","δοκιμή":"attempt","σώζω":"rescue","πιάνω":"rescue","επίσης":"also","και":"also","ή":"either","δεν":"isnt","ίσο":"equals","διαφέρει":"differs","ναι":"yep","αληθές":"yep","όχι":"nope","ψευδές":"nope","κενό":"void","εισαγωγή":"summon","ασύγχρονο":"async","περιμένω":"await","παράγω":"spawn"},"Hebrew":{"לחשל":"forge","ליצור":"forge","להיות":"be","הוא":"be","לזמן":"conjure","פונקציה":"conjure","להחזיר":"yield","לחשוב":"ponder","אם":"ponder","אחרת":"otherwise","לולאה":"cycle","כלעוד":"cycle","לחזור":"iterate","לכל":"iterate","דרך":"through","בתוך":"within","לזרוק":"yeet","לדלג":"skip","לדבר":"speak","להציג":"speak","להדפיס":"speak","מהות":"essence","מחלקה":"essence","להרחיב":"extend","עצמי":"self","הורה":"super","חדש":"new","לנסות":"attempt","להציל":"rescue","לתפוס":"rescue","גם":"also","ו":"also","או":"either","לא":"isnt","שווה":"equals","שונה":"differs","כן":"yep","אמת":"yep","שקר":"nope","ריק":"void","לייבא":"summon","אסינכרוני":"async","לחכות":"await","להוליד":"spawn"},"Ukrainian":{"кувати":"forge","створити":"forge","бути":"be","є":"be","викликати":"conjure","функція":"conjure","повернути":"yield","обміркувати":"ponder","якщо":"ponder","інакше":"otherwise","цикл":"cycle","поки":"cycle","перебрати":"iterate","для":"iterate","через":"through","всередині":"within","в":"within","кинути":"yeet","пропустити":"skip","сказати":"speak","показати":"speak","вивести":"speak","сутність":"essence","клас":"essence","розширити":"extend","себе":"self","батько":"super","новий":"new","спроба":"attempt","спробувати":"attempt","врятувати":"rescue","зловити":"rescue","також":"also","і":"also","або":"either","не":"isnt","дорівнює":"equals","відрізняється":"differs","так":"yep","істина":"yep","ні":"nope","хиба":"nope","порожньо":"void","призвати":"summon","імпорт":"summon","асинхронний":"async","чекати":"await","породити":"spawn"},"Czech":{"kovat":"forge","vytvořit":"forge","být":"be","je":"be","vyvolat":"conjure","funkce":"conjure","vrátit":"yield","uvážit":"ponder","pokud":"ponder","jinak":"otherwise","smyčka":"cycle","dokud":"cycle","iterovat":"iterate","pro":"iterate","skrz":"through","uvnitř":"within","v":"within","hodit":"yeet","přeskočit":"skip","říci":"speak","zobrazit":"speak","vytisknout":"speak","podstata":"essence","třída":"essence","rozšířit":"extend","sám":"self","rodič":"super","nový":"new","zkusit":"attempt","zachránit":"rescue","chytit":"rescue","také":"also","a":"also","nebo":"either","není":"isnt","rovná":"equals","liší":"differs","ano":"yep","pravda":"yep","ne":"nope","nepravda":"nope","prázdný":"void","importovat":"summon","asynchronní":"async","čekat":"await","vytvořit_proces":"spawn"},"Romanian":{"forja":"forge","crea":"forge","fi":"be","este":"be","evoca":"conjure","funcție":"conjure","funcția":"conjure","întoarce":"yield","returna":"yield","gândi":"ponder","dacă":"ponder","altfel":"otherwise","buclă":"cycle","câttimp":"cycle","itera":"iterate","pentru":"iterate","prin":"through","în_interior":"within","în":"within","arunca":"yeet","sări":"skip","spune":"speak","arată":"speak","afișează":"speak","esență":"essence","clasă":"essence","extinde":"extend","sine":"self","părinte":"super","nou":"new","încearcă":"attempt","salvează":"rescue","prinde":"rescue","de_asemenea":"also","și":"also","sau":"either","nu_este":"isnt","egal":"equals","diferă":"differs","da":"yep","adevărat":"yep","nu":"nope","fals":"nope","gol":"void","importa":"summon","asincron":"async","așteaptă":"await","genera":"spawn"},"Hungarian":{"kovácsol":"forge","létrehoz":"forge","lenni":"be","legyen":"be","idéz":"conjure","függvény":"conjure","visszaad":"yield","fontol":"ponder","ha":"ponder","különben":"otherwise","ciklus":"cycle","amíg":"cycle","iterál":"iterate","minden":"iterate","keresztül":"through","belül":"within","ban":"within","dob":"yeet","átugor":"skip","mond":"speak","mutat":"speak","kiír":"speak","lényeg":"essence","osztály":"essence","bővít":"extend","maga":"self","szülő":"super","új":"new","próba":"attempt","megpróbál":"attempt","ment":"rescue","elkap":"rescue","is":"also","és":"also","vagy":"either","nem":"isnt","egyenlő":"equals","különbözik":"differs","igen":"yep","igaz":"yep","hamis":"nope","üres":"void","behív":"summon","importál":"summon","aszinkron":"async","vár":"await","indít":"spawn"},"Bulgarian":{"изкова":"forge","изковай":"forge","създай":"forge","създам":"forge","създавам":"forge","създаване":"forge","направи":"forge","направя":"forge","правя":"forge","нека":"forge","дефинирай":"forge","дефиниция":"forge","обяви":"forge","обявявам":"forge","приеми":"forge","вземи":"forge","имаме":"forge","имам":"forge","бъде":"be","да_бъде":"be","бъда":"be","е":"be","да_е":"be","са":"be","става":"be","да_стане":"be","стане":"be","равняване":"be","присвой":"be","присвоявам":"be","със_стойност":"be","извикай":"conjure","извикване":"conjure","функция":"conjure","метод":"conjure","процедура":"conjure","конструирай":"conjure","върни":"yield","връщам":"yield","връщай":"yield","отговори":"yield","дай":"yield","обмисли":"ponder","ако":"ponder","когато":"ponder","в_случай":"ponder","при_условие":"ponder","провери":"ponder","иначе":"otherwise","в_противен_случай":"otherwise","иначе_ако":"otherwise","обратно":"otherwise","ако_не":"otherwise","цикъл":"cycle","докато":"cycle","повтаряй":"cycle","повтори":"cycle","продължавай":"cycle","върти":"cycle","върти_се":"cycle","обходи":"iterate","обхождай":"iterate","за_всеки":"iterate","за":"iterate","всеки":"iterate","итерирай":"iterate","минавай_през":"iterate","през":"through","по":"through","над":"through","вътре":"within","вътре_в":"within","в":"within","сред":"within","хвърли":"yeet","хвърлям":"yeet","счупи":"yeet","прекъсни":"yeet","спри":"yeet","излез":"yeet","край":"yeet","прескочи":"skip","пропусни":"skip","продължи":"skip","следващ":"skip","кажи":"speak","казвай":"speak","изкрещи":"speak","покажи":"speak","показвай":"speak","изведи":"speak","извеждай":"speak","отпечатай":"speak","печатай":"speak","изпиши":"speak","пиши":"speak","напиши":"speak","принтирай":"speak","принт":"speak","логни":"speak","съобщи":"speak","същност":"essence","клас":"essence","структура":"essence","есенция":"essence","есенция_на":"essence","разшири":"extend","разширяване":"extend","наследи":"extend","наследяване":"extend","произлиза":"extend","себе_си":"self","себе":"self","този":"self","тази":"self","родител":"super","родителят":"super","наследник":"super","баща":"super","нов":"new","ново":"new","нова":"new","създай_нов":"new","инстанция":"new","инит":"init","конструктор":"init","създаване_на":"init","начало":"init","опитай":"attempt","опитвай":"attempt","пробвай":"attempt","опит_за":"attempt","спаси":"rescue","хвани":"rescue","прихвани":"rescue","при_грешка":"rescue","ако_грешка":"rescue","улови":"rescue","също":"also","и":"also","както_и":"also","или":"either","било_то":"either","не_е":"isnt","не":"isnt","равно":"equals","равно_на":"equals","еднакво":"equals","същото":"equals","различно":"differs","различно_от":"differs","не_равно":"differs","да":"yep","вярно":"yep","истина":"yep","истинно":"yep","истинско":"yep","невярно":"nope","лъжа":"nope","грешно":"nope","неистина":"nope","празно":"void","нищо":"void","нула":"void","нулева":"void","липсва":"void","призови":"summon","импортирай":"summon","внеси":"summon","вкарай":"summon","включи":"summon","зареди":"summon","използвай":"summon","асинхронен":"async","асинхронно":"async","паралелно":"async","изчакай":"await","чакай":"await","почакай":"await","породи":"spawn","стартирай":"spawn","пусни":"spawn","изпълни":"spawn"}}''')
+_SDEV_SUPPORTED_LANGUAGES = list(_SDEV_KEYWORD_TABLES.keys())
+_SDEV_IDENT_INTRODUCERS = {'forge','be','new','essence','conjure','extend','summon','within'}
+
+_SDEV_PHRASE_CACHE = {}
+def _sdev_build_phrase_norms(lang):
+    if lang in _SDEV_PHRASE_CACHE: return _SDEV_PHRASE_CACHE[lang]
+    table = _SDEV_KEYWORD_TABLES.get(lang, {})
+    phrases = [k for k in table if '_' in k]
+    out = []
+    for p in phrases:
+        spaced = p.replace('_', r'\s+')
+        pat = _sdev_re.compile('(^|[^\\w])' + spaced + '(?=$|[^\\w])', _sdev_re.UNICODE)
+        out.append((pat, '\\g<1>' + p))
+    _SDEV_PHRASE_CACHE[lang] = out
+    return out
+
+_SDEV_REPLACER_CACHE = {}
+def _sdev_compile_replacer(lang):
+    if lang in _SDEV_REPLACER_CACHE: return _SDEV_REPLACER_CACHE[lang]
+    table = _SDEV_KEYWORD_TABLES.get(lang, {})
+    entries = sorted(table.items(), key=lambda kv: -len(kv[0]))
+    if not entries:
+        fn = lambda s: s
+    else:
+        escaped = '|'.join(_sdev_re.escape(k) for k, _ in entries)
+        pat = _sdev_re.compile('(^|[^\\w])(' + escaped + ')(?=$|[^\\w])', _sdev_re.UNICODE)
+        lookup = dict(entries)
+        def fn(src, _pat=pat, _lookup=lookup):
+            return _pat.sub(lambda m: m.group(1) + _lookup.get(m.group(2), m.group(2)), src)
+    _SDEV_REPLACER_CACHE[lang] = fn
+    return fn
+
+def _sdev_levenshtein(a, b):
+    if a == b: return 0
+    al, bl = len(a), len(b)
+    if not al: return bl
+    if not bl: return al
+    prev = list(range(bl + 1))
+    for i in range(1, al + 1):
+        curr = [i] + [0] * bl
+        for j in range(1, bl + 1):
+            cost = 0 if a[i-1] == b[j-1] else 1
+            curr[j] = min(curr[j-1] + 1, prev[j] + 1, prev[j-1] + cost)
+        prev = curr
+    return prev[bl]
+
+_SDEV_FUZZY_CACHE = {}
+_SDEV_WORD_RE = _sdev_re.compile(r'[^\W\d_][\w]*', _sdev_re.UNICODE)
+def _sdev_compile_fuzzy(lang):
+    if lang in _SDEV_FUZZY_CACHE: return _SDEV_FUZZY_CACHE[lang]
+    table = _SDEV_KEYWORD_TABLES.get(lang, {})
+    keys = [k for k in table if '_' not in k and len(k) >= 3]
+    by_char = {}
+    for k in keys:
+        by_char.setdefault(k[0].lower(), []).append(k)
+    def fn(src):
+        prev_token = ['']
+        def repl(m):
+            word = m.group(0)
+            try:
+                word.encode('ascii')
+                prev_token[0] = word.lower()
+                return word
+            except UnicodeEncodeError:
+                pass
+            lower = word.lower()
+            if lower in table:
+                out = table[lower]; prev_token[0] = out; return out
+            start = m.start()
+            prev_char = src[start-1] if start > 0 else ''
+            if prev_char == '.' or prev_token[0] in _SDEV_IDENT_INTRODUCERS:
+                prev_token[0] = lower; return word
+            if len(lower) < 4:
+                prev_token[0] = lower; return word
+            threshold = 2 if len(lower) >= 6 else 1
+            best = None
+            for k in by_char.get(lower[0], []):
+                if abs(len(k) - len(lower)) > threshold: continue
+                d = _sdev_levenshtein(lower, k)
+                if d <= threshold and (best is None or d < best[1]):
+                    best = (k, d)
+                    if d == 0: break
+            if best:
+                out = table[best[0]]; prev_token[0] = out; return out
+            prev_token[0] = lower
+            return word
+        return _SDEV_WORD_RE.sub(repl, src)
+    _SDEV_FUZZY_CACHE[lang] = fn
+    return fn
+
+def _sdev_segment_source(source):
+    segs = []
+    i = 0; buf = []
+    def flush(code):
+        nonlocal buf
+        if buf:
+            segs.append((code, ''.join(buf)))
+            buf = []
+    while i < len(source):
+        c = source[i]
+        if (c == '/' and i+1 < len(source) and source[i+1] == '/') or c == '#':
+            flush(True)
+            end = source.find('\n', i)
+            stop = len(source) if end == -1 else end
+            segs.append((False, source[i:stop]))
+            i = stop; continue
+        if c in ('"', "'", '`'):
+            flush(True)
+            quote = c; j = i + 1
+            while j < len(source):
+                if source[j] == '\\': j += 2; continue
+                if source[j] == quote: j += 1; break
+                j += 1
+            segs.append((False, source[i:j]))
+            i = j; continue
+        buf.append(c); i += 1
+    flush(True)
+    return segs
+
+def _sdev_has_non_ascii(code):
+    try: code.encode('ascii'); return False
+    except UnicodeEncodeError: return True
+
+def _sdev_detect_language(source):
+    english_hits = len(_sdev_re.findall(r'\b(forge|be|conjure|ponder|cycle|speak|yield)\b', source))
+    best_lang, best_score = None, 0
+    for lang in _SDEV_SUPPORTED_LANGUAGES:
+        table = _SDEV_KEYWORD_TABLES[lang]
+        score = sum(1 for w in table if w in source)
+        if score > best_score:
+            best_score = score; best_lang = lang
+    if best_score >= 2 and best_score > english_hits:
+        return best_lang
+    return None
+
+_SDEV_FORGE_FIX = _sdev_re.compile(r'\bforge(\s+[^\W\d_][\w]*\s*\()', _sdev_re.UNICODE)
+
+def sdev_translate_source(source, source_language='auto'):
+    """Translate sdev source from a foreign language to canonical English sdev.
+    Returns (translated_code, detected_language)."""
+    if not source: return source, None
+    lang = source_language
+    if lang == 'English': return source, 'English'
+    if not lang or lang == 'auto':
+        if not _sdev_has_non_ascii(source):
+            detected = _sdev_detect_language(source)
+            if not detected: return source, None
+            lang = detected
+        else:
+            lang = _sdev_detect_language(source)
+            if not lang: return source, None
+    if lang not in _SDEV_KEYWORD_TABLES:
+        return source, None
+    replace = _sdev_compile_replacer(lang)
+    phrase_norms = _sdev_build_phrase_norms(lang)
+    fuzzy = _sdev_compile_fuzzy(lang)
+    parts = []
+    for is_code, text in _sdev_segment_source(source):
+        if not is_code:
+            parts.append(text); continue
+        t = text
+        for pat, rep in phrase_norms:
+            t = pat.sub(rep, t)
+        t = replace(t)
+        t = fuzzy(t)
+        t = _SDEV_FORGE_FIX.sub(r'conjure\1', t)
+        parts.append(t)
+    return ''.join(parts), lang
+# ─── end translator ───
+
+
 class TokenType(Enum):
     NUMBER = auto()
     STRING = auto()
