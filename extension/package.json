@@ -1,8 +1,8 @@
 {
   "name": "sdev-language",
   "displayName": "sdev Language",
-  "description": "Official VS Code support for the sdev programming language — syntax highlighting, snippets, a built-in run command, and a 25-language source translator.",
-  "version": "1.1.0",
+  "description": "Official VS Code support for the sdev programming language — syntax highlighting, snippets, and a built-in run command.",
+  "version": "1.0.0",
   "publisher": "sdev-lang",
   "author": { "name": "sdev" },
   "license": "MIT",
@@ -11,18 +11,13 @@
   "repository": { "type": "git", "url": "https://s-dev.lovable.app" },
   "engines": { "vscode": "^1.75.0" },
   "categories": ["Programming Languages", "Snippets", "Formatters"],
-  "keywords": ["sdev", "interpreter", "language", "esoteric", "fantasy", "i18n", "translator", "multilingual"],
+  "keywords": ["sdev", "interpreter", "language", "esoteric", "fantasy"],
   "main": "./extension.js",
   "activationEvents": [
     "onLanguage:sdev",
     "onCommand:sdev.run",
     "onCommand:sdev.runSelection",
-    "onCommand:sdev.openPlayground",
-    "onCommand:sdev.translateFile",
-    "onCommand:sdev.translateSelection",
-    "onCommand:sdev.detectLanguage",
-    "onCommand:sdev.openDocs",
-    "onCommand:sdev.openBook"
+    "onCommand:sdev.openPlayground"
   ],
   "contributes": {
     "languages": [
@@ -47,34 +42,23 @@
     "commands": [
       { "command": "sdev.run", "title": "sdev: Run File", "icon": "$(play)" },
       { "command": "sdev.runSelection", "title": "sdev: Run Selection" },
-      { "command": "sdev.openPlayground", "title": "sdev: Open Online Playground" },
-      { "command": "sdev.translateFile", "title": "sdev: Translate File to English sdev", "icon": "$(globe)" },
-      { "command": "sdev.translateSelection", "title": "sdev: Translate Selection to English sdev" },
-      { "command": "sdev.detectLanguage", "title": "sdev: Detect Source Language" },
-      { "command": "sdev.openDocs", "title": "sdev: Open Language Documentation" },
-      { "command": "sdev.openBook", "title": "sdev: Open the sdev Book" }
+      { "command": "sdev.openPlayground", "title": "sdev: Open Online Playground" }
     ],
     "menus": {
       "editor/title/run": [
-        { "command": "sdev.run", "when": "resourceLangId == sdev", "group": "navigation@1" },
-        { "command": "sdev.translateFile", "when": "resourceLangId == sdev", "group": "navigation@2" }
+        { "command": "sdev.run", "when": "resourceLangId == sdev", "group": "navigation" }
       ],
       "editor/context": [
-        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection", "group": "z_sdev@1" },
-        { "command": "sdev.translateSelection", "when": "resourceLangId == sdev && editorHasSelection", "group": "z_sdev@2" }
+        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection", "group": "z_sdev" }
       ],
       "commandPalette": [
         { "command": "sdev.run", "when": "resourceLangId == sdev" },
-        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection" },
-        { "command": "sdev.translateFile", "when": "resourceLangId == sdev" },
-        { "command": "sdev.translateSelection", "when": "resourceLangId == sdev && editorHasSelection" },
-        { "command": "sdev.detectLanguage", "when": "resourceLangId == sdev" }
+        { "command": "sdev.runSelection", "when": "resourceLangId == sdev && editorHasSelection" }
       ]
     },
     "keybindings": [
       { "command": "sdev.run", "key": "ctrl+enter", "mac": "cmd+enter", "when": "resourceLangId == sdev && editorTextFocus" },
-      { "command": "sdev.runSelection", "key": "ctrl+shift+enter", "mac": "cmd+shift+enter", "when": "resourceLangId == sdev && editorHasSelection" },
-      { "command": "sdev.translateFile", "key": "ctrl+alt+t", "mac": "cmd+alt+t", "when": "resourceLangId == sdev && editorTextFocus" }
+      { "command": "sdev.runSelection", "key": "ctrl+shift+enter", "mac": "cmd+shift+enter", "when": "resourceLangId == sdev && editorHasSelection" }
     ],
     "configuration": {
       "title": "sdev",
@@ -94,27 +78,6 @@
           "type": "string",
           "default": "python3",
           "description": "Path to the Python executable (used by the 'python' runner)."
-        },
-        "sdev.sourceLanguage": {
-          "type": "string",
-          "default": "auto",
-          "enum": [
-            "auto", "English", "Spanish", "French", "German", "Portuguese", "Italian",
-            "Dutch", "Russian", "Chinese", "Japanese", "Korean", "Arabic", "Hindi",
-            "Turkish", "Polish", "Swedish", "Norwegian", "Danish", "Finnish", "Greek",
-            "Hebrew", "Ukrainian", "Czech", "Romanian", "Hungarian", "Bulgarian"
-          ],
-          "description": "Source language for the built-in translator. 'auto' detects the language automatically. 'English' disables translation."
-        },
-        "sdev.translate": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable the built-in multi-language translator. When off, source is fed directly to the interpreter."
-        },
-        "sdev.showDetectedLanguage": {
-          "type": "boolean",
-          "default": true,
-          "description": "After a run, show which human language the translator detected in the output channel."
         }
       }
     }

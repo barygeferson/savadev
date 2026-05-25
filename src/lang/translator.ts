@@ -506,11 +506,8 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
     // new — instantiate
     "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
-    // init — constructor declaration. The runtime looks for a method named
-    // `init`, so we expand to the full `conjure init` declaration so that
-    // `конструктор(args)` reads as a method header inside an essence block.
-    "инит": "conjure init", "конструктор": "conjure init",
-    "създаване_на": "conjure init", "начало": "conjure init",
+    // init — constructor method name (not a keyword, but the runtime looks for `init`)
+    "инит": "init", "конструктор": "init", "създаване_на": "init", "начало": "init",
     // attempt / rescue
     "опитай": "attempt", "опитвай": "attempt", "пробвай": "attempt",
     "опит_за": "attempt",
