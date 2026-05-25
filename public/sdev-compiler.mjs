@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// sdev compiler & runtime — bundled, self-contained CLI
-// Generated from scripts/build-compiler.ts
+// sdev compiler & runtime v4.0 — Interpreter-first, full feature parity
+// Bundled, self-contained CLI. Generated from scripts/build-compiler.ts
 
 // src/lang/tokens.ts
 var KEYWORDS = {
@@ -2453,30 +2453,6 @@ var Parser = class {
 // src/lang/bytecode.ts
 var BYTECODE_VERSION = 2;
 var BYTECODE_MAGIC = 1396983126;
-function serializeChunk(chunk) {
-  const json = JSON.stringify(chunk);
-  const encoder = new TextEncoder();
-  const payload = encoder.encode(json);
-  const buf = new ArrayBuffer(12 + payload.length);
-  const view = new DataView(buf);
-  view.setUint32(0, BYTECODE_MAGIC, true);
-  view.setUint32(4, chunk.version, true);
-  view.setUint32(8, payload.length, true);
-  new Uint8Array(buf, 12).set(payload);
-  return buf;
-}
-function deserializeChunk(buffer) {
-  const view = new DataView(buffer);
-  const magic = view.getUint32(0, true);
-  if (magic !== BYTECODE_MAGIC) throw new Error("Invalid SDEV bytecode: bad magic header");
-  const version = view.getUint32(4, true);
-  const payloadLen = view.getUint32(8, true);
-  const decoder = new TextDecoder();
-  const payload = decoder.decode(new Uint8Array(buffer, 12, payloadLen));
-  const chunk = JSON.parse(payload);
-  chunk.version = version;
-  return chunk;
-}
 function disassemble(fn, indent = "") {
   const lines = [];
   const label = fn.name ? `<func ${fn.name}(${fn.params.join(", ")})>` : "<main>";
@@ -7755,37 +7731,43 @@ var Interpreter = class {
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, extname } from "path";
 import { createInterface } from "readline";
-var VERSION = "3.0.0";
+var VERSION = "4.0.0";
+var SDEVC_MAGIC = "SDEVC4";
 var args = process.argv.slice(2);
 function help() {
   console.log(`sdev compiler & runtime v${VERSION}
+  (Interpreter-first \u2014 full feature parity with the web IDE)
 
 USAGE:
   sdev <command> [options] <file>
 
 COMMANDS:
-  run <file.sdev>             Run source through interpreter (default)
-  exec <file.sdev>            Compile + run via stack-based VM
-  compile <file.sdev> [-o]    Compile to .sdevc bytecode
-  disasm <file.sdev|.sdevc>   Show bytecode disassembly (.sdevir)
-  run-bc <file.sdevc>         Execute compiled .sdevc bytecode
-  translate <file> --to <lang> Translate source to another language
-  repl                        Interactive REPL
+  run <file>                  Run any .sdev or .sdevc file (auto-detect)
+  exec <file.sdev>            Alias for 'run' (kept for back-compat)
+  compile <file.sdev> [-o]    Compile to .sdevc container (AST + source)
+  run-bc <file.sdevc>         Execute a compiled .sdevc file (full features)
+  disasm <file.sdev|.sdevc>   Best-effort bytecode disassembly (.sdevir)
+  translate <file> --to <L>   Translate source to another language
+  check <file.sdev>           Parse only \u2014 report syntax errors
+  ast <file.sdev>             Print AST as JSON
+  repl                        Interactive REPL (full interpreter)
   languages                   List supported source languages
   version                     Print version
 
 OPTIONS:
   --lang <Name>               Source language (default: auto-detect)
-  --vm                        Force VM execution path
+  --vm                        Use stack-based VM instead of the interpreter
+                              (faster, but limited feature subset)
   -o, --out <file>            Output file path
   -h, --help                  Show this help
 
 EXAMPLES:
-  sdev run hello.sdev
-  sdev compile hello.sdev -o hello.sdevc
-  sdev run-bc hello.sdevc
-  sdev disasm hello.sdev
+  sdev run hello.sdev                    # full interpreter
+  sdev compile hello.sdev -o hello.sdevc # produce container
+  sdev run hello.sdevc                   # runs through interpreter
+  sdev run hello.sdev --vm               # opt into bytecode VM
   sdev translate hello.sdev --to Bulgarian -o hello.bg.sdev
+  sdev repl
 `);
 }
 function readFlag(name, short) {
@@ -7810,34 +7792,59 @@ if (args[0] === "languages") {
   process.exit(0);
 }
 var cmd = args[0];
-var fileArg = args.find((a, i) => i > 0 && !a.startsWith("-") && args[i - 1] !== "--lang" && args[i - 1] !== "-o" && args[i - 1] !== "--out" && args[i - 1] !== "--to");
+var FLAG_NAMES = /* @__PURE__ */ new Set(["--lang", "-o", "--out", "--to"]);
+var fileArg = args.find((a, i) => i > 0 && !a.startsWith("-") && !FLAG_NAMES.has(args[i - 1]));
 var sourceLang = readFlag("--lang") ?? "auto";
 var outPath = readFlag("-o") ?? readFlag("--out");
+var useVm = hasFlag("--vm");
+function abs(file) {
+  const p = resolve(process.cwd(), file);
+  if (!existsSync(p)) {
+    console.error(`File not found: ${p}`);
+    process.exit(1);
+  }
+  return p;
+}
 function loadSource(file) {
-  const path = resolve(process.cwd(), file);
-  if (!existsSync(path)) {
-    console.error(`File not found: ${path}`);
-    process.exit(1);
-  }
-  return readFileSync(path, "utf-8");
+  return readFileSync(abs(file), "utf-8");
 }
-function loadBytecode(file) {
-  const path = resolve(process.cwd(), file);
-  if (!existsSync(path)) {
-    console.error(`File not found: ${path}`);
-    process.exit(1);
-  }
-  const buf = readFileSync(path);
-  const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-  return deserializeChunk(ab);
-}
-function compileSource(src) {
+function parseSource(src) {
   const lex = new Lexer(src, { sourceLanguage: sourceLang });
   const tokens = lex.tokenize();
-  const parser = new Parser(tokens);
-  const ast = parser.parse();
-  const compiler = new Compiler();
-  return { chunk: compiler.compile(ast), detected: lex.detectedLanguage };
+  const ast = new Parser(tokens).parse();
+  return { ast, detected: lex.detectedLanguage ?? "English" };
+}
+function loadContainer(file) {
+  const raw = readFileSync(abs(file), "utf-8");
+  let c;
+  try {
+    c = JSON.parse(raw);
+  } catch {
+    console.error("Invalid .sdevc container (not JSON)");
+    process.exit(1);
+  }
+  if (!c || c.magic !== SDEVC_MAGIC) {
+    console.error(`Invalid .sdevc container (magic mismatch, got ${c?.magic ?? "?"}, expected ${SDEVC_MAGIC})`);
+    process.exit(1);
+  }
+  return c;
+}
+function runWithInterpreter(ast) {
+  new Interpreter((m) => console.log(m)).interpret(ast);
+}
+function runWithVm(ast) {
+  try {
+    const chunk = new Compiler().compile(ast);
+    new VM((m) => console.log(m)).run(chunk);
+  } catch (e) {
+    console.error("[--vm] feature unsupported by bytecode VM, falling back to interpreter:");
+    console.error("   ", e instanceof Error ? e.message : String(e));
+    runWithInterpreter(ast);
+  }
+}
+function execAst(ast) {
+  if (useVm) runWithVm(ast);
+  else runWithInterpreter(ast);
 }
 function reportError(e) {
   if (e instanceof SdevError) console.error("error:", e.message);
@@ -7845,32 +7852,25 @@ function reportError(e) {
   else console.error("error:", String(e));
   process.exit(1);
 }
+function runFile(file) {
+  if (extname(file) === ".sdevc") {
+    const c = loadContainer(file);
+    const { ast } = parseSource(c.source);
+    execAst(ast);
+  } else {
+    const { ast } = parseSource(loadSource(file));
+    execAst(ast);
+  }
+}
 try {
   switch (cmd) {
-    case "run": {
-      if (!fileArg) {
-        console.error("Missing file");
-        process.exit(1);
-      }
-      const src = loadSource(fileArg);
-      const lex = new Lexer(src, { sourceLanguage: sourceLang });
-      const tokens = lex.tokenize();
-      const ast = new Parser(tokens).parse();
-      if (hasFlag("--vm")) {
-        const chunk = new Compiler().compile(ast);
-        new VM((m) => console.log(m)).run(chunk);
-      } else {
-        new Interpreter((m) => console.log(m)).interpret(ast);
-      }
-      break;
-    }
+    case "run":
     case "exec": {
       if (!fileArg) {
         console.error("Missing file");
         process.exit(1);
       }
-      const { chunk } = compileSource(loadSource(fileArg));
-      new VM((m) => console.log(m)).run(chunk);
+      runFile(fileArg);
       break;
     }
     case "compile": {
@@ -7878,26 +7878,20 @@ try {
         console.error("Missing file");
         process.exit(1);
       }
-      const { chunk } = compileSource(loadSource(fileArg));
+      const src = loadSource(fileArg);
+      const { ast, detected } = parseSource(src);
+      const container = {
+        magic: SDEVC_MAGIC,
+        version: VERSION,
+        language: detected,
+        source: src,
+        ast,
+        compiledAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
       const out = outPath ?? fileArg.replace(/\.sdev$/, "") + ".sdevc";
-      const ab = serializeChunk(chunk);
-      writeFileSync(out, Buffer.from(ab));
-      console.log(`compiled -> ${out} (${(ab.byteLength / 1024).toFixed(2)} KB, magic=0x${BYTECODE_MAGIC.toString(16)})`);
-      break;
-    }
-    case "disasm": {
-      if (!fileArg) {
-        console.error("Missing file");
-        process.exit(1);
-      }
-      let chunk;
-      if (extname(fileArg) === ".sdevc") chunk = loadBytecode(fileArg);
-      else chunk = compileSource(loadSource(fileArg)).chunk;
-      const out = disassemble(chunk.entry);
-      if (outPath) {
-        writeFileSync(outPath, out);
-        console.log("wrote", outPath);
-      } else console.log(out);
+      const json = JSON.stringify(container);
+      writeFileSync(out, json);
+      console.log(`compiled -> ${out} (${(json.length / 1024).toFixed(2)} KB, magic=${SDEVC_MAGIC}, lang=${detected})`);
       break;
     }
     case "run-bc": {
@@ -7905,8 +7899,32 @@ try {
         console.error("Missing file");
         process.exit(1);
       }
-      const chunk = loadBytecode(fileArg);
-      new VM((m) => console.log(m)).run(chunk);
+      const c = loadContainer(fileArg);
+      const { ast } = parseSource(c.source);
+      execAst(ast);
+      break;
+    }
+    case "disasm": {
+      if (!fileArg) {
+        console.error("Missing file");
+        process.exit(1);
+      }
+      let ast;
+      if (extname(fileArg) === ".sdevc") ast = parseSource(loadContainer(fileArg).source).ast;
+      else ast = parseSource(loadSource(fileArg)).ast;
+      let out;
+      try {
+        const chunk = new Compiler().compile(ast);
+        out = disassemble(chunk.entry);
+      } catch (e) {
+        out = `; disassembly unavailable for this program
+; ${e instanceof Error ? e.message : String(e)}
+`;
+      }
+      if (outPath) {
+        writeFileSync(outPath, out);
+        console.log("wrote", outPath);
+      } else console.log(out);
       break;
     }
     case "translate": {
@@ -7920,18 +7938,42 @@ try {
         process.exit(1);
       }
       const src = loadSource(fileArg);
-      const { translated } = translateSource(src, sourceLang === "auto" ? detectLanguage(src) ?? "English" : sourceLang, to);
+      const from = sourceLang === "auto" ? detectLanguage(src) ?? "English" : sourceLang;
+      const { translated } = translateSource(src, from, to);
       if (outPath) {
         writeFileSync(outPath, translated);
         console.log("wrote", outPath);
       } else process.stdout.write(translated);
       break;
     }
+    case "check": {
+      if (!fileArg) {
+        console.error("Missing file");
+        process.exit(1);
+      }
+      parseSource(loadSource(fileArg));
+      console.log("OK \u2014 no syntax errors");
+      break;
+    }
+    case "ast": {
+      if (!fileArg) {
+        console.error("Missing file");
+        process.exit(1);
+      }
+      const { ast } = parseSource(loadSource(fileArg));
+      const json = JSON.stringify(ast, null, 2);
+      if (outPath) {
+        writeFileSync(outPath, json);
+        console.log("wrote", outPath);
+      } else console.log(json);
+      break;
+    }
     case "repl": {
-      console.log(`sdev REPL v${VERSION} \u2014 type :q to quit, :vm to toggle VM mode`);
+      console.log(`sdev REPL v${VERSION} \u2014 :q quit  :vm toggle vm  :clear reset buffer`);
       const rl = createInterface({ input: process.stdin, output: process.stdout, prompt: "sdev> " });
-      let useVm = false;
+      let vmMode = useVm;
       let buffer = "";
+      const interp = new Interpreter((m) => console.log(m));
       rl.prompt();
       rl.on("line", (line) => {
         const t = line.trim();
@@ -7940,8 +7982,8 @@ try {
           return;
         }
         if (t === ":vm") {
-          useVm = !useVm;
-          console.log("vm mode:", useVm);
+          vmMode = !vmMode;
+          console.log("vm mode:", vmMode);
           rl.prompt();
           return;
         }
@@ -7955,8 +7997,15 @@ try {
         try {
           const lex = new Lexer(buffer, { sourceLanguage: sourceLang });
           const ast = new Parser(lex.tokenize()).parse();
-          if (useVm) new VM((m) => console.log(m)).run(new Compiler().compile(ast));
-          else new Interpreter((m) => console.log(m)).interpret(ast);
+          if (vmMode) {
+            try {
+              new VM((m) => console.log(m)).run(new Compiler().compile(ast));
+            } catch {
+              interp.interpret(ast);
+            }
+          } else {
+            interp.interpret(ast);
+          }
           buffer = "";
         } catch (e) {
           if (e instanceof SdevError) {
@@ -7975,9 +8024,7 @@ try {
     }
     default: {
       if (existsSync(resolve(process.cwd(), cmd))) {
-        const src = loadSource(cmd);
-        const ast = new Parser(new Lexer(src, { sourceLanguage: sourceLang }).tokenize()).parse();
-        new Interpreter((m) => console.log(m)).interpret(ast);
+        runFile(cmd);
       } else {
         console.error(`Unknown command: ${cmd}`);
         help();
