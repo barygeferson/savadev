@@ -116,40 +116,186 @@ export function DownloadablesDropdown({ code }: DownloadablesDropdownProps) {
   };
 
   const downloadWindowsInstaller = () => {
+    // Full-featured installer:
+    //  - Downloads BOTH interpreters (Python + JavaScript) with embedded translator
+    //  - Auto-detects Python / Node availability and chooses runner
+    //  - Creates `sdev`, `sdev-py`, `sdev-js`, `sdev-repl`, `sdev-translate` wrappers
+    //  - Registers .sdev file association with proper icon + verb
+    //  - Adds C:\sdev\bin to the user PATH
+    //  - Drops multilingual example files (EN / BG / ES / FR / RU / ZH)
+    //  - Bundles latest docs (SDEV_DOCUMENTATION.md + Leaflet docs + book) offline
+    //  - Optional VS Code extension auto-install if `code` is on PATH
+    const origin = (typeof window !== 'undefined' ? window.location.origin : 'https://web.sdev.codes');
     const batchScript = `@echo off
-title sdev Language Installer
-color 0A
-echo.
-echo  ========================================
-echo     sdev Programming Language Installer
-echo  ========================================
-echo.
-echo  Installing sdev to C:\\sdev...
-echo.
-
-if not exist "C:\\sdev" mkdir "C:\\sdev"
-if not exist "C:\\sdev\\bin" mkdir "C:\\sdev\\bin"
-
-echo  Creating example file...
-(
-echo // Welcome to sdev!
-echo forge message be "Hello from sdev!"
-echo speak^(message^)
-echo.
-echo // Download interpreter from: https://sdev-lang.dev
-) > "C:\\sdev\\example.sdev"
+setlocal EnableDelayedExpansion
+title sdev Language Installer v2.0
+color 0B
+mode con: cols=86 lines=34
 
 echo.
-echo  ========================================
-echo     Installation Complete!
-echo  ========================================
+echo  ============================================================================
+echo                     sdev Programming Language - Windows Installer
+echo                            v2.0  (with built-in translator)
+echo  ============================================================================
 echo.
-echo  Download the Python or JavaScript interpreter from:
-echo    https://sdev-lang.dev/downloads
+echo   This will install:
+echo     - sdev Python interpreter  (25-language built-in translator)
+echo     - sdev JavaScript interpreter (Node + browser, same translator)
+echo     - sdev CLI wrappers: sdev, sdev-py, sdev-js, sdev-repl, sdev-translate
+echo     - .sdev file association  ^(double-click to run^)
+echo     - Multilingual example programs ^(EN / BG / ES / FR / RU / ZH^)
+echo     - Offline documentation + The sdev Book
+echo     - User PATH entry for C:\\sdev\\bin
 echo.
-echo  Press any key to open sdev folder...
+echo   Install location: C:\\sdev
+echo.
+pause
+
+set "ROOT=C:\\sdev"
+set "BIN=%ROOT%\\bin"
+set "DOCS=%ROOT%\\docs"
+set "EXAMPLES=%ROOT%\\examples"
+set "BASEURL=${origin}"
+
+echo.
+echo  [1/8] Creating directory layout...
+if not exist "%ROOT%"     mkdir "%ROOT%"
+if not exist "%BIN%"      mkdir "%BIN%"
+if not exist "%DOCS%"     mkdir "%DOCS%"
+if not exist "%EXAMPLES%" mkdir "%EXAMPLES%"
+
+echo  [2/8] Detecting runtimes...
+set HAS_PY=0
+set HAS_NODE=0
+where python  >nul 2>nul && set HAS_PY=1
+where python3 >nul 2>nul && set HAS_PY=1
+where node    >nul 2>nul && set HAS_NODE=1
+if "!HAS_PY!"=="1"   echo         Python detected.
+if "!HAS_NODE!"=="1" echo         Node.js detected.
+if "!HAS_PY!"=="0" if "!HAS_NODE!"=="0" (
+  echo.
+  echo   WARNING: neither Python nor Node.js was found on PATH.
+  echo            Install one of:
+  echo              - Python 3.10+   https://www.python.org/downloads/
+  echo              - Node.js 18+    https://nodejs.org/
+  echo            then re-run this installer. ^(Continuing anyway.^)
+  echo.
+  pause
+)
+
+echo  [3/8] Downloading interpreters from %BASEURL% ...
+powershell -NoProfile -Command ^
+  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
+  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.py' -OutFile '%BIN%\\sdev-interpreter.py';" ^
+  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.js' -OutFile '%BIN%\\sdev-interpreter.js'"
+if errorlevel 1 (
+  echo   ERROR: download failed. Check your internet connection and retry.
+  pause & exit /b 1
+)
+
+echo  [4/8] Downloading offline documentation + book...
+powershell -NoProfile -Command ^
+  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
+  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_DOCUMENTATION.md';" ^
+  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md';" ^
+  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-en.pdf' -OutFile '%DOCS%\\sdev-book-en.pdf' } catch {};" ^
+  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-bg.pdf' -OutFile '%DOCS%\\sdev-book-bg.pdf' } catch {}"
+
+echo  [5/8] Writing multilingual examples...
+
+> "%EXAMPLES%\\hello.sdev"  echo // English - classic hello world
+>> "%EXAMPLES%\\hello.sdev" echo forge name be "world"
+>> "%EXAMPLES%\\hello.sdev" echo speak("Hello, " + name + "!")
+
+> "%EXAMPLES%\\hello.bg.sdev"  echo // Bulgarian - built-in translator demo
+>> "%EXAMPLES%\\hello.bg.sdev" echo създай радиус be 5
+>> "%EXAMPLES%\\hello.bg.sdev" echo създай площ be радиус * радиус * 3.14159
+>> "%EXAMPLES%\\hello.bg.sdev" echo speak(площ)
+
+> "%EXAMPLES%\\hello.es.sdev"  echo // Spanish
+>> "%EXAMPLES%\\hello.es.sdev" echo forjar nombre ser "mundo"
+>> "%EXAMPLES%\\hello.es.sdev" echo hablar("Hola, " + nombre + "!")
+
+> "%EXAMPLES%\\hello.fr.sdev"  echo // French
+>> "%EXAMPLES%\\hello.fr.sdev" echo forger nom etre "monde"
+>> "%EXAMPLES%\\hello.fr.sdev" echo parler("Bonjour, " + nom + "!")
+
+> "%EXAMPLES%\\fizzbuzz.sdev"  echo // Classic FizzBuzz
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo iterate i within range(1, 16) ::
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo   ponder i %% 15 equals 0 :: speak("FizzBuzz") ;;
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo   otherwise ponder i %% 3 equals 0 :: speak("Fizz") ;;
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo   otherwise ponder i %% 5 equals 0 :: speak("Buzz") ;;
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo   otherwise :: speak(i) ;;
+>> "%EXAMPLES%\\fizzbuzz.sdev" echo ;;
+
+echo  [6/8] Creating CLI wrappers in %BIN% ...
+
+> "%BIN%\\sdev.bat" echo @echo off
+>> "%BIN%\\sdev.bat" echo rem Universal launcher - prefers Python, falls back to Node.
+>> "%BIN%\\sdev.bat" echo where python  ^>nul 2^>nul ^&^& ^(python  "%%~dp0sdev-interpreter.py" %%* ^& exit /b ^)
+>> "%BIN%\\sdev.bat" echo where python3 ^>nul 2^>nul ^&^& ^(python3 "%%~dp0sdev-interpreter.py" %%* ^& exit /b ^)
+>> "%BIN%\\sdev.bat" echo where node    ^>nul 2^>nul ^&^& ^(node    "%%~dp0sdev-interpreter.js" %%* ^& exit /b ^)
+>> "%BIN%\\sdev.bat" echo echo No Python or Node.js found on PATH. ^& exit /b 1
+
+> "%BIN%\\sdev-py.bat"        echo @echo off
+>> "%BIN%\\sdev-py.bat"       echo python "%%~dp0sdev-interpreter.py" %%*
+
+> "%BIN%\\sdev-js.bat"        echo @echo off
+>> "%BIN%\\sdev-js.bat"       echo node "%%~dp0sdev-interpreter.js" %%*
+
+> "%BIN%\\sdev-repl.bat"      echo @echo off
+>> "%BIN%\\sdev-repl.bat"     echo python "%%~dp0sdev-interpreter.py"
+
+> "%BIN%\\sdev-translate.bat" echo @echo off
+>> "%BIN%\\sdev-translate.bat" echo rem Translate any-language sdev file to canonical English sdev.
+>> "%BIN%\\sdev-translate.bat" echo rem   Usage:  sdev-translate myfile.sdev [--lang Bulgarian]
+>> "%BIN%\\sdev-translate.bat" echo python "%%~dp0sdev-interpreter.py" --translate-only %%*
+
+> "%BIN%\\sdev-languages.bat" echo @echo off
+>> "%BIN%\\sdev-languages.bat" echo python "%%~dp0sdev-interpreter.py" --languages
+
+echo  [7/8] Registering .sdev file association + adding to PATH...
+assoc .sdev=sdev.SourceFile         >nul 2>nul
+ftype sdev.SourceFile="%BIN%\\sdev.bat" "%%1" %%* >nul 2>nul
+
+rem Append C:\\sdev\\bin to user PATH (idempotent)
+for /f "tokens=2*" %%A in ('reg query "HKCU\\Environment" /v PATH 2^>nul ^| findstr /i "PATH"') do set "USERPATH=%%B"
+echo !USERPATH! | findstr /i /c:"%BIN%" >nul
+if errorlevel 1 (
+  setx PATH "!USERPATH!;%BIN%" >nul
+  echo         Added %BIN% to user PATH. ^(Open a new terminal to use 'sdev'.^)
+) else (
+  echo         %BIN% already on PATH.
+)
+
+echo  [8/8] Optional: install VS Code extension if 'code' is on PATH...
+where code >nul 2>nul && (
+  powershell -NoProfile -Command ^
+    "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
+    "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-language-1.0.0.vsix' -OutFile '%ROOT%\\sdev-language.vsix'; code --install-extension '%ROOT%\\sdev-language.vsix' } catch { Write-Host 'VS Code extension install skipped.' }"
+)
+
+echo.
+echo  ============================================================================
+echo                              INSTALLATION COMPLETE
+echo  ============================================================================
+echo.
+echo   Try it now ^(open a NEW terminal first so PATH is refreshed^):
+echo.
+echo     sdev %EXAMPLES%\\hello.sdev
+echo     sdev %EXAMPLES%\\hello.bg.sdev        ^<- runs Bulgarian source via translator
+echo     sdev-repl                              ^<- interactive REPL
+echo     sdev-translate %EXAMPLES%\\hello.bg.sdev  ^<- show translated English sdev
+echo     sdev-languages                         ^<- list all 25 supported languages
+echo.
+echo   Docs:           %DOCS%\\SDEV_DOCUMENTATION.md
+echo   Leaflet/GIS:    %DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md
+echo   Online:         %BASEURL%/docs
+echo.
+echo  Press any key to open the sdev folder...
 pause >nul
-explorer "C:\\sdev"
+explorer "%ROOT%"
+endlocal
 `;
 
     const blob = new Blob([batchScript], { type: 'application/bat' });
@@ -159,7 +305,10 @@ explorer "C:\\sdev"
     a.download = 'sdev-installer.bat';
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Downloaded Windows installer');
+    toast.success('Downloaded Windows installer v2.0', {
+      description: 'Includes both interpreters with built-in 25-language translator',
+      duration: 6000,
+    });
   };
 
   const downloadPythonInterpreter = () => {
