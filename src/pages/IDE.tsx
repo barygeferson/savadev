@@ -804,17 +804,22 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted/30">
+                <button
+                  onClick={() => navigate('/')}
+                  aria-label="Back to Playground"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted/30"
+                >
                   <ArrowLeft className="w-3.5 h-3.5" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Back to Playground</TooltipContent>
             </Tooltip>
             <div className="w-px h-4 bg-border/50" />
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="font-display font-bold text-sm gradient-text hidden sm:block">SDEV IDE</span>
-            </div>
+            <h1 className="flex items-center gap-1.5 m-0 text-sm font-display font-bold">
+              <Zap className="w-4 h-4 text-primary" aria-hidden="true" />
+              <span className="gradient-text hidden sm:block">SDEV IDE</span>
+              <span className="sr-only">sdev IDE</span>
+            </h1>
             <div className="w-px h-4 bg-border/50" />
             {/* Menu items */}
             <div className="hidden md:flex items-center">
@@ -957,7 +962,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowCommandPalette(true)}>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowCommandPalette(true)} aria-label="Open command palette">
                   <Command className="w-3.5 h-3.5" />
                 </Button>
               </TooltipTrigger>
@@ -1003,6 +1008,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     size="sm"
                     className="h-7 w-7 p-0 text-muted-foreground hover:text-primary"
                     onClick={() => setShowTranslated(v => !v)}
+                    aria-label={showTranslated ? 'Show original code' : 'Show English translation'}
                   >
                     {showTranslated ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </Button>
@@ -1051,7 +1057,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1 text-xs border-border/50 h-7 px-2">
+                    <Button variant="outline" size="sm" className="gap-1 text-xs border-border/50 h-7 px-2" aria-label="Downloads">
                       <Download className="w-3 h-3" />
                       <ChevronDown className="w-2.5 h-2.5 opacity-50" />
                     </Button>
