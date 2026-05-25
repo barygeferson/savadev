@@ -497,7 +497,7 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "логни": "speak", "съобщи": "speak",
     // essence — class
     "същност": "essence", "клас": "essence",
-    "структура": "essence",
+    "структура": "essence", "есенция": "essence", "есенция_на": "essence",
     // extend — inherit
     "разшири": "extend", "разширяване": "extend", "наследи": "extend",
     "наследяване": "extend", "произлиза": "extend",
@@ -506,6 +506,8 @@ export const KEYWORD_TABLES: Record<string, Record<string, string>> = {
     "родител": "super", "родителят": "super", "наследник": "super", "баща": "super",
     // new — instantiate
     "нов": "new", "ново": "new", "нова": "new", "създай_нов": "new", "инстанция": "new",
+    // init — constructor method name (not a keyword, but the runtime looks for `init`)
+    "инит": "init", "конструктор": "init", "създаване_на": "init", "начало": "init",
     // attempt / rescue
     "опитай": "attempt", "опитвай": "attempt", "пробвай": "attempt",
     "опит_за": "attempt",
@@ -738,6 +740,13 @@ export function translateSource(
       t = replace(t);
       // Finally, fuzzy match anything that looks like an unconverted foreign keyword.
       t = fuzzy(t);
+      // Context fix: `forge name(` is really a method/function declaration in
+      // most natural languages where "create" covers both vars and functions
+      // (e.g. Bulgarian `създай`). Rewrite to `conjure name(`.
+      t = t.replace(
+        /\bforge(\s+[\p{L}_][\p{L}\p{N}_]*\s*\()/gu,
+        'conjure$1'
+      );
       return t;
     })
     .join('');
