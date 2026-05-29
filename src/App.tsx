@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Launch from "./pages/Launch";
 import Index from "./pages/Index";
 import IDEPage from "./pages/IDE";
 import Auth from "./pages/Auth";
@@ -10,6 +11,7 @@ import Account from "./pages/Account";
 import Gist from "./pages/Gist";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
+import { LaunchGate } from "./components/LaunchGate";
 
 const queryClient = new QueryClient();
 
@@ -20,13 +22,19 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/ide" element={<IDEPage />} />
+          {/* Countdown landing — always public */}
+          <Route path="/" element={<Launch />} />
+          {/* Auth must stay reachable so early-access users can sign in */}
           <Route path="/auth" element={<Auth />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/g/:slug" element={<Gist />} />
-          <Route path="/docs" element={<Docs />} />
-          <Route path="/docs/:section" element={<Docs />} />
+
+          {/* Everything else is gated until launch or sign-in */}
+          <Route path="/home" element={<LaunchGate><Index /></LaunchGate>} />
+          <Route path="/ide" element={<LaunchGate><IDEPage /></LaunchGate>} />
+          <Route path="/account" element={<LaunchGate><Account /></LaunchGate>} />
+          <Route path="/g/:slug" element={<LaunchGate><Gist /></LaunchGate>} />
+          <Route path="/docs" element={<LaunchGate><Docs /></LaunchGate>} />
+          <Route path="/docs/:section" element={<LaunchGate><Docs /></LaunchGate>} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
