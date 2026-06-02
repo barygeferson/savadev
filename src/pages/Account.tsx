@@ -136,7 +136,15 @@ export default function Account() {
             <TabsTrigger value="gists"><Share2 className="h-3.5 w-3.5 mr-1.5" />Gists ({gists.length})</TabsTrigger>
             <TabsTrigger value="stars"><Star className="h-3.5 w-3.5 mr-1.5" />Stars ({stars.length})</TabsTrigger>
             <TabsTrigger value="history"><Clock className="h-3.5 w-3.5 mr-1.5" />History</TabsTrigger>
+            {isAdmin && <TabsTrigger value="admin"><Shield className="h-3.5 w-3.5 mr-1.5" />Admin</TabsTrigger>}
           </TabsList>
+
+          {isAdmin && (
+            <TabsContent value="admin" className="mt-6">
+              <AdminInviteCodes />
+            </TabsContent>
+          )}
+
 
           <TabsContent value="profile" className="mt-6">
             <h2 className="text-xl font-semibold tracking-tight mb-3">Profile</h2>
