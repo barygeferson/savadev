@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import Gist from "./pages/Gist";
 import Docs from "./pages/Docs";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { LaunchGate } from "./components/LaunchGate";
 
@@ -26,6 +28,9 @@ const App = () => (
           <Route path="/" element={<Launch />} />
           {/* Auth must stay reachable so early-access users can sign in */}
           <Route path="/auth" element={<Auth />} />
+          {/* Legal pages — always public */}
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
 
           {/* Everything else is gated until launch or sign-in */}
           <Route path="/home" element={<LaunchGate><Index /></LaunchGate>} />
