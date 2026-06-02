@@ -89,9 +89,9 @@ export default function Auth() {
           </div>
 
           <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${signupAllowed ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Sign up</TabsTrigger>
+              {signupAllowed && <TabsTrigger value="signup">Sign up</TabsTrigger>}
             </TabsList>
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4 mt-4">
