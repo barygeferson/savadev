@@ -11,6 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { hasInviteAccess } from '@/lib/inviteCode';
+import { isLaunched } from '@/lib/launchGate';
 
 export default function Auth() {
   const navigate = useNavigate();
