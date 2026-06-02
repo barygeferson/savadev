@@ -12,6 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, LogOut, Save, Trash2, Star, Clock, FileCode, Share2, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCloudFiles } from '@/hooks/useCloudFiles';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { AdminInviteCodes } from '@/components/AdminInviteCodes';
+import { Shield } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Profile {
@@ -49,6 +52,7 @@ export default function Account() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { files, deleteFile, refresh } = useCloudFiles();
+  const { isAdmin } = useIsAdmin();
   const [profile, setProfile] = useState<Profile>({ display_name: '', avatar_url: '', bio: '', website: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [history, setHistory] = useState<RunRow[]>([]);
@@ -132,7 +136,15 @@ export default function Account() {
             <TabsTrigger value="gists"><Share2 className="h-3.5 w-3.5 mr-1.5" />Gists ({gists.length})</TabsTrigger>
             <TabsTrigger value="stars"><Star className="h-3.5 w-3.5 mr-1.5" />Stars ({stars.length})</TabsTrigger>
             <TabsTrigger value="history"><Clock className="h-3.5 w-3.5 mr-1.5" />History</TabsTrigger>
+            {isAdmin && <TabsTrigger value="admin"><Shield className="h-3.5 w-3.5 mr-1.5" />Admin</TabsTrigger>}
           </TabsList>
+
+          {isAdmin && (
+            <TabsContent value="admin" className="mt-6">
+              <AdminInviteCodes />
+            </TabsContent>
+          )}
+
 
           <TabsContent value="profile" className="mt-6">
             <h2 className="text-xl font-semibold tracking-tight mb-3">Profile</h2>

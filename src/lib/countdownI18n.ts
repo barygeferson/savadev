@@ -11,6 +11,21 @@ type Strings = {
   launched: string;
   enter: string;
   launchLine: (date: string) => string;
+  addToCalendar?: string;
+  haveInvite?: string;
+  inviteCodePlaceholder?: string;
+  redeem?: string;
+  inviteValid?: string;
+  inviteInvalid?: string;
+};
+
+const EXTRA_DEFAULTS = {
+  addToCalendar: 'Add to Google Calendar',
+  haveInvite: 'Have an invite code?',
+  inviteCodePlaceholder: 'Enter invite code',
+  redeem: 'Redeem',
+  inviteValid: 'Invite accepted — welcome!',
+  inviteInvalid: 'Invalid or expired code',
 };
 
 const TABLE: Record<string, Strings> = {
@@ -146,10 +161,13 @@ const TABLE: Record<string, Strings> = {
   },
 };
 
-export function getCountdownStrings(): Strings {
-  if (typeof navigator === 'undefined') return TABLE.en;
-  const lang = (navigator.language || 'en').toLowerCase().split('-')[0];
-  return TABLE[lang] || TABLE.en;
+export function getCountdownStrings(): Required<Strings> {
+  const base = (() => {
+    if (typeof navigator === 'undefined') return TABLE.en;
+    const lang = (navigator.language || 'en').toLowerCase().split('-')[0];
+    return TABLE[lang] || TABLE.en;
+  })();
+  return { ...EXTRA_DEFAULTS, ...base } as Required<Strings>;
 }
 
 export function formatLaunchDate(d: Date): string {
