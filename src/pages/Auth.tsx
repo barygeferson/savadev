@@ -108,7 +108,7 @@ export default function Auth() {
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="signup">
+            {signupAllowed && <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="name-up">Display name</Label>
