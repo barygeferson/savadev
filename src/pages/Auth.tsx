@@ -126,7 +126,7 @@ export default function Auth() {
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create account
                 </Button>
               </form>
-            </TabsContent>
+            </TabsContent>}
           </Tabs>
         </Card>
       </div>
