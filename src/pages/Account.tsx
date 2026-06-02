@@ -12,6 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ArrowLeft, LogOut, Save, Trash2, Star, Clock, FileCode, Share2, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCloudFiles } from '@/hooks/useCloudFiles';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { AdminInviteCodes } from '@/components/AdminInviteCodes';
+import { Shield } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Profile {
