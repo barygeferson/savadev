@@ -4,7 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-#lovable-badge { display: none !important; }
+/* Hide all Lovable platform branding */
+#lovable-badge,
+[class*="lovable"],
+[id*="lovable"] {
+  display: none !important;
+}
 
 @layer base {
   :root {
