@@ -52,6 +52,7 @@ export default function Account() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { files, deleteFile, refresh } = useCloudFiles();
+  const { isAdmin } = useIsAdmin();
   const [profile, setProfile] = useState<Profile>({ display_name: '', avatar_url: '', bio: '', website: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [history, setHistory] = useState<RunRow[]>([]);
