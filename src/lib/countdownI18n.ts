@@ -11,6 +11,12 @@ type Strings = {
   launched: string;
   enter: string;
   launchLine: (date: string) => string;
+  addToCalendar: string;
+  haveInvite: string;
+  inviteCodePlaceholder: string;
+  redeem: string;
+  inviteValid: string;
+  inviteInvalid: string;
 };
 
 const TABLE: Record<string, Strings> = {
