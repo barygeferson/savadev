@@ -11,6 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { hasInviteAccess } from '@/lib/inviteCode';
+import { isLaunched } from '@/lib/launchGate';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -19,6 +21,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
+  const signupAllowed = isLaunched() || hasInviteAccess();
+
 
   useEffect(() => {
     if (!authLoading && user) navigate('/ide');
@@ -85,9 +89,9 @@ export default function Auth() {
           </div>
 
           <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${signupAllowed ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Sign up</TabsTrigger>
+              {signupAllowed && <TabsTrigger value="signup">Sign up</TabsTrigger>}
             </TabsList>
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4 mt-4">
@@ -104,7 +108,7 @@ export default function Auth() {
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="signup">
+            {signupAllowed && <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="name-up">Display name</Label>
@@ -122,7 +126,7 @@ export default function Auth() {
                   {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create account
                 </Button>
               </form>
-            </TabsContent>
+            </TabsContent>}
           </Tabs>
         </Card>
       </div>

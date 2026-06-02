@@ -26,6 +26,10 @@ export function useAuth() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    try {
+      const { clearInviteAccess } = await import('@/lib/inviteCode');
+      clearInviteAccess();
+    } catch {}
   };
 
   return { session, user, loading, signOut };
