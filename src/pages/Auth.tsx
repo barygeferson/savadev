@@ -21,6 +21,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
+  const signupAllowed = isLaunched() || hasInviteAccess();
+
 
   useEffect(() => {
     if (!authLoading && user) navigate('/ide');
