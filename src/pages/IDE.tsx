@@ -1254,7 +1254,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             {/* Sidebar panel */}
             {sidePanel && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="flex flex-col border-r border-border/40 bg-background/20">
+                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className={`flex flex-col border-r ${glass ? 'backdrop-blur-xl bg-background/25 border-white/10' : 'border-border/40 bg-background/20'}`}>
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
