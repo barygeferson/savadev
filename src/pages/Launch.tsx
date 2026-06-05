@@ -57,7 +57,7 @@ export default function Launch() {
   const alreadyInvited = hasInviteAccess();
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative overflow-hidden flex items-center justify-center px-4 py-12">
+    <main className="min-h-screen bg-background text-foreground relative overflow-hidden flex items-center justify-center px-4 py-12 sky-backdrop">
       <SEO
         title="sdev — Launching July 12, 2026"
         description="sdev officially launches on July 12, 2026. Sign in for early access."

@@ -8,9 +8,11 @@ interface Props {
 
 const FONT_FAMILIES = ['JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Consolas', 'monospace'];
 const THEMES = [
-  { id: 'dark', label: 'Dark', color: '#0d0e1a' },
-  { id: 'darker', label: 'Darker', color: '#080810' },
-  { id: 'midnight', label: 'Midnight Blue', color: '#0a0f1e' },
+  { id: 'dark',     label: 'Sky Dark',  color: 'linear-gradient(135deg,#0a1626,#13283f)' },
+  { id: 'midnight', label: 'Midnight',  color: 'linear-gradient(135deg,#070a18,#1a1f3e)' },
+  { id: 'sky',      label: 'Open Sky',  color: 'linear-gradient(135deg,#0e3a5c,#3aa9e0)' },
+  { id: 'sunset',   label: 'Sunset',    color: 'linear-gradient(135deg,#2a1410,#e8742a)' },
+  { id: 'light',    label: 'Cloud',     color: 'linear-gradient(135deg,#eaf4fb,#ffffff)' },
 ];
 
 export function IdeSettingsPanel({ settings, onChange }: Props) {
@@ -75,9 +77,9 @@ export function IdeSettingsPanel({ settings, onChange }: Props) {
               <button
                 key={t.id}
                 onClick={() => set('theme', t.id as IdeSettings['theme'])}
-                className={`w-full flex items-center gap-2 p-2 rounded border transition-colors ${settings.theme === t.id ? 'border-primary/50 bg-primary/10' : 'border-border/30 hover:border-border/60 hover:bg-muted/20'}`}
+                className={`w-full flex items-center gap-2 p-2 rounded border transition-colors ${settings.theme === t.id ? 'border-primary/60 bg-primary/10' : 'border-border/30 hover:border-border/60 hover:bg-muted/20'}`}
               >
-                <div className="w-5 h-5 rounded border border-border/40" style={{ backgroundColor: t.color }} />
+                <div className="w-6 h-6 rounded border border-border/40 shadow-inner" style={{ background: t.color }} />
                 <span className="text-xs font-mono text-foreground">{t.label}</span>
                 {settings.theme === t.id && <span className="ml-auto text-xs text-primary">✓</span>}
               </button>
