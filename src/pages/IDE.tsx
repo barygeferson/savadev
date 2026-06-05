@@ -877,7 +877,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         )}
 
         {/* ── Title / Menu Bar ── */}
-        <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
+        {!zenMode && <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
           {/* Left */}
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
@@ -1215,40 +1215,61 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               />
             )}
           </div>
-        </div>
+        </div>}
 
         {/* ── Activity Bar + Main Body ── */}
         <div className="relative z-10 flex flex-1 overflow-hidden">
-          {/* Activity Bar */}
-          <div className={`w-11 flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-background/30'}`}>
-            {sidebarIcons.map(({ id, icon: Icon, label }) => (
-              <Tooltip key={id}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setSidePanel(p => p === id ? null : id)}
-                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
-                      sidePanel === id ? 'text-primary bg-primary/15 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
-              </Tooltip>
-            ))}
+          {!zenMode && (
+          <div className={`w-12 flex-shrink-0 flex flex-col items-center py-2 gap-0.5 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-card/40'}`}>
+            {sidebarIcons.map(({ id, icon: Icon, label }) => {
+              const active = sidePanel === id;
+              return (
+                <Tooltip key={id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setSidePanel(p => p === id ? null : id)}
+                      className={`relative w-10 h-10 flex items-center justify-center rounded-md transition-all ${
+                        active ? 'text-foreground bg-muted/60' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                      }`}
+                    >
+                      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />}
+                      <Icon className="w-[18px] h-[18px]" />
+                      {id === 'problems' && problems.length > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                          {problems.length > 9 ? '9+' : problems.length}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{label}</TooltipContent>
+                </Tooltip>
+              );
+            })}
             <div className="flex-1" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setIsFullscreen(f => !f)}
-                  className="w-8 h-8 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-all"
+                  onClick={() => setZenMode(z => !z)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-md transition-all ${zenMode ? 'text-primary bg-primary/15' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
                 >
-                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  <Eye className="w-[18px] h-[18px]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{zenMode ? 'Exit Zen Mode' : 'Zen Mode'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIsFullscreen(f => !f)}
+                  className="w-10 h-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
+                >
+                  {isFullscreen ? <Minimize2 className="w-[18px] h-[18px]" /> : <Maximize2 className="w-[18px] h-[18px]" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</TooltipContent>
             </Tooltip>
           </div>
+          )}
 
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* Sidebar panel */}
