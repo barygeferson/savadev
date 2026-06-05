@@ -853,8 +853,6 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
-  const glass = settings.liquidGlass;
-
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
@@ -862,13 +860,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         className={`ide-shell ide-theme-${settings.theme} relative flex flex-col h-screen text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
         style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}
       >
-        {glass && (
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 opacity-70">
-            <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--primary) / 0.35), transparent)' }} />
-            <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--secondary) / 0.30), transparent)' }} />
-            <div className="absolute -bottom-40 left-1/3 w-[460px] h-[460px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--accent) / 0.25), transparent)' }} />
-          </div>
-        )}
+
 
         {/* ── Title / Menu Bar ── */}
         {!zenMode && <div className="ide-titlebar relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none">
