@@ -1029,6 +1029,22 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => navigate('/')}
+                  aria-label="Visit website"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Website</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Visit sdev website</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowCommandPalette(true)} aria-label="Open command palette">
                   <Command className="w-3.5 h-3.5" />
                 </Button>
