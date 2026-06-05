@@ -1215,7 +1215,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               />
             )}
           </div>
-        </div>
+        </div>}
 
         {/* ── Activity Bar + Main Body ── */}
         <div className="relative z-10 flex flex-1 overflow-hidden">
