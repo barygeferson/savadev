@@ -1212,7 +1212,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         </div>}
 
         {/* ── Activity Bar + Main Body ── */}
-        <div className="relative z-10 flex flex-1 overflow-hidden">
+        <div className="relative z-10 flex flex-1 min-h-0 overflow-hidden">
           {!zenMode && (
           <div className="ide-activitybar w-12 flex-shrink-0 flex flex-col items-center py-2 gap-1">
             {sidebarIcons.map(({ id, icon: Icon, label }) => {
@@ -1267,11 +1267,11 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           </div>
           )}
 
-          <ResizablePanelGroup direction="horizontal" className="flex-1">
+          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
             {/* Sidebar panel */}
             {sidePanel && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="ide-sidepanel flex flex-col">
+                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="ide-sidepanel flex min-h-0 flex-col">
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
@@ -1319,11 +1319,11 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             )}
 
             {/* Editor + Terminal */}
-            <ResizablePanel defaultSize={sidePanel ? 82 : 100} className="flex flex-col">
-              <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={sidePanel ? 82 : 100} className="flex min-h-0 flex-col">
+              <ResizablePanelGroup direction="vertical" className="min-h-0">
                 {/* Editor */}
-                <ResizablePanel defaultSize={65} minSize={25}>
-                  <div className="flex flex-col h-full">
+                <ResizablePanel defaultSize={65} minSize={25} className="min-h-0">
+                  <div className="flex h-full min-h-0 flex-col">
                     <IdeTabs files={openFiles} activeId={activeId} onSelect={selectFile} onClose={closeTab} />
                     {/* Translation banner */}
                     {lastResult && lastResult.detectedLanguage !== 'English' && (
@@ -1340,7 +1340,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         </button>
                       </div>
                     )}
-                    <div className="flex-1 overflow-hidden">
+                    <div className="flex-1 min-h-0 overflow-hidden">
                       {activeFile ? (
                         showTranslated && lastResult ? (
                           <div className="flex flex-col h-full">
@@ -1392,7 +1392,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <ResizableHandle withHandle />
 
                 {/* Bottom panel */}
-                <ResizablePanel defaultSize={35} minSize={15} maxSize={65}>
+                <ResizablePanel defaultSize={35} minSize={15} maxSize={65} className="min-h-0 overflow-hidden">
                   {/* Panel tabs */}
                   <div className="ide-tabsbar flex items-center flex-shrink-0">
                     <button
