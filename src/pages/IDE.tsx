@@ -1220,7 +1220,6 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         {/* ── Activity Bar + Main Body ── */}
         <div className="relative z-10 flex flex-1 overflow-hidden">
           {!zenMode && (
-          /* Activity Bar */
           <div className={`w-12 flex-shrink-0 flex flex-col items-center py-2 gap-0.5 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-card/40'}`}>
             {sidebarIcons.map(({ id, icon: Icon, label }) => {
               const active = sidePanel === id;
