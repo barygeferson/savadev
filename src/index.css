@@ -283,16 +283,13 @@
       hsl(var(--background));
   }
   .ide-titlebar {
-    background: linear-gradient(180deg, hsl(var(--card) / 0.85), hsl(var(--background) / 0.7));
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
     border-bottom: 1px solid hsl(var(--border) / 0.5);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
     box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.04), 0 1px 0 0 hsl(0 0% 0% / 0.2);
   }
   .ide-activitybar {
-    background: linear-gradient(180deg, hsl(var(--card) / 0.6), hsl(var(--background) / 0.4));
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
     border-right: 1px solid hsl(var(--border) / 0.4);
-    backdrop-filter: blur(10px);
   }
   .ide-activity-btn {
     position: relative;
@@ -312,12 +309,11 @@
     box-shadow: 0 6px 18px -6px hsl(var(--primary) / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.2);
   }
   .ide-sidepanel {
-    background: linear-gradient(180deg, hsl(var(--card) / 0.5), hsl(var(--background) / 0.35));
+    background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--background)));
     border-right: 1px solid hsl(var(--border) / 0.4);
-    backdrop-filter: blur(10px);
   }
   .ide-tabsbar {
-    background: linear-gradient(180deg, hsl(var(--background) / 0.6), hsl(var(--card) / 0.4));
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
     border-bottom: 1px solid hsl(var(--border) / 0.4);
   }
   .ide-tab {
