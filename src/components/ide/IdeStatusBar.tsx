@@ -15,45 +15,43 @@ interface Props {
 
 export function IdeStatusBar({ statusMsg, runMode, activeFile, lines, chars, cursor, selection, execTime, error }: Props) {
   return (
-    <div className={`flex items-center justify-between h-6 pl-0 pr-0 border-t border-border/40 flex-shrink-0 text-[11px] font-mono select-none ${error ? 'bg-destructive/90 text-destructive-foreground' : 'bg-primary/90 text-primary-foreground'}`}>
-      {/* Left segments */}
+    <div
+      className="ide-statusbar flex items-center justify-between flex-shrink-0 font-mono select-none"
+      data-state={error ? 'error' : 'ok'}
+    >
       <div className="flex items-center h-full">
-        <span className="flex items-center gap-1.5 px-3 h-full hover:bg-black/15 cursor-default">
-          <GitBranch className="w-3 h-3" />
-          main
+        <span className="ide-status-seg">
+          <GitBranch className="w-3 h-3" /> main
         </span>
-        <span className="flex items-center gap-1.5 px-3 h-full hover:bg-black/15 cursor-default">
+        <span className="ide-status-seg">
           {error
-            ? <><AlertTriangle className="w-3 h-3" /> {statusMsg}</>
-            : <><CheckCircle2 className="w-3 h-3" /> {statusMsg}</>
-          }
+            ? <><AlertTriangle className="w-3 h-3 text-destructive-foreground" /> {statusMsg}</>
+            : <><CheckCircle2 className="w-3 h-3 ide-status-accent" /> {statusMsg}</>}
         </span>
-        <span className="flex items-center gap-1.5 px-3 h-full hover:bg-black/15 cursor-default">
+        <span className="ide-status-seg">
           {runMode === 'interpreter'
-            ? <><Zap className="w-3 h-3" /> Interpreter</>
-            : <><Cpu className="w-3 h-3" /> Bytecode VM</>
-          }
+            ? <><Zap className="w-3 h-3 ide-status-accent" /> Interpreter</>
+            : <><Cpu className="w-3 h-3 ide-status-accent" /> Bytecode VM</>}
         </span>
         {execTime !== null && (
-          <span className="flex items-center gap-1.5 px-3 h-full hover:bg-black/15 cursor-default">
+          <span className="ide-status-seg">
             <Clock className="w-3 h-3" /> {execTime}ms
           </span>
         )}
       </div>
 
-      {/* Right segments */}
       <div className="flex items-center h-full">
         {activeFile && (
           <>
-            {selection > 0 && <span className="px-3 h-full flex items-center hover:bg-black/15">{selection} sel</span>}
-            <span className="px-3 h-full flex items-center hover:bg-black/15">Ln {cursor.line}, Col {cursor.col}</span>
-            <span className="px-3 h-full flex items-center hover:bg-black/15">{lines} L · {chars} ch</span>
-            <span className="px-3 h-full flex items-center hover:bg-black/15">UTF-8</span>
-            <span className="px-3 h-full flex items-center hover:bg-black/15">LF</span>
-            <span className="px-3 h-full flex items-center hover:bg-black/15 font-semibold">sdev</span>
+            {selection > 0 && <span className="ide-status-seg">{selection} sel</span>}
+            <span className="ide-status-seg">Ln {cursor.line}, Col {cursor.col}</span>
+            <span className="ide-status-seg">{lines} L · {chars} ch</span>
+            <span className="ide-status-seg">UTF-8</span>
+            <span className="ide-status-seg">LF</span>
+            <span className="ide-status-seg font-semibold ide-status-accent">sdev</span>
           </>
         )}
-        <span className="flex items-center gap-1.5 px-3 h-full hover:bg-black/15">
+        <span className="ide-status-seg">
           <Wifi className="w-3 h-3" /> Online
         </span>
       </div>
