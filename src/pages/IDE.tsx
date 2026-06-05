@@ -276,6 +276,65 @@ const DEFAULT_SETTINGS: IdeSettings = {
   fontFamily: 'JetBrains Mono',
 };
 
+// IDE theme palettes — applied as CSS custom properties directly on the IDE root
+const IDE_THEME_VARS: Record<IdeSettings['theme'], Record<string, string>> = {
+  dark: {
+    '--background': '212 45% 6%',  '--foreground': '200 25% 96%',
+    '--card': '212 40% 9%',        '--card-foreground': '200 25% 96%',
+    '--popover': '212 40% 10%',    '--popover-foreground': '200 25% 96%',
+    '--muted': '212 30% 14%',      '--muted-foreground': '210 18% 65%',
+    '--border': '212 30% 18%',     '--input': '212 30% 12%',
+    '--primary': '205 90% 58%',    '--primary-foreground': '212 45% 6%',
+    '--secondary': '188 78% 60%',  '--secondary-foreground': '212 45% 6%',
+    '--accent': '25 92% 58%',      '--accent-foreground': '212 45% 6%',
+    '--ring': '205 90% 58%',
+  },
+  midnight: {
+    '--background': '230 45% 5%',  '--foreground': '220 25% 94%',
+    '--card': '230 42% 8%',        '--card-foreground': '220 25% 94%',
+    '--popover': '230 42% 9%',     '--popover-foreground': '220 25% 94%',
+    '--muted': '230 32% 13%',      '--muted-foreground': '220 18% 65%',
+    '--border': '230 32% 17%',     '--input': '230 32% 11%',
+    '--primary': '248 75% 66%',    '--primary-foreground': '230 45% 5%',
+    '--secondary': '195 80% 60%',  '--secondary-foreground': '230 45% 5%',
+    '--accent': '195 90% 62%',     '--accent-foreground': '230 45% 5%',
+    '--ring': '248 75% 66%',
+  },
+  sky: {
+    '--background': '205 80% 10%', '--foreground': '200 35% 97%',
+    '--card': '205 65% 14%',       '--card-foreground': '200 35% 97%',
+    '--popover': '205 65% 15%',    '--popover-foreground': '200 35% 97%',
+    '--muted': '205 50% 18%',      '--muted-foreground': '200 25% 75%',
+    '--border': '205 50% 24%',     '--input': '205 55% 16%',
+    '--primary': '195 95% 62%',    '--primary-foreground': '205 80% 10%',
+    '--secondary': '188 85% 65%',  '--secondary-foreground': '205 80% 10%',
+    '--accent': '25 95% 62%',      '--accent-foreground': '205 80% 10%',
+    '--ring': '195 95% 62%',
+  },
+  sunset: {
+    '--background': '18 35% 8%',   '--foreground': '35 35% 96%',
+    '--card': '18 32% 11%',        '--card-foreground': '35 35% 96%',
+    '--popover': '18 32% 12%',     '--popover-foreground': '35 35% 96%',
+    '--muted': '18 25% 16%',       '--muted-foreground': '30 18% 70%',
+    '--border': '18 28% 20%',      '--input': '18 28% 14%',
+    '--primary': '25 95% 62%',     '--primary-foreground': '18 35% 8%',
+    '--secondary': '350 80% 65%',  '--secondary-foreground': '18 35% 8%',
+    '--accent': '205 90% 62%',     '--accent-foreground': '18 35% 8%',
+    '--ring': '25 95% 62%',
+  },
+  light: {
+    '--background': '205 60% 97%', '--foreground': '215 35% 14%',
+    '--card': '0 0% 100%',         '--card-foreground': '215 35% 14%',
+    '--popover': '0 0% 100%',      '--popover-foreground': '215 35% 14%',
+    '--muted': '205 35% 92%',      '--muted-foreground': '215 20% 40%',
+    '--border': '205 30% 84%',     '--input': '205 40% 95%',
+    '--primary': '205 88% 48%',    '--primary-foreground': '0 0% 100%',
+    '--secondary': '188 75% 45%',  '--secondary-foreground': '0 0% 100%',
+    '--accent': '22 92% 52%',      '--accent-foreground': '0 0% 100%',
+    '--ring': '205 88% 48%',
+  },
+};
+
 // Load/save to localStorage (used for guests; logged-in users sync to cloud)
 const LS_FILES = 'sdev-ide-files';
 const LS_FOLDERS = 'sdev-ide-folders';
@@ -796,7 +855,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
-      <div className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`} style={{ fontFamily: settings.fontFamily }}>
+      <div className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`} style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}>
 
         {/* ── Title / Menu Bar ── */}
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-muted/10 flex-shrink-0 select-none">
