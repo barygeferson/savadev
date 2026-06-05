@@ -1226,8 +1226,8 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setSidePanel(p => p === id ? null : id)}
-                    className={`w-8 h-8 flex items-center justify-center rounded transition-all ${
-                      sidePanel === id ? 'text-foreground border-l-2 border-primary bg-muted/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20 border-l-2 border-transparent'
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                      sidePanel === id ? 'text-primary bg-primary/15 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
