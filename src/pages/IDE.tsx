@@ -1166,14 +1166,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               size="sm"
               onClick={runCode}
               disabled={isRunning || isTranslating}
-              className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
+              className="ide-run-btn gap-1.5 font-semibold h-7 text-xs min-w-[72px] rounded-md border-0"
             >
               {isTranslating ? (
                 <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Translating</span>
               ) : isRunning ? (
                 <span className="flex items-center gap-1"><span className="animate-spin">⟳</span> Running</span>
               ) : (
-                <><Play className="w-3 h-3" /> Run</>
+                <><Play className="w-3 h-3 fill-current" /> Run</>
               )}
             </Button>
 
