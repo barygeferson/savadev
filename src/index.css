@@ -322,7 +322,7 @@
     display: inline-flex; align-items: center; gap: .5rem;
     height: 30px; padding: 0 .5rem 0 .75rem;
     border-radius: 8px;
-    font-size: 12px; font-family: var(--font-mono, ui-monospace);
+    font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     color: hsl(var(--muted-foreground));
     transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
     cursor: pointer; user-select: none;
