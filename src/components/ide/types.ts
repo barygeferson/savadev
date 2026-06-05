@@ -27,4 +27,5 @@ export interface IdeSettings {
   lineNumbers: boolean;
   autoSave: boolean;
   fontFamily: string;
+  liquidGlass?: boolean;
 }

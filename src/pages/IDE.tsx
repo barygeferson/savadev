@@ -34,7 +34,7 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe,
 } from 'lucide-react';
 import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
@@ -274,6 +274,7 @@ const DEFAULT_SETTINGS: IdeSettings = {
   lineNumbers: true,
   autoSave: true,
   fontFamily: 'JetBrains Mono',
+  liquidGlass: false,
 };
 
 // IDE theme palettes — applied as CSS custom properties directly on the IDE root
@@ -852,31 +853,38 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
+  const glass = settings.liquidGlass;
+  const glassBar = glass
+    ? 'backdrop-blur-2xl bg-background/40 supports-[backdrop-filter]:bg-background/30 border-b border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+    : 'bg-muted/10 border-b border-border/40';
+  const glassPanel = glass
+    ? 'backdrop-blur-xl bg-background/30 supports-[backdrop-filter]:bg-background/20 border-white/10'
+    : 'bg-background/20 border-border/40';
+
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
-      <div className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`} style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}>
+      <div
+        className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${glass ? 'relative' : ''}`}
+        style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}
+      >
+        {glass && (
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 opacity-70">
+            <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--primary) / 0.35), transparent)' }} />
+            <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--secondary) / 0.30), transparent)' }} />
+            <div className="absolute -bottom-40 left-1/3 w-[460px] h-[460px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--accent) / 0.25), transparent)' }} />
+          </div>
+        )}
 
         {/* ── Title / Menu Bar ── */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-muted/10 flex-shrink-0 select-none">
+        <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
           {/* Left */}
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => navigate('/')}
-                  aria-label="Back to Playground"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted/30"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Back to Playground</TooltipContent>
-            </Tooltip>
-            <div className="w-px h-4 bg-border/50" />
-            <h1 className="flex items-center gap-1.5 m-0 text-sm font-display font-bold">
-              <Zap className="w-4 h-4 text-primary" aria-hidden="true" />
-              <span className="gradient-text hidden sm:block">SDEV IDE</span>
+            <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
+              <span className="relative flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary/30 to-secondary/30 border border-white/10">
+                <Zap className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              </span>
+              <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>
             </h1>
             <div className="w-px h-4 bg-border/50" />
@@ -1019,6 +1027,22 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 
           {/* Right: quick actions */}
           <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => navigate('/')}
+                  aria-label="Visit website"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Website</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Visit sdev website</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowCommandPalette(true)} aria-label="Open command palette">
@@ -1194,16 +1218,16 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         </div>
 
         {/* ── Activity Bar + Main Body ── */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="relative z-10 flex flex-1 overflow-hidden">
           {/* Activity Bar */}
-          <div className="w-10 flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r border-border/40 bg-background/30">
+          <div className={`w-11 flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-background/30'}`}>
             {sidebarIcons.map(({ id, icon: Icon, label }) => (
               <Tooltip key={id}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setSidePanel(p => p === id ? null : id)}
-                    className={`w-8 h-8 flex items-center justify-center rounded transition-all ${
-                      sidePanel === id ? 'text-foreground border-l-2 border-primary bg-muted/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20 border-l-2 border-transparent'
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                      sidePanel === id ? 'text-primary bg-primary/15 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -1230,7 +1254,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             {/* Sidebar panel */}
             {sidePanel && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="flex flex-col border-r border-border/40 bg-background/20">
+                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className={`flex flex-col border-r ${glass ? 'backdrop-blur-xl bg-background/25 border-white/10' : 'border-border/40 bg-background/20'}`}>
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
@@ -1353,7 +1377,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 {/* Bottom panel */}
                 <ResizablePanel defaultSize={35} minSize={15} maxSize={65}>
                   {/* Panel tabs */}
-                  <div className="flex items-center border-b border-border/40 bg-muted/10 flex-shrink-0">
+                  <div className={`flex items-center border-b flex-shrink-0 ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-muted/10'}`}>
                     <button
                       onClick={() => setBottomPanel('terminal')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'terminal' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
