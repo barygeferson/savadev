@@ -1269,6 +1269,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipContent side="right">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</TooltipContent>
             </Tooltip>
           </div>
+          )}
 
           <ResizablePanelGroup direction="horizontal" className="flex-1">
             {/* Sidebar panel */}
