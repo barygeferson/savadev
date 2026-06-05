@@ -877,7 +877,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         )}
 
         {/* ── Title / Menu Bar ── */}
-        <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
+        {!zenMode && <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
           {/* Left */}
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
