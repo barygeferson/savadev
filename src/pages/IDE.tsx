@@ -1148,7 +1148,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               size="sm"
               onClick={runCode}
               disabled={isRunning || isTranslating}
-              className="gap-1.5 bg-gradient-to-r from-neon-cyan to-neon-violet border-0 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
+              className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
             >
               {isTranslating ? (
                 <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Translating</span>
