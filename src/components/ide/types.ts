@@ -22,7 +22,7 @@ export interface IdeSettings {
   fontSize: number;
   tabSize: number;
   wordWrap: boolean;
-  theme: 'dark' | 'darker' | 'midnight';
+  theme: 'dark' | 'midnight' | 'sky' | 'sunset' | 'light';
   minimap: boolean;
   lineNumbers: boolean;
   autoSave: boolean;
