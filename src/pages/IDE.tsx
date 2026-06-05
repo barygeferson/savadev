@@ -1218,9 +1218,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         </div>
 
         {/* ── Activity Bar + Main Body ── */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="relative z-10 flex flex-1 overflow-hidden">
           {/* Activity Bar */}
-          <div className="w-10 flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r border-border/40 bg-background/30">
+          <div className={`w-11 flex-shrink-0 flex flex-col items-center py-2 gap-1 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-background/30'}`}>
             {sidebarIcons.map(({ id, icon: Icon, label }) => (
               <Tooltip key={id}>
                 <TooltipTrigger asChild>
