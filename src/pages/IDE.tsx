@@ -854,18 +854,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
   ];
 
   const glass = settings.liquidGlass;
-  const glassBar = glass
-    ? 'backdrop-blur-2xl bg-background/40 supports-[backdrop-filter]:bg-background/30 border-b border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
-    : 'bg-muted/10 border-b border-border/40';
-  const glassPanel = glass
-    ? 'backdrop-blur-xl bg-background/30 supports-[backdrop-filter]:bg-background/20 border-white/10'
-    : 'bg-background/20 border-border/40';
 
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
       <div
-        className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${glass ? 'relative' : ''}`}
+        className={`ide-shell ide-theme-${settings.theme} relative flex flex-col h-screen text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
         style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}
       >
         {glass && (
@@ -877,23 +871,23 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         )}
 
         {/* ── Title / Menu Bar ── */}
-        {!zenMode && <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
+        {!zenMode && <div className="ide-titlebar relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none">
           {/* Left */}
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
-              <span className="relative flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary/30 to-secondary/30 border border-white/10">
-                <Zap className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              <span className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary shadow-[0_6px_18px_-6px_hsl(var(--primary)/0.6)]">
+                <Zap className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
               </span>
               <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>
             </h1>
-            <div className="w-px h-4 bg-border/50" />
+            <div className="w-px h-4 bg-border/50 mx-1" />
             {/* Menu items */}
             <div className="hidden md:flex items-center">
               {/* File Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">File</button>
+                  <button className="ide-menu-btn font-mono">File</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => newFile()} className="text-xs gap-2 cursor-pointer">
@@ -927,7 +921,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Edit Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Edit</button>
+                  <button className="ide-menu-btn font-mono">Edit</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-card border-border/50">
                   <DropdownMenuItem onClick={formatCurrent} className="text-xs gap-2 cursor-pointer">
@@ -956,7 +950,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* View Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">View</button>
+                  <button className="ide-menu-btn font-mono">View</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => setSidePanel(p => p === 'explorer' ? null : 'explorer')} className="text-xs gap-2 cursor-pointer">
@@ -983,7 +977,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Run Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Run</button>
+                  <button className="ide-menu-btn font-mono">Run</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={runCode} className="text-xs gap-2 cursor-pointer">
@@ -1002,7 +996,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Help Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Help</button>
+                  <button className="ide-menu-btn font-mono">Help</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => window.open('/SDEV_DOCUMENTATION.md', '_blank')} className="text-xs gap-2 cursor-pointer">
@@ -1172,14 +1166,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               size="sm"
               onClick={runCode}
               disabled={isRunning || isTranslating}
-              className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-7 text-xs min-w-[64px]"
+              className="ide-run-btn gap-1.5 font-semibold h-7 text-xs min-w-[72px] rounded-md border-0"
             >
               {isTranslating ? (
                 <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Translating</span>
               ) : isRunning ? (
                 <span className="flex items-center gap-1"><span className="animate-spin">⟳</span> Running</span>
               ) : (
-                <><Play className="w-3 h-3" /> Run</>
+                <><Play className="w-3 h-3 fill-current" /> Run</>
               )}
             </Button>
 
@@ -1220,7 +1214,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         {/* ── Activity Bar + Main Body ── */}
         <div className="relative z-10 flex flex-1 overflow-hidden">
           {!zenMode && (
-          <div className={`w-12 flex-shrink-0 flex flex-col items-center py-2 gap-0.5 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-card/40'}`}>
+          <div className="ide-activitybar w-12 flex-shrink-0 flex flex-col items-center py-2 gap-1">
             {sidebarIcons.map(({ id, icon: Icon, label }) => {
               const active = sidePanel === id;
               return (
@@ -1228,14 +1222,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => setSidePanel(p => p === id ? null : id)}
-                      className={`relative w-10 h-10 flex items-center justify-center rounded-md transition-all ${
-                        active ? 'text-foreground bg-muted/60' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                      }`}
+                      data-active={active}
+                      className="ide-activity-btn"
+                      aria-label={label}
                     >
-                      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />}
                       <Icon className="w-[18px] h-[18px]" />
                       {id === 'problems' && problems.length > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center shadow-md">
                           {problems.length > 9 ? '9+' : problems.length}
                         </span>
                       )}
@@ -1250,7 +1243,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setZenMode(z => !z)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-md transition-all ${zenMode ? 'text-primary bg-primary/15' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
+                  data-active={zenMode}
+                  className="ide-activity-btn"
+                  aria-label="Zen Mode"
                 >
                   <Eye className="w-[18px] h-[18px]" />
                 </button>
@@ -1261,7 +1256,8 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIsFullscreen(f => !f)}
-                  className="w-10 h-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
+                  className="ide-activity-btn"
+                  aria-label="Fullscreen"
                 >
                   {isFullscreen ? <Minimize2 className="w-[18px] h-[18px]" /> : <Maximize2 className="w-[18px] h-[18px]" />}
                 </button>
@@ -1275,7 +1271,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
             {/* Sidebar panel */}
             {sidePanel && (
               <>
-                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className={`flex flex-col border-r ${glass ? 'backdrop-blur-xl bg-background/25 border-white/10' : 'border-border/40 bg-background/20'}`}>
+                <ResizablePanel defaultSize={18} minSize={12} maxSize={35} className="ide-sidepanel flex flex-col">
                   {sidePanel === 'explorer' && (
                     <IdeFileTree
                       files={files}
@@ -1398,7 +1394,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 {/* Bottom panel */}
                 <ResizablePanel defaultSize={35} minSize={15} maxSize={65}>
                   {/* Panel tabs */}
-                  <div className={`flex items-center border-b flex-shrink-0 ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-muted/10'}`}>
+                  <div className="ide-tabsbar flex items-center flex-shrink-0">
                     <button
                       onClick={() => setBottomPanel('terminal')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'terminal' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}

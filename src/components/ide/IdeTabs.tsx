@@ -1,4 +1,4 @@
-import { X, FileCode2, Circle } from 'lucide-react';
+import { X, FileCode2, FileText, FileJson, Braces, Circle } from 'lucide-react';
 import type { IdeFile } from './types';
 
 interface Props {
@@ -8,52 +8,44 @@ interface Props {
   onClose: (id: string) => void;
 }
 
-function fileColor(name: string) {
-  if (name.endsWith('.sdev')) return 'text-primary';
-  if (name.endsWith('.md')) return 'text-brand-mist';
-  if (name.endsWith('.json')) return 'text-brand-amber';
-  if (name.endsWith('.js') || name.endsWith('.ts')) return 'text-brand-green';
-  return 'text-muted-foreground';
+function fileIcon(name: string) {
+  if (name.endsWith('.md')) return { Icon: FileText, color: 'text-brand-mist' };
+  if (name.endsWith('.json')) return { Icon: FileJson, color: 'text-brand-amber' };
+  if (name.endsWith('.js') || name.endsWith('.ts')) return { Icon: Braces, color: 'text-brand-green' };
+  if (name.endsWith('.sdev')) return { Icon: FileCode2, color: 'text-primary' };
+  return { Icon: FileCode2, color: 'text-muted-foreground' };
 }
 
 export function IdeTabs({ files, activeId, onSelect, onClose }: Props) {
   return (
-    <div className="flex items-end gap-1 px-1 pt-1 overflow-x-auto flex-shrink-0 bg-background/40 border-b border-border/40 scrollbar-none">
+    <div className="ide-tabsbar flex items-center gap-1 px-2 py-1.5 overflow-x-auto flex-shrink-0 scrollbar-none">
       {files.map(file => {
         const isActive = file.id === activeId;
+        const { Icon, color } = fileIcon(file.name);
         return (
           <div
             key={file.id}
+            data-active={isActive}
             onClick={() => onSelect(file.id)}
-            className={`
-              group relative flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 cursor-pointer rounded-t-md
-              transition-all flex-shrink-0 text-xs font-mono select-none
-              ${isActive
-                ? 'bg-card text-foreground shadow-[0_-2px_0_0_hsl(var(--primary))_inset]'
-                : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
-              }
-            `}
+            className="ide-tab group"
           >
-            <FileCode2 className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? fileColor(file.name) : 'opacity-60'}`} />
-            <span className="truncate max-w-[140px]">{file.name}</span>
+            <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? color : 'opacity-60'}`} />
+            <span className="truncate max-w-[160px]">{file.name}</span>
             <button
               onClick={e => { e.stopPropagation(); if (files.length > 1) onClose(file.id); }}
-              className={`
-                ml-1 w-4 h-4 flex items-center justify-center rounded
-                hover:bg-muted/60 hover:text-destructive transition-all
-                ${isActive ? 'opacity-70' : 'opacity-0 group-hover:opacity-70'}
-              `}
+              className={`ml-1 w-4 h-4 flex items-center justify-center rounded hover:bg-muted/60 hover:text-destructive transition-all ${
+                isActive ? 'opacity-70' : 'opacity-0 group-hover:opacity-70'
+              }`}
               aria-label="Close tab"
             >
               {file.modified
                 ? <Circle className="w-2 h-2 fill-current" />
-                : <X className="w-3 h-3" />
-              }
+                : <X className="w-3 h-3" />}
             </button>
           </div>
         );
       })}
-      <div className="flex-1 border-b border-border/40 self-stretch" />
+      <div className="flex-1" />
     </div>
   );
 }
