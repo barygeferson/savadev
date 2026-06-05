@@ -1394,7 +1394,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                 {/* Bottom panel */}
                 <ResizablePanel defaultSize={35} minSize={15} maxSize={65}>
                   {/* Panel tabs */}
-                  <div className={`flex items-center border-b flex-shrink-0 ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-muted/10'}`}>
+                  <div className="ide-tabsbar flex items-center flex-shrink-0">
                     <button
                       onClick={() => setBottomPanel('terminal')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'terminal' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
