@@ -94,7 +94,7 @@ export function IdeSettingsPanel({ settings, onChange }: Props) {
             ['lineNumbers', 'Line Numbers'] as [keyof IdeSettings, string],
             ['wordWrap', 'Word Wrap'] as [keyof IdeSettings, string],
             ['autoSave', 'Auto Save'] as [keyof IdeSettings, string],
-            ['liquidGlass', 'Liquid Glass ✨'] as [keyof IdeSettings, string],
+            
           ]).map(([key, label]) => (
             <div key={String(key)} className="flex items-center justify-between">
               <span className="text-xs font-mono text-muted-foreground">{label}</span>
