@@ -1214,7 +1214,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         {/* ── Activity Bar + Main Body ── */}
         <div className="relative z-10 flex flex-1 overflow-hidden">
           {!zenMode && (
-          <div className={`w-12 flex-shrink-0 flex flex-col items-center py-2 gap-0.5 border-r ${glass ? 'backdrop-blur-xl bg-background/30 border-white/10' : 'border-border/40 bg-card/40'}`}>
+          <div className="ide-activitybar w-12 flex-shrink-0 flex flex-col items-center py-2 gap-1">
             {sidebarIcons.map(({ id, icon: Icon, label }) => {
               const active = sidePanel === id;
               return (
@@ -1222,14 +1222,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => setSidePanel(p => p === id ? null : id)}
-                      className={`relative w-10 h-10 flex items-center justify-center rounded-md transition-all ${
-                        active ? 'text-foreground bg-muted/60' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                      }`}
+                      data-active={active}
+                      className="ide-activity-btn"
+                      aria-label={label}
                     >
-                      {active && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />}
                       <Icon className="w-[18px] h-[18px]" />
                       {id === 'problems' && problems.length > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center shadow-md">
                           {problems.length > 9 ? '9+' : problems.length}
                         </span>
                       )}
@@ -1244,7 +1243,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setZenMode(z => !z)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-md transition-all ${zenMode ? 'text-primary bg-primary/15' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'}`}
+                  data-active={zenMode}
+                  className="ide-activity-btn"
+                  aria-label="Zen Mode"
                 >
                   <Eye className="w-[18px] h-[18px]" />
                 </button>
@@ -1255,7 +1256,8 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIsFullscreen(f => !f)}
-                  className="w-10 h-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all"
+                  className="ide-activity-btn"
+                  aria-label="Fullscreen"
                 >
                   {isFullscreen ? <Minimize2 className="w-[18px] h-[18px]" /> : <Maximize2 className="w-[18px] h-[18px]" />}
                 </button>
