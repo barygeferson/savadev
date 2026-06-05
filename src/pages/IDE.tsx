@@ -887,7 +887,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* File Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">File</button>
+                  <button className="ide-menu-btn font-mono">File</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => newFile()} className="text-xs gap-2 cursor-pointer">
@@ -921,7 +921,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Edit Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Edit</button>
+                  <button className="ide-menu-btn font-mono">Edit</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-card border-border/50">
                   <DropdownMenuItem onClick={formatCurrent} className="text-xs gap-2 cursor-pointer">
@@ -950,7 +950,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* View Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">View</button>
+                  <button className="ide-menu-btn font-mono">View</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => setSidePanel(p => p === 'explorer' ? null : 'explorer')} className="text-xs gap-2 cursor-pointer">
@@ -977,7 +977,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Run Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Run</button>
+                  <button className="ide-menu-btn font-mono">Run</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={runCode} className="text-xs gap-2 cursor-pointer">
@@ -996,7 +996,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
               {/* Help Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 rounded transition-all font-mono">Help</button>
+                  <button className="ide-menu-btn font-mono">Help</button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-52 bg-card border-border/50">
                   <DropdownMenuItem onClick={() => window.open('/SDEV_DOCUMENTATION.md', '_blank')} className="text-xs gap-2 cursor-pointer">
