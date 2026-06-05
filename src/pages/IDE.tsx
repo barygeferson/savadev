@@ -34,7 +34,7 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe,
 } from 'lucide-react';
 import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
@@ -274,6 +274,7 @@ const DEFAULT_SETTINGS: IdeSettings = {
   lineNumbers: true,
   autoSave: true,
   fontFamily: 'JetBrains Mono',
+  liquidGlass: false,
 };
 
 // IDE theme palettes — applied as CSS custom properties directly on the IDE root
