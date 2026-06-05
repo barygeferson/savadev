@@ -853,31 +853,38 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
+  const glass = settings.liquidGlass;
+  const glassBar = glass
+    ? 'backdrop-blur-2xl bg-background/40 supports-[backdrop-filter]:bg-background/30 border-b border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+    : 'bg-muted/10 border-b border-border/40';
+  const glassPanel = glass
+    ? 'backdrop-blur-xl bg-background/30 supports-[backdrop-filter]:bg-background/20 border-white/10'
+    : 'bg-background/20 border-border/40';
+
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
-      <div className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`} style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}>
+      <div
+        className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${glass ? 'relative' : ''}`}
+        style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}
+      >
+        {glass && (
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 opacity-70">
+            <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--primary) / 0.35), transparent)' }} />
+            <div className="absolute top-1/3 -right-40 w-[520px] h-[520px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--secondary) / 0.30), transparent)' }} />
+            <div className="absolute -bottom-40 left-1/3 w-[460px] h-[460px] rounded-full blur-3xl" style={{ background: 'radial-gradient(closest-side, hsl(var(--accent) / 0.25), transparent)' }} />
+          </div>
+        )}
 
         {/* ── Title / Menu Bar ── */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-muted/10 flex-shrink-0 select-none">
+        <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
           {/* Left */}
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => navigate('/')}
-                  aria-label="Back to Playground"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted/30"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Back to Playground</TooltipContent>
-            </Tooltip>
-            <div className="w-px h-4 bg-border/50" />
-            <h1 className="flex items-center gap-1.5 m-0 text-sm font-display font-bold">
-              <Zap className="w-4 h-4 text-primary" aria-hidden="true" />
-              <span className="gradient-text hidden sm:block">SDEV IDE</span>
+            <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
+              <span className="relative flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary/30 to-secondary/30 border border-white/10">
+                <Zap className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              </span>
+              <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>
             </h1>
             <div className="w-px h-4 bg-border/50" />
