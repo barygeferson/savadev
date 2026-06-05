@@ -854,18 +854,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
   ];
 
   const glass = settings.liquidGlass;
-  const glassBar = glass
-    ? 'backdrop-blur-2xl bg-background/40 supports-[backdrop-filter]:bg-background/30 border-b border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
-    : 'bg-muted/10 border-b border-border/40';
-  const glassPanel = glass
-    ? 'backdrop-blur-xl bg-background/30 supports-[backdrop-filter]:bg-background/20 border-white/10'
-    : 'bg-background/20 border-border/40';
 
   return (
     <TooltipProvider delayDuration={400}>
       <SEO title="IDE — sdev" description="Full-featured sdev IDE in your browser. File tree, terminal, debugger, and live preview for the sdev programming language." path="/ide" />
       <div
-        className={`ide-theme-${settings.theme} flex flex-col h-screen bg-background text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${glass ? 'relative' : ''}`}
+        className={`ide-shell ide-theme-${settings.theme} relative flex flex-col h-screen text-foreground overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}
         style={{ fontFamily: settings.fontFamily, ...(IDE_THEME_VARS[settings.theme] as React.CSSProperties) }}
       >
         {glass && (
@@ -877,17 +871,17 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
         )}
 
         {/* ── Title / Menu Bar ── */}
-        {!zenMode && <div className={`relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none ${glassBar}`}>
+        {!zenMode && <div className="ide-titlebar relative z-10 flex items-center justify-between px-3 py-1.5 flex-shrink-0 select-none">
           {/* Left */}
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
-              <span className="relative flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-primary/30 to-secondary/30 border border-white/10">
-                <Zap className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              <span className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary shadow-[0_6px_18px_-6px_hsl(var(--primary)/0.6)]">
+                <Zap className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
               </span>
               <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>
             </h1>
-            <div className="w-px h-4 bg-border/50" />
+            <div className="w-px h-4 bg-border/50 mx-1" />
             {/* Menu items */}
             <div className="hidden md:flex items-center">
               {/* File Menu */}
