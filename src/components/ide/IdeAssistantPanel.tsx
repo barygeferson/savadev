@@ -119,7 +119,7 @@ export function IdeAssistantPanel({ code, fileName, error, problemSummary, onApp
               <span className={`text-[10px] font-mono uppercase tracking-wider ${confidenceColor}`}>
                 ● confidence: {result.confidence}
               </span>
-              <Button onClick={apply} size="sm" className="h-7 text-[11px] gap-1 bg-neon-green/20 hover:bg-neon-green/30 text-neon-green border border-neon-green/30">
+              <Button onClick={apply} size="sm" className="h-7 text-[11px] gap-1 bg-brand-green/20 hover:bg-brand-green/30 text-brand-green border border-brand-green/30">
                 <Check className="w-3 h-3" /> Apply fix
               </Button>
             </div>
