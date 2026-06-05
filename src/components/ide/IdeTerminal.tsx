@@ -101,7 +101,7 @@ export function IdeTerminal({ lines, error, execTime, onClear }: Props) {
   }, [lines, error, repl]);
 
   return (
-    <div className="flex flex-col h-full bg-background/50">
+    <div className="flex h-full min-h-0 flex-col bg-background/50">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-1 border-b border-border/30 bg-muted/10 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export function IdeTerminal({ lines, error, execTime, onClear }: Props) {
       </div>
 
       {/* Output area */}
-      <div className="flex-1 overflow-auto p-3 font-mono text-xs space-y-0.5"
+      <div className="flex-1 min-h-0 overflow-auto p-3 font-mono text-xs space-y-0.5"
            onClick={() => inputRef.current?.focus()}>
         {/* Last run */}
         {lines.map((line, i) => (
