@@ -31,7 +31,7 @@ export function IdeStatusBar({ statusMsg, runMode, activeFile, lines, chars, cur
         <span className="ide-status-seg">
           {runMode === 'interpreter'
             ? <><Zap className="w-3 h-3 ide-status-accent" /> Interpreter</>
-            : <><Cpu className="w-3 h-3 ide-status-accent" /> Bytecode VM</>}
+            : <><Cpu className="w-3 h-3 ide-status-accent" /> Compiler</>}
         </span>
         {execTime !== null && (
           <span className="ide-status-seg">
