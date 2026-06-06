@@ -1015,7 +1015,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     <Zap className="w-3.5 h-3.5 text-neon-cyan" /> Tree-walk Interpreter {runMode === 'interpreter' && '✓'}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setRunMode('vm')} className="text-xs gap-2 cursor-pointer">
-                    <Cpu className="w-3.5 h-3.5 text-neon-violet" /> Bytecode VM {runMode === 'vm' && '✓'}
+                    <Cpu className="w-3.5 h-3.5 text-neon-violet" /> Compiler (full features) {runMode === 'vm' && '✓'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
