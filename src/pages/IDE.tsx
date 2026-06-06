@@ -22,8 +22,6 @@ import { createGraphicsBuiltins } from '@/lang/graphics';
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
 import { Interpreter } from '@/lang/interpreter';
-import { Environment } from '@/lang/environment';
-import { createBuiltins } from '@/lang/builtins';
 import { SdevError } from '@/lang/errors';
 import { supabase } from '@/integrations/supabase/client';
 import { Compiler } from '@/lang/compiler';
@@ -609,13 +607,8 @@ export default function IDEPage() {
         detectedLanguage = lexer.detectedLanguage;
         const parser = new Parser(tokens);
         const ast = parser.parse();
-        const env = new Environment();
-        const builtins = createBuiltins((msg) => outputLines.push(msg));
-        builtins.forEach((fn, name) => env.define(name, fn));
-        env.define('PI', Math.PI);
-        env.define('TAU', Math.PI * 2);
-        env.define('E', Math.E);
-        env.define('INFINITY', Infinity);
+        const interpreter = new Interpreter((msg) => outputLines.push(msg));
+        const env = interpreter.getGlobalEnv();
         const gfx = createGraphicsBuiltins(
           (cmd) => commands.push(cmd),
           () => turtleState,
@@ -635,8 +628,6 @@ export default function IDEPage() {
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
         ui.forEach((fn, name) => env.define(name, fn));
-        const interpreter = new Interpreter((msg) => outputLines.push(msg));
-        (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       } else {
@@ -655,13 +646,8 @@ export default function IDEPage() {
         // are ignored — execution still uses the interpreter below.
         try { new Compiler().compile(ast); } catch { /* IR unsupported for this program */ }
 
-        const env = new Environment();
-        const builtins = createBuiltins((msg) => outputLines.push(msg));
-        builtins.forEach((fn, name) => env.define(name, fn));
-        env.define('PI', Math.PI);
-        env.define('TAU', Math.PI * 2);
-        env.define('E', Math.E);
-        env.define('INFINITY', Infinity);
+        const interpreter = new Interpreter((msg) => outputLines.push(msg));
+        const env = interpreter.getGlobalEnv();
         const gfx = createGraphicsBuiltins(
           (cmd) => commands.push(cmd),
           () => turtleState,
@@ -680,8 +666,6 @@ export default function IDEPage() {
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
         ui.forEach((fn, name) => env.define(name, fn));
-        const interpreter = new Interpreter((msg) => outputLines.push(msg));
-        (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       }
