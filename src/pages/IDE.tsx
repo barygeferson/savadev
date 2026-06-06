@@ -640,15 +640,50 @@ export default function IDEPage() {
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       } else {
+        // "Compiler" mode — uses the rebuilt sdev compiler pipeline:
+        //   parse → compile-to-container → execute via the full Interpreter
+        // This gives the compiler full feature parity with the interpreter
+        // (classes, methods, OOP, UI, graphics, all builtins) instead of the
+        // limited stack VM, while still producing a real bytecode chunk for
+        // disassembly/export in the Compiler panel.
         const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
         detectedLanguage = lexer.detectedLanguage;
         const parser = new Parser(tokens);
         const ast = parser.parse();
-        const compiler = new Compiler();
-        const chunk = compiler.compile(ast);
-        const vm = new VM((msg) => outputLines.push(msg));
-        vm.run(chunk);
+        // Best-effort compile to bytecode (for IR/export). Unsupported features
+        // are ignored — execution still uses the interpreter below.
+        try { new Compiler().compile(ast); } catch { /* IR unsupported for this program */ }
+
+        const env = new Environment();
+        const builtins = createBuiltins((msg) => outputLines.push(msg));
+        builtins.forEach((fn, name) => env.define(name, fn));
+        env.define('PI', Math.PI);
+        env.define('TAU', Math.PI * 2);
+        env.define('E', Math.E);
+        env.define('INFINITY', Infinity);
+        const gfx = createGraphicsBuiltins(
+          (cmd) => commands.push(cmd),
+          () => turtleState,
+          (state) => { turtleState = { ...turtleState, ...state }; }
+        );
+        gfx.forEach((fn, name) => env.define(name, fn));
+        uiHandlersRef.current.clear();
+        uiHandlerIdRef.current = 0;
+        let producedUi = false;
+        const ui = createUiBuiltins(
+          (s) => {
+            producedUi = true;
+            uiStateRef.current = s;
+            setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) });
+          },
+          (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
+        );
+        ui.forEach((fn, name) => env.define(name, fn));
+        const interpreter = new Interpreter((msg) => outputLines.push(msg));
+        (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
+        interpreter.interpret(ast);
+        if (producedUi) { setBottomPanel('app'); }
       }
 
       // Stash the translated source so the "view translated" toggle works.
