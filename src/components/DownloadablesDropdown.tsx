@@ -184,22 +184,35 @@ if "!HAS_PY!"=="0" if "!HAS_NODE!"=="0" (
 )
 
 echo  [3/8] Downloading interpreters from %BASEURL% ...
-powershell -NoProfile -Command ^
-  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.py' -OutFile '%BIN%\\sdev-interpreter.py';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.js' -OutFile '%BIN%\\sdev-interpreter.js'"
-if errorlevel 1 (
-  echo   ERROR: download failed. Check your internet connection and retry.
-  pause & exit /b 1
+set "DL=curl.exe"
+where curl.exe >nul 2>nul || set "DL="
+if defined DL (
+  call :fetch "%BASEURL%/sdev-interpreter.py" "%BIN%\\sdev-interpreter.py" python || goto :dl_fail
+  call :fetch "%BASEURL%/sdev-interpreter.js" "%BIN%\\sdev-interpreter.js" js     || goto :dl_fail
+) else (
+  call :psfetch "%BASEURL%/sdev-interpreter.py" "%BIN%\\sdev-interpreter.py" python || goto :dl_fail
+  call :psfetch "%BASEURL%/sdev-interpreter.js" "%BIN%\\sdev-interpreter.js" js     || goto :dl_fail
 )
+goto :dl_ok
+:dl_fail
+echo.
+echo   ERROR: download failed or returned HTML instead of source.
+echo          Check your internet connection and that %BASEURL% is reachable, then retry.
+pause & exit /b 1
+:dl_ok
 
 echo  [4/8] Downloading offline documentation + book...
-powershell -NoProfile -Command ^
-  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_DOCUMENTATION.md';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md';" ^
-  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-en.pdf' -OutFile '%DOCS%\\sdev-book-en.pdf' } catch {};" ^
-  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-bg.pdf' -OutFile '%DOCS%\\sdev-book-bg.pdf' } catch {}"
+if defined DL (
+  call :fetch   "%BASEURL%/SDEV_DOCUMENTATION.md"         "%DOCS%\\SDEV_DOCUMENTATION.md"         text
+  call :fetch   "%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md" "%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md" text
+  call :fetchopt "%BASEURL%/sdev-book-en.pdf"             "%DOCS%\\sdev-book-en.pdf"              pdf
+  call :fetchopt "%BASEURL%/sdev-book-bg.pdf"             "%DOCS%\\sdev-book-bg.pdf"              pdf
+) else (
+  call :psfetch  "%BASEURL%/SDEV_DOCUMENTATION.md"         "%DOCS%\\SDEV_DOCUMENTATION.md"         text
+  call :psfetch  "%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md" "%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md" text
+  call :psfetch  "%BASEURL%/sdev-book-en.pdf"              "%DOCS%\\sdev-book-en.pdf"              pdf
+  call :psfetch  "%BASEURL%/sdev-book-bg.pdf"              "%DOCS%\\sdev-book-bg.pdf"              pdf
+)
 
 echo  [5/8] Writing multilingual examples...
 
@@ -296,6 +309,45 @@ echo  Press any key to open the sdev folder...
 pause >nul
 explorer "%ROOT%"
 endlocal
+exit /b 0
+
+rem ---------------------------------------------------------------------------
+rem :fetch  URL  OUTFILE  KIND   -- download with curl, verify content
+rem :psfetch URL OUTFILE  KIND   -- same, but via PowerShell fallback
+rem :fetchopt URL OUTFILE KIND   -- optional: warn but do not fail
+rem ---------------------------------------------------------------------------
+:fetch
+echo         GET %~1
+if exist "%~2" del /q "%~2" >nul 2>nul
+curl.exe -fSL --retry 3 --retry-delay 1 -A "sdev-installer/2.0" -o "%~2" "%~1"
+if errorlevel 1 ( echo         FAILED: %~1 & exit /b 1 )
+call :verify "%~2" "%~3" || exit /b 1
+exit /b 0
+
+:psfetch
+echo         GET %~1  ^(powershell^)
+if exist "%~2" del /q "%~2" >nul 2>nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -UseBasicParsing -Uri '%~1' -OutFile '%~2' -Headers @{ 'User-Agent'='sdev-installer/2.0' } } catch { exit 1 }"
+if errorlevel 1 ( echo         FAILED: %~1 & exit /b 1 )
+call :verify "%~2" "%~3" || exit /b 1
+exit /b 0
+
+:fetchopt
+if defined DL (
+  curl.exe -fSL --retry 2 -A "sdev-installer/2.0" -o "%~2" "%~1" 2>nul
+) else (
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -UseBasicParsing -Uri '%~1' -OutFile '%~2' } catch { exit 0 }" >nul 2>nul
+)
+if not exist "%~2" exit /b 0
+call :verify "%~2" "%~3" >nul 2>nul || ( del /q "%~2" >nul 2>nul & echo         skipped optional %~nx2 )
+exit /b 0
+
+:verify
+for %%S in ("%~1") do set "SZ=%%~zS"
+if "%SZ%"=="" ( echo         empty file %~nx1 & exit /b 1 )
+if %SZ% LSS 256 ( echo         too small: %~nx1 ^(%SZ% bytes^) & exit /b 1 )
+findstr /b /c:"<!DOCTYPE" /c:"<!doctype" /c:"<html" "%~1" >nul 2>nul && ( echo         server returned HTML instead of source for %~nx1 & exit /b 1 )
+exit /b 0
 `;
 
     const blob = new Blob([batchScript], { type: 'application/bat' });
