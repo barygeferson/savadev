@@ -1140,10 +1140,10 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     onClick={() => setRunMode('vm')}
                     className={`px-2 py-1 text-xs font-mono transition-all ${runMode === 'vm' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}`}
                   >
-                    <Cpu className="w-3 h-3 inline mr-1" />VM
+                    <Cpu className="w-3 h-3 inline mr-1" />Compiler
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Bytecode VM</TooltipContent>
+                <TooltipContent>Compiler (full features)</TooltipContent>
               </Tooltip>
             </div>
 
