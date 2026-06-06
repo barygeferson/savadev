@@ -350,7 +350,8 @@ findstr /b /c:"<!DOCTYPE" /c:"<!doctype" /c:"<html" "%~1" >nul 2>nul && ( echo  
 exit /b 0
 `;
 
-    const blob = new Blob([batchScript], { type: 'application/bat' });
+    const windowsBatchScript = batchScript.replace(/\r?\n/g, '\r\n');
+    const blob = new Blob([windowsBatchScript], { type: 'application/bat' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
