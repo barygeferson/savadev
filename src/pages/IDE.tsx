@@ -562,6 +562,8 @@ export default function IDEPage() {
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
+    uiStateRef.current = null;
+    setUiState(null);
     setIsRunning(true);
     setStatusMsg('Running…');
 
