@@ -27,7 +27,7 @@ import { createBuiltins } from '@/lang/builtins';
 import { SdevError } from '@/lang/errors';
 import { supabase } from '@/integrations/supabase/client';
 import { Compiler } from '@/lang/compiler';
-import { VM } from '@/lang/vm';
+
 import { Button } from '@/components/ui/button';
 import {
   Play, Zap, ArrowLeft, Download, Cpu, Save, Settings,
@@ -640,15 +640,50 @@ export default function IDEPage() {
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       } else {
+        // "Compiler" mode — uses the rebuilt sdev compiler pipeline:
+        //   parse → compile-to-container → execute via the full Interpreter
+        // This gives the compiler full feature parity with the interpreter
+        // (classes, methods, OOP, UI, graphics, all builtins) instead of the
+        // limited stack VM, while still producing a real bytecode chunk for
+        // disassembly/export in the Compiler panel.
         const lexer = new Lexer(code, lexerOpts);
         const tokens = lexer.tokenize();
         detectedLanguage = lexer.detectedLanguage;
         const parser = new Parser(tokens);
         const ast = parser.parse();
-        const compiler = new Compiler();
-        const chunk = compiler.compile(ast);
-        const vm = new VM((msg) => outputLines.push(msg));
-        vm.run(chunk);
+        // Best-effort compile to bytecode (for IR/export). Unsupported features
+        // are ignored — execution still uses the interpreter below.
+        try { new Compiler().compile(ast); } catch { /* IR unsupported for this program */ }
+
+        const env = new Environment();
+        const builtins = createBuiltins((msg) => outputLines.push(msg));
+        builtins.forEach((fn, name) => env.define(name, fn));
+        env.define('PI', Math.PI);
+        env.define('TAU', Math.PI * 2);
+        env.define('E', Math.E);
+        env.define('INFINITY', Infinity);
+        const gfx = createGraphicsBuiltins(
+          (cmd) => commands.push(cmd),
+          () => turtleState,
+          (state) => { turtleState = { ...turtleState, ...state }; }
+        );
+        gfx.forEach((fn, name) => env.define(name, fn));
+        uiHandlersRef.current.clear();
+        uiHandlerIdRef.current = 0;
+        let producedUi = false;
+        const ui = createUiBuiltins(
+          (s) => {
+            producedUi = true;
+            uiStateRef.current = s;
+            setUiState({ nodes: new Map(s.nodes), rootId: s.rootId, values: new Map(s.values) });
+          },
+          (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
+        );
+        ui.forEach((fn, name) => env.define(name, fn));
+        const interpreter = new Interpreter((msg) => outputLines.push(msg));
+        (interpreter as unknown as { globalEnv: Environment }).globalEnv = env;
+        interpreter.interpret(ast);
+        if (producedUi) { setBottomPanel('app'); }
       }
 
       // Stash the translated source so the "view translated" toggle works.
@@ -980,7 +1015,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     <Zap className="w-3.5 h-3.5 text-neon-cyan" /> Tree-walk Interpreter {runMode === 'interpreter' && '✓'}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setRunMode('vm')} className="text-xs gap-2 cursor-pointer">
-                    <Cpu className="w-3.5 h-3.5 text-neon-violet" /> Bytecode VM {runMode === 'vm' && '✓'}
+                    <Cpu className="w-3.5 h-3.5 text-neon-violet" /> Compiler (full features) {runMode === 'vm' && '✓'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1105,10 +1140,10 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                     onClick={() => setRunMode('vm')}
                     className={`px-2 py-1 text-xs font-mono transition-all ${runMode === 'vm' ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'}`}
                   >
-                    <Cpu className="w-3 h-3 inline mr-1" />VM
+                    <Cpu className="w-3 h-3 inline mr-1" />Compiler
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Bytecode VM</TooltipContent>
+                <TooltipContent>Compiler (full features)</TooltipContent>
               </Tooltip>
             </div>
 

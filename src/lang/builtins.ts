@@ -1399,8 +1399,14 @@ export function createBuiltins(output: OutputCallback): Map<string, SdevFunction
     call: (args: unknown[]) => {
       const promptText = args.length > 0 ? String(args[0]) : '';
       if (typeof globalThis !== 'undefined' && typeof (globalThis as any).prompt === 'function') {
-        const result = (globalThis as any).prompt(promptText);
-        return result !== null ? result : '';
+        try {
+          const result = (globalThis as any).prompt(promptText);
+          // Cancelled / blocked / undefined → return empty string (never null/undefined)
+          if (result === null || result === undefined) return '';
+          return String(result);
+        } catch {
+          return '';
+        }
       }
       if (args.length > 0) output(promptText);
       return '';
