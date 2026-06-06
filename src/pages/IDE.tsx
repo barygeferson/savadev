@@ -562,6 +562,8 @@ export default function IDEPage() {
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
+    uiStateRef.current = null;
+    setUiState(null);
     setIsRunning(true);
     setStatusMsg('Running…');
 
@@ -615,6 +617,7 @@ export default function IDEPage() {
           (state) => { turtleState = { ...turtleState, ...state }; }
         );
         gfx.forEach((fn, name) => env.define(name, fn));
+        const runtimeInput = env.get('input', 0) as { type: 'builtin' | 'user' | 'lambda'; call: (args: unknown[], line: number) => unknown };
         // ── UI toolkit builtins ──
         uiHandlersRef.current.clear();
         uiHandlerIdRef.current = 0;
@@ -627,7 +630,20 @@ export default function IDEPage() {
           },
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
-        ui.forEach((fn, name) => env.define(name, fn));
+        const uiInput = ui.get('input');
+        ui.forEach((fn, name) => {
+          if (name !== 'input') env.define(name, fn);
+        });
+        if (uiInput) {
+          env.define('input', {
+            type: 'builtin',
+            call: (args: unknown[], line: number) => {
+              const hasUiRoot = uiStateRef.current?.rootId != null;
+              if (hasUiRoot && args.length <= 2) return uiInput.call(args, line);
+              return runtimeInput.call(args, line);
+            },
+          });
+        }
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       } else {
@@ -654,6 +670,7 @@ export default function IDEPage() {
           (state) => { turtleState = { ...turtleState, ...state }; }
         );
         gfx.forEach((fn, name) => env.define(name, fn));
+        const runtimeInput = env.get('input', 0) as { type: 'builtin' | 'user' | 'lambda'; call: (args: unknown[], line: number) => unknown };
         uiHandlersRef.current.clear();
         uiHandlerIdRef.current = 0;
         let producedUi = false;
@@ -665,7 +682,20 @@ export default function IDEPage() {
           },
           (cb) => { const id = ++uiHandlerIdRef.current; uiHandlersRef.current.set(id, cb); return id; }
         );
-        ui.forEach((fn, name) => env.define(name, fn));
+        const uiInput = ui.get('input');
+        ui.forEach((fn, name) => {
+          if (name !== 'input') env.define(name, fn);
+        });
+        if (uiInput) {
+          env.define('input', {
+            type: 'builtin',
+            call: (args: unknown[], line: number) => {
+              const hasUiRoot = uiStateRef.current?.rootId != null;
+              if (hasUiRoot && args.length <= 2) return uiInput.call(args, line);
+              return runtimeInput.call(args, line);
+            },
+          });
+        }
         interpreter.interpret(ast);
         if (producedUi) { setBottomPanel('app'); }
       }
