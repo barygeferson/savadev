@@ -125,7 +125,7 @@ export function DownloadablesDropdown({ code }: DownloadablesDropdownProps) {
     //  - Drops multilingual example files (EN / BG / ES / FR / RU / ZH)
     //  - Bundles latest docs (SDEV_DOCUMENTATION.md + Leaflet docs + book) offline
     //  - Optional VS Code extension auto-install if `code` is on PATH
-    const origin = (typeof window !== 'undefined' ? window.location.origin : 'https://web.sdev.codes');
+    const origin = 'https://web.sdev.codes';
     const batchScript = `@echo off
 setlocal EnableDelayedExpansion
 title sdev Language Installer v2.0
