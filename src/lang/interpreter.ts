@@ -54,6 +54,10 @@ export class Interpreter {
     this.globalEnv.define('INFINITY', Infinity);
   }
 
+  getGlobalEnv(): Environment {
+    return this.globalEnv;
+  }
+
   interpret(program: AST.Program): unknown {
     let result: unknown = null;
     for (const stmt of program.statements) {

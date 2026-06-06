@@ -3,8 +3,6 @@ import { AlertTriangle, CheckCircle2, Trash2, Clock, ChevronRight, TerminalSquar
 import { Lexer } from '@/lang/lexer';
 import { Parser } from '@/lang/parser';
 import { Interpreter } from '@/lang/interpreter';
-import { Environment } from '@/lang/environment';
-import { createBuiltins } from '@/lang/builtins';
 import { SdevError } from '@/lang/errors';
 
 interface Props {
@@ -30,23 +28,15 @@ export function IdeTerminal({ lines, error, execTime, onClear }: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [histIdx, setHistIdx] = useState<number>(-1);
 
-  const envRef = useRef<Environment | null>(null);
   const interpRef = useRef<Interpreter | null>(null);
 
   // Lazily create the persistent REPL environment
   const ensureEnv = () => {
-    if (!envRef.current) {
-      const env = new Environment();
+    if (!interpRef.current) {
       const out = (msg: string) => setRepl(r => [...r, { kind: 'out', text: msg }]);
-      createBuiltins(out).forEach((fn, name) => env.define(name, fn));
-      env.define('PI', Math.PI);
-      env.define('TAU', Math.PI * 2);
-      env.define('E', Math.E);
-      envRef.current = env;
       interpRef.current = new Interpreter(out);
-      (interpRef.current as unknown as { globalEnv: Environment }).globalEnv = env;
     }
-    return { env: envRef.current!, interp: interpRef.current! };
+    return { interp: interpRef.current! };
   };
 
   const runRepl = (src: string) => {
@@ -56,7 +46,7 @@ export function IdeTerminal({ lines, error, execTime, onClear }: Props) {
     setHistIdx(-1);
 
     if (src.trim() === ':clear') { setRepl([{ kind: 'sys', text: 'REPL cleared.' }]); return; }
-    if (src.trim() === ':reset') { envRef.current = null; interpRef.current = null; setRepl([{ kind: 'sys', text: 'REPL state reset.' }]); return; }
+    if (src.trim() === ':reset') { interpRef.current = null; setRepl([{ kind: 'sys', text: 'REPL state reset.' }]); return; }
     if (src.trim() === ':help') {
       setRepl(r => [...r,
         { kind: 'sys', text: 'Commands: :help, :clear, :reset' },
