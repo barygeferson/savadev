@@ -184,22 +184,35 @@ if "!HAS_PY!"=="0" if "!HAS_NODE!"=="0" (
 )
 
 echo  [3/8] Downloading interpreters from %BASEURL% ...
-powershell -NoProfile -Command ^
-  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.py' -OutFile '%BIN%\\sdev-interpreter.py';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/sdev-interpreter.js' -OutFile '%BIN%\\sdev-interpreter.js'"
-if errorlevel 1 (
-  echo   ERROR: download failed. Check your internet connection and retry.
-  pause & exit /b 1
+set "DL=curl.exe"
+where curl.exe >nul 2>nul || set "DL="
+if defined DL (
+  call :fetch "%BASEURL%/sdev-interpreter.py" "%BIN%\\sdev-interpreter.py" python || goto :dl_fail
+  call :fetch "%BASEURL%/sdev-interpreter.js" "%BIN%\\sdev-interpreter.js" js     || goto :dl_fail
+) else (
+  call :psfetch "%BASEURL%/sdev-interpreter.py" "%BIN%\\sdev-interpreter.py" python || goto :dl_fail
+  call :psfetch "%BASEURL%/sdev-interpreter.js" "%BIN%\\sdev-interpreter.js" js     || goto :dl_fail
 )
+goto :dl_ok
+:dl_fail
+echo.
+echo   ERROR: download failed or returned HTML instead of source.
+echo          Check your internet connection and that %BASEURL% is reachable, then retry.
+pause & exit /b 1
+:dl_ok
 
 echo  [4/8] Downloading offline documentation + book...
-powershell -NoProfile -Command ^
-  "[Net.ServicePointManager]::SecurityProtocol='Tls12';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_DOCUMENTATION.md';" ^
-  "Invoke-WebRequest -Uri '%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md' -OutFile '%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md';" ^
-  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-en.pdf' -OutFile '%DOCS%\\sdev-book-en.pdf' } catch {};" ^
-  "try { Invoke-WebRequest -Uri '%BASEURL%/sdev-book-bg.pdf' -OutFile '%DOCS%\\sdev-book-bg.pdf' } catch {}"
+if defined DL (
+  call :fetch   "%BASEURL%/SDEV_DOCUMENTATION.md"         "%DOCS%\\SDEV_DOCUMENTATION.md"         text
+  call :fetch   "%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md" "%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md" text
+  call :fetchopt "%BASEURL%/sdev-book-en.pdf"             "%DOCS%\\sdev-book-en.pdf"              pdf
+  call :fetchopt "%BASEURL%/sdev-book-bg.pdf"             "%DOCS%\\sdev-book-bg.pdf"              pdf
+) else (
+  call :psfetch  "%BASEURL%/SDEV_DOCUMENTATION.md"         "%DOCS%\\SDEV_DOCUMENTATION.md"         text
+  call :psfetch  "%BASEURL%/SDEV_LEAFLET_DOCUMENTATION.md" "%DOCS%\\SDEV_LEAFLET_DOCUMENTATION.md" text
+  call :psfetch  "%BASEURL%/sdev-book-en.pdf"              "%DOCS%\\sdev-book-en.pdf"              pdf
+  call :psfetch  "%BASEURL%/sdev-book-bg.pdf"              "%DOCS%\\sdev-book-bg.pdf"              pdf
+)
 
 echo  [5/8] Writing multilingual examples...
 
