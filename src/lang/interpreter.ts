@@ -714,10 +714,29 @@ export class Interpreter {
     line: number,
     fn: (a: number, b: number) => T
   ): T {
-    if (typeof left !== 'number' || typeof right !== 'number') {
-      throw new SdevError(`Cannot use '${op}' with non-numbers (got ${typeof left} and ${typeof right})`, line);
+    // Auto-coerce numeric strings (helps with input() which returns strings)
+    const coerce = (v: unknown): unknown => {
+      if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
+      return v;
+    };
+    const l = coerce(left);
+    const r = coerce(right);
+    if (typeof l !== 'number' || typeof r !== 'number') {
+      const label = (v: unknown): string => {
+        if (v === null || v === undefined) return 'nothing';
+        if (Array.isArray(v)) return 'list';
+        if (typeof v === 'object') {
+          const o = v as { type?: string };
+          if (o.type === 'instance') return 'instance';
+          if (o.type === 'class') return 'class';
+          if (o.type === 'user' || o.type === 'builtin' || o.type === 'lambda') return 'function';
+          return 'object';
+        }
+        return typeof v;
+      };
+      throw new SdevError(`Cannot use '${op}' with non-numbers (got ${label(left)} and ${label(right)})`, line);
     }
-    return fn(left, right);
+    return fn(l, r);
   }
 
   private isEqual(a: unknown, b: unknown): boolean {
