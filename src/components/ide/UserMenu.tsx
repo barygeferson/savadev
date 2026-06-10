@@ -108,10 +108,19 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-neon-cyan to-neon-violet flex items-center justify-center text-[8px] font-bold text-background">
-              {initials}
-            </div>
-            <span className="hidden sm:inline truncate max-w-[100px]">{user.email}</span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName || 'avatar'}
+                className="w-4 h-4 rounded-full object-cover"
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-neon-cyan to-neon-violet flex items-center justify-center text-[8px] font-bold text-background">
+                {initials}
+              </div>
+            )}
+            <span className="hidden sm:inline truncate max-w-[100px]">{displayName || user.email}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-card border-border/50">
