@@ -304,9 +304,22 @@ serve(async (req) => {
   try {
     const { code, sourceLanguage } = await req.json();
 
-    if (!code || !sourceLanguage) {
+    const VALID_LANGS = ['html-css-js','python','javascript','typescript','java','csharp','cpp','c','go','rust','ruby','php','swift','kotlin','lua','html','css','sdev-fix','auto'];
+    if (!code || typeof code !== 'string' || !sourceLanguage || typeof sourceLanguage !== 'string') {
       return new Response(
-        JSON.stringify({ error: "Missing code or sourceLanguage" }),
+        JSON.stringify({ error: "Missing or invalid code/sourceLanguage" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (code.length > 50000) {
+      return new Response(
+        JSON.stringify({ error: "Code too long (max 50000 chars)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (!VALID_LANGS.includes(sourceLanguage)) {
+      return new Response(
+        JSON.stringify({ error: "Unsupported sourceLanguage" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
