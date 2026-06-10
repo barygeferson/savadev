@@ -51,7 +51,7 @@ import { UserMenu } from '@/components/ide/UserMenu';
 import { useCloudFiles } from '@/hooks/useCloudFiles';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
-import sdevLogo from '@/assets/sdev-logo.png.asset.json';
+import sdevLogo from '@/assets/sdev-logo.png';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -918,7 +918,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
               <span className="relative flex items-center justify-center w-7 h-7">
-                <img src={sdevLogo.url} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
+                <img src={sdevLogo} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
               </span>
               <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>
