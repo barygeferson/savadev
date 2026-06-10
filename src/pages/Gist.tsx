@@ -103,8 +103,29 @@ export default function Gist() {
       <main className="container max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold tracking-tight">{gist.title}</h1>
         {gist.description && <p className="text-muted-foreground mt-2">{gist.description}</p>}
-        <div className="text-sm text-muted-foreground mt-3">
-          by {author || 'anon'} · {gist.view_count} views
+        <div className="flex items-center gap-3 mt-4">
+          {author?.avatar_url ? (
+            <img src={author.avatar_url} alt={author.display_name || 'author'} className="h-10 w-10 rounded-full object-cover border border-border/50" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-neon-cyan to-neon-violet flex items-center justify-center text-xs font-bold text-background">
+              {(author?.display_name || 'A').slice(0, 2).toUpperCase()}
+            </div>
+          )}
+          <div className="text-sm">
+            <div className="font-medium">{author?.display_name || 'anon'}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <span>{gist.view_count} views</span>
+              {author?.website && (
+                <>
+                  <span>·</span>
+                  <a href={author.website} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline">
+                    {author.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </a>
+                </>
+              )}
+            </div>
+            {author?.bio && <div className="text-xs text-muted-foreground mt-1 max-w-md">{author.bio}</div>}
+          </div>
         </div>
 
         <div className="flex gap-2 my-4">
