@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,17 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
   const [saveName, setSaveName] = useState(currentName);
   const [gistTitle, setGistTitle] = useState(currentName);
   const [gistDesc, setGistDesc] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) { setAvatarUrl(null); setDisplayName(null); return; }
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).maybeSingle();
+      setAvatarUrl(data?.avatar_url ?? null);
+      setDisplayName(data?.display_name ?? null);
+    })();
+  }, [user]);
 
   const handleCloudSave = async () => {
     if (!user) { navigate('/auth'); return; }
@@ -97,10 +108,19 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-neon-cyan to-neon-violet flex items-center justify-center text-[8px] font-bold text-background">
-              {initials}
-            </div>
-            <span className="hidden sm:inline truncate max-w-[100px]">{user.email}</span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName || 'avatar'}
+                className="w-4 h-4 rounded-full object-cover"
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-neon-cyan to-neon-violet flex items-center justify-center text-[8px] font-bold text-background">
+                {initials}
+              </div>
+            )}
+            <span className="hidden sm:inline truncate max-w-[100px]">{displayName || user.email}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-card border-border/50">
