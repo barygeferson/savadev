@@ -571,6 +571,20 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (code.length > 50000) {
+      return new Response(JSON.stringify({ error: "Code too long (max 50000 chars)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (sourceLanguage !== undefined && sourceLanguage !== null) {
+      if (typeof sourceLanguage !== "string" || sourceLanguage.length > 40) {
+        return new Response(JSON.stringify({ error: "Invalid sourceLanguage" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {

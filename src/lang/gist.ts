@@ -57,15 +57,27 @@ export function parseGistUrl(url: string): { gistId: string; filename?: string }
 }
 
 export async function fetchGist(gistId: string): Promise<GistFile[]> {
+  // Strict validation — gist IDs are hex strings (commonly 20–40 chars)
+  if (!/^[a-f0-9]{20,40}$/i.test(gistId)) {
+    throw new Error('Invalid gist ID format');
+  }
+
   // Check cache
   const cached = gistCache[gistId];
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.files;
   }
-  
-  const response = await fetch(`https://api.github.com/gists/${gistId}`);
+
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: { Accept: 'application/vnd.github.v3+json' },
+    redirect: 'error',
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch gist: ${response.status}`);
+  }
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error('Invalid gist response content type');
   }
   
   const data = await response.json();

@@ -80,6 +80,13 @@ serve(async (req: Request) => {
     const sourceLanguage: string = typeof body.sourceLanguage === "string" ? body.sourceLanguage : "auto";
     const original: string = typeof body.original === "string" ? body.original : partial;
 
+    if (partial.length > 50000 || original.length > 50000 || sourceLanguage.length > 40) {
+      return new Response(
+        JSON.stringify({ error: "Payload too large" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!partial.trim()) {
       return new Response(
         JSON.stringify({ translated: partial, usedAI: false }),
