@@ -250,14 +250,14 @@ const Index = () => {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border text-xs text-muted-foreground font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
-              v1.0.0 — now with multi-language support
+              v1.0.0
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1]">
-              sdev — Code becomes{' '}
+              SDEV — Code becomes{' '}
               <span className="gradient-text">poetry.</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-              sdev is a programming language designed for clarity and creativity.
+              SDEV is a programming language designed for clarity and creativity.
               Expressive syntax, built-in graphics, a full compiler — and you can write it in any human language.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
