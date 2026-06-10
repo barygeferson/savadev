@@ -20,12 +20,19 @@ interface GistView {
   created_at: string;
 }
 
+interface AuthorProfile {
+  display_name: string | null;
+  avatar_url: string | null;
+  website: string | null;
+  bio: string | null;
+}
+
 export default function Gist() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [gist, setGist] = useState<GistView | null>(null);
-  const [author, setAuthor] = useState<string>('');
+  const [author, setAuthor] = useState<AuthorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [starred, setStarred] = useState(false);
 
@@ -38,8 +45,8 @@ export default function Gist() {
       // Bump view count (best-effort)
       await supabase.from('gists').update({ view_count: (data.view_count ?? 0) + 1 }).eq('id', data.id);
 
-      const { data: prof } = await supabase.from('profiles').select('display_name').eq('user_id', data.user_id).maybeSingle();
-      if (prof?.display_name) setAuthor(prof.display_name);
+      const { data: prof } = await supabase.from('profiles').select('display_name, avatar_url, website, bio').eq('user_id', data.user_id).maybeSingle();
+      if (prof) setAuthor(prof as AuthorProfile);
 
       if (user) {
         const { data: star } = await supabase.from('starred_snippets').select('id').eq('user_id', user.id).eq('gist_id', data.id).maybeSingle();
