@@ -258,6 +258,28 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
 
+    // Input validation — guard against credit-draining abuse
+    if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
+      return new Response(
+        JSON.stringify({ error: "messages must be a non-empty array (max 50)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    for (const m of messages) {
+      if (
+        !m || typeof m !== "object" ||
+        !["user", "assistant", "system"].includes(m.role) ||
+        typeof m.content !== "string" ||
+        m.content.length === 0 ||
+        m.content.length > 8000
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Invalid message: each must have role user/assistant/system and content string ≤ 8000 chars" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
