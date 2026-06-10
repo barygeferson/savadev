@@ -32,6 +32,17 @@ export function UserMenu({ currentName, currentContent, currentCloudId, onCloudI
   const [saveName, setSaveName] = useState(currentName);
   const [gistTitle, setGistTitle] = useState(currentName);
   const [gistDesc, setGistDesc] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) { setAvatarUrl(null); setDisplayName(null); return; }
+    (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url, display_name').eq('user_id', user.id).maybeSingle();
+      setAvatarUrl(data?.avatar_url ?? null);
+      setDisplayName(data?.display_name ?? null);
+    })();
+  }, [user]);
 
   const handleCloudSave = async () => {
     if (!user) { navigate('/auth'); return; }
