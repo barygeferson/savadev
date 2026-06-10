@@ -51,7 +51,7 @@ import { UserMenu } from '@/components/ide/UserMenu';
 import { useCloudFiles } from '@/hooks/useCloudFiles';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
-import sdevLogo from '@/assets/sdev-logo.png.asset.json';
+import sdevLogo from '@/assets/sdev-logo.png';
 
 const STARTER_FILES: IdeFile[] = [
   {
