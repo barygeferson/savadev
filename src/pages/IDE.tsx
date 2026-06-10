@@ -51,6 +51,7 @@ import { UserMenu } from '@/components/ide/UserMenu';
 import { useCloudFiles } from '@/hooks/useCloudFiles';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
+import sdevLogo from '@/assets/sdev-logo.png.asset.json';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -916,8 +917,8 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
           {/* Left */}
           <div className="flex items-center gap-2">
             <h1 className="flex items-center gap-2 m-0 text-sm font-display font-bold pl-1">
-              <span className="relative flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-secondary shadow-[0_6px_18px_-6px_hsl(var(--primary)/0.6)]">
-                <Zap className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
+              <span className="relative flex items-center justify-center w-7 h-7">
+                <img src={sdevLogo.url} alt="" aria-hidden="true" className="w-7 h-7 object-contain" />
               </span>
               <span className="gradient-text hidden sm:block tracking-tight">SDEV IDE</span>
               <span className="sr-only">sdev IDE</span>

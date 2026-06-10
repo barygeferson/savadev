@@ -25,6 +25,7 @@ import { Interpreter } from '@/lang/interpreter';
 import { Environment } from '@/lang/environment';
 import { createBuiltins } from '@/lang/builtins';
 import { SdevError } from '@/lang/errors';
+import sdevLogo from '@/assets/sdev-logo.png.asset.json';
 
 const DEFAULT_CODE = `// Welcome to sdev!
 // A unique, expressive programming language
@@ -188,9 +189,7 @@ const Index = () => {
           <div className="flex items-center gap-8">
             {/* Logo */}
             <a href="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Zap className="w-5 h-5 text-primary" />
-              </div>
+              <img src={sdevLogo.url} alt="sdev logo" className="w-9 h-9 object-contain transition-transform group-hover:scale-105" />
               <span className="text-xl font-display font-bold tracking-tight text-foreground">sdev</span>
             </a>
             {/* Nav links */}
