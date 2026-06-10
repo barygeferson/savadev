@@ -262,11 +262,11 @@ const Index = () => {
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <Button
-                onClick={scrollToPlayground}
+                onClick={() => window.open('https://web.sdev.codes/docs', '_blank')}
                 size="lg"
                 className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 px-6"
               >
-                Try the Playground
+                View Docs
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <Button
