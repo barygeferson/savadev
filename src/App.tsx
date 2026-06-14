@@ -13,6 +13,7 @@ import Docs from "./pages/Docs";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 import { LaunchGate } from "./components/LaunchGate";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,8 @@ const App = () => (
           {/* Legal pages — always public */}
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+
 
           {/* Everything else is gated until launch or sign-in */}
           <Route path="/home" element={<LaunchGate><Index /></LaunchGate>} />
