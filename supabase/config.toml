@@ -1,20 +1,17 @@
 project_id = "ygzqjekxzvsrkhuqhqbp"
 
-[functions.translate-code]
-verify_jwt = false
-
-[functions.sdev-chat]
-verify_jwt = false
-
-[functions.translate-sdev]
-verify_jwt = false
-
-[functions.translate-fuzzy]
-verify_jwt = false
-
-[functions.sdev-fix]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
-
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.sdev-chat]
+    verify_jwt = false
+  [functions.sdev-fix]
+    verify_jwt = false
+  [functions.translate-code]
+    verify_jwt = false
+  [functions.translate-fuzzy]
+    verify_jwt = false
+  [functions.translate-sdev]
+    verify_jwt = false
