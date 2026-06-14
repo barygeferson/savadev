@@ -32,6 +32,8 @@ const App = () => (
           {/* Legal pages — always public */}
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
+
 
           {/* Everything else is gated until launch or sign-in */}
           <Route path="/home" element={<LaunchGate><Index /></LaunchGate>} />
