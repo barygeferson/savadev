@@ -14,7 +14,7 @@ export interface BuiltinDoc {
   name: string;
   signature: string;
   doc: string;
-  category: 'io' | 'math' | 'string' | 'list' | 'graphics' | 'turtle' | 'ui' | 'oop' | 'sys' | 'type';
+  category: 'io' | 'math' | 'string' | 'list' | 'graphics' | 'turtle' | 'ui' | 'oop' | 'sys' | 'type' | 'web';
 }
 
 export const SDEV_BUILTINS: BuiltinDoc[] = [
