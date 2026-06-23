@@ -2918,4 +2918,111 @@ within i be sequence(4) ::
 
 ---
 
+## Web Building (HTML / CSS / JavaScript)
+
+sdev ships a full Web DSL: any program that calls `page(...)` produces a real
+HTML document that opens in the IDE's **WEB** preview panel (with Reload,
+Download as `.html`, and Open in new tab). You can mix the high-level DSL with
+raw HTML/CSS/JS passthrough — everything HTML, CSS, and JavaScript can do is
+available.
+
+> Web builtins are part of the **JavaScript runtime** (web IDE and bundled
+> JS interpreter). The Python/desktop CLI focuses on terminal output.
+
+### Page lifecycle
+
+| Builtin            | Purpose                                                           |
+|--------------------|-------------------------------------------------------------------|
+| `page(title)`      | Start a new HTML document. Auto-switches the IDE to the WEB tab.  |
+| `endpage()`        | Finalize the page; auto-closes any still-open containers.         |
+| `title(text)`      | Set/update the `<title>`.                                         |
+| `meta({...})`      | Append a `<meta>` to `<head>`.                                    |
+| `link(rel, href)`  | Append a `<link>` (stylesheet, icon, …) to `<head>`.              |
+
+### Elements
+
+Every HTML5 tag is available in three forms:
+
+- **Self-closing helper:** `h1("Hello")`, `p("text", {class:"lead"})`,
+  `a("Click", {href:"/x"})`, `img({src:"a.png", alt:"a"})`
+- **Unambiguous form:** `html_div(...)`, `html_button(...)`, `html_input(...)` —
+  use these when a tag name (e.g. `button`, `input`, `label`, `table`, `form`)
+  collides with sdev's UI toolkit.
+- **Containers:** `open_<tag>({attrs})` … nested children … `end_<tag>()`
+  (e.g. `open_div`, `open_section`, `open_ul`, `open_form`).
+
+Generic builders cover everything else:
+
+```sdev
+tag("custom-element", "text", { id: "x" })
+open("nav", { class: "top" })
+  a("Home", { href: "/" })
+close()
+```
+
+### CSS
+
+```sdev
+style("body", { background: "#0b1220", color: "white", font_family: "system-ui" })
+style(".btn", { padding: "12px 18px", border_radius: "8px", background: "#3b82f6" })
+style(".btn:hover", { background: "#2563eb" })
+
+keyframes("spin", {
+  "0%":   { transform: "rotate(0deg)" },
+  "100%": { transform: "rotate(360deg)" },
+})
+
+// Or drop in raw CSS
+raw_css(".grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }")
+```
+
+Property names use `snake_case` and are auto-converted to `kebab-case`
+(`font_size` → `font-size`).
+
+### JavaScript
+
+```sdev
+onclick("#go",       "alert('hello from sdev')")
+on("input", "#q",    "console.log(event.target.value)")
+script("window.addEventListener('load', () => console.log('ready'))")
+raw_js("fetch('/api').then(r => r.json()).then(console.log)")
+```
+
+### Raw passthrough
+
+When the DSL doesn't cover something, drop straight to source:
+
+```sdev
+raw_html("<svg viewBox='0 0 10 10'><circle cx='5' cy='5' r='4'/></svg>")
+raw_css("@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }")
+raw_js("document.title = 'updated from sdev'")
+```
+
+### Full example
+
+```sdev
+page("Counter")
+  style("body", { display: "grid", place_items: "center", height: "100vh",
+                  font_family: "system-ui", background: "#0b1220", color: "#fff" })
+  style(".btn", { padding: "12px 20px", border_radius: "10px",
+                  background: "#3b82f6", color: "#fff", border: "none",
+                  cursor: "pointer", font_size: "16px" })
+
+  h1("Count: 0", { id: "label" })
+  html_button("Tap me", { id: "btn", class: "btn" })
+
+  onclick("#btn", "
+    const el = document.querySelector('#label');
+    const n = (+el.textContent.match(/\\\\d+/)[0]) + 1;
+    el.textContent = 'Count: ' + n;
+  ")
+endpage()
+```
+
+Click **Run** → the WEB tab opens with a live, interactive page.
+Use **Open in new tab** to pop it out, or **Download** to save the `.html` file.
+
+---
+
 *This documentation covers sdev version 1.x. For the latest updates and additional examples, visit the sdev IDE.*
+
