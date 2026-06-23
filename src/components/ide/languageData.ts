@@ -14,7 +14,7 @@ export interface BuiltinDoc {
   name: string;
   signature: string;
   doc: string;
-  category: 'io' | 'math' | 'string' | 'list' | 'graphics' | 'turtle' | 'ui' | 'oop' | 'sys' | 'type';
+  category: 'io' | 'math' | 'string' | 'list' | 'graphics' | 'turtle' | 'ui' | 'oop' | 'sys' | 'type' | 'web';
 }
 
 export const SDEV_BUILTINS: BuiltinDoc[] = [
@@ -112,6 +112,25 @@ export const SDEV_BUILTINS: BuiltinDoc[] = [
   { name: 'button',   signature: 'button(label, fn)',     doc: 'Create a button.', category: 'ui' },
   { name: 'label',    signature: 'label(text)',           doc: 'Create a text label.', category: 'ui' },
   { name: 'textbox',  signature: 'textbox(key)',          doc: 'Create a text input.', category: 'ui' },
+
+  // Web (browser DSL — renders in the IDE's WEB preview panel)
+  { name: 'page',       signature: 'page(title)',                doc: 'Start a new HTML page. Switches the IDE to the WEB preview panel.', category: 'web' },
+  { name: 'endpage',    signature: 'endpage()',                  doc: 'Finalize the page and auto-close any open containers.', category: 'web' },
+  { name: 'tag',        signature: 'tag(name, text?, attrs?)',   doc: 'Emit any HTML tag (e.g. tag("div","hi",{class:"x"})).', category: 'web' },
+  { name: 'open',       signature: 'open(name, attrs?)',         doc: 'Open a container element; pair with close().', category: 'web' },
+  { name: 'close',      signature: 'close()',                    doc: 'Close the most recently opened container.', category: 'web' },
+  { name: 'style',      signature: 'style(selector, dict) | style(raw_css)', doc: 'Add CSS — either a selector + dict of declarations, or a raw CSS string.', category: 'web' },
+  { name: 'keyframes',  signature: 'keyframes(name, steps)',     doc: 'Define a @keyframes animation from a step dict.', category: 'web' },
+  { name: 'script',     signature: 'script(code)',               doc: 'Append JavaScript to the page <script>.', category: 'web' },
+  { name: 'onclick',    signature: 'onclick(selector, code)',    doc: 'Bind a click handler to all elements matching a CSS selector.', category: 'web' },
+  { name: 'on',         signature: 'on(event, selector, code)',  doc: 'Bind any DOM event to elements matching a CSS selector.', category: 'web' },
+  { name: 'raw_html',   signature: 'raw_html(html)',             doc: 'Insert raw HTML at the current position.', category: 'web' },
+  { name: 'raw_css',    signature: 'raw_css(css)',               doc: 'Append raw CSS to the document <style>.', category: 'web' },
+  { name: 'raw_js',     signature: 'raw_js(js)',                 doc: 'Append raw JavaScript to the document <script>.', category: 'web' },
+  { name: 'html_div',   signature: 'html_div(text?, attrs?)',    doc: 'Emit a <div>. Every HTML5 tag has an html_<tag> form (html_h1, html_button, html_input, …) and a paired open_<tag> / end_<tag> for nesting.', category: 'web' },
+  { name: 'h1',         signature: 'h1(text?, attrs?)',          doc: 'Emit an <h1> heading. Same shape for h2…h6, p, span, a, img, ul/li, table, form, etc.', category: 'web' },
+  { name: 'meta',       signature: 'meta(attrs)',                doc: 'Add a <meta> tag to <head>.', category: 'web' },
+  { name: 'link',       signature: 'link(rel, href) | link(attrs)', doc: 'Add a <link> tag to <head> (stylesheets, icons, …).', category: 'web' },
 ];
 
 export const SDEV_CONSTANTS = ['PI', 'TAU', 'E', 'INFINITY', 'yep', 'nope', 'void'];
@@ -136,4 +155,6 @@ export const SDEV_SNIPPETS: Snippet[] = [
   { prefix: 'canvas',   body: 'canvas($1, $2)\nclear("$3")',                          description: 'Open canvas' },
   { prefix: 'turtle',   body: 'canvas(400, 400)\nclear("#0d0d15")\nturtle()\n$0',     description: 'Turtle graphics setup' },
   { prefix: 'window',   body: 'window("$1")\nbutton("$2", () -> ::\n  $3\n;;)',       description: 'UI window with button' },
+  { prefix: 'page',     body: 'page("$1")\n  h1("$2")\n  p("$3")\nendpage()',         description: 'Web page (renders in WEB preview panel)' },
+  { prefix: 'webform',  body: 'page("$1")\n  open_form({ id: "f" })\n    html_input({ name: "q", placeholder: "type..." })\n    html_button("Go", { type: "submit" })\n  end_form()\n  onclick("#f button", "event.preventDefault(); alert(document.querySelector(\'[name=q]\').value)")\nendpage()', description: 'Web form with click handler' },
 ];

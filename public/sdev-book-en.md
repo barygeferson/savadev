@@ -6009,3 +6009,90 @@ JS and Python should behave identically — if not, file a bug.
 
 A short paragraph at the top of every window beats a README.
 
+
+---
+
+# Chapter — Building for the Browser
+
+sdev isn't just for terminals and canvases. The Web DSL turns any program into a
+real HTML document — rendered live in the IDE's **WEB** preview panel, with
+Reload, Download as `.html`, and Open in new tab.
+
+You write sdev. We compile to HTML + CSS + JavaScript.
+
+## Your first page
+
+```sdev
+page("Hello SDEV")
+  h1("Welcome!")
+  p("This is a real web page rendered in-browser.")
+endpage()
+```
+
+Press **Run** and the bottom panel flips to **WEB**.
+
+## Elements
+
+Every HTML5 element has a builtin. Some are exposed under their natural name
+(`h1`, `p`, `div`, `a`, `img`, `section`, `ul`, `li`, …). Tags that collide
+with sdev's UI toolkit (`button`, `input`, `label`, `form`, `table`, `select`,
+`textarea`, `header`, `footer`, `video`, `audio`, `menu`, `option`) are exposed
+under `html_<tag>`:
+
+```sdev
+html_button("Click me", { id: "go", class: "btn" })
+html_input({ type: "email", placeholder: "you@site.com" })
+```
+
+For nesting, every container has `open_<tag>` / `end_<tag>`:
+
+```sdev
+open_section({ class: "hero" })
+  h1("Big claim")
+  p("Supporting line.")
+end_section()
+```
+
+## CSS
+
+```sdev
+style("body", {
+  background: "#0b1220",
+  color: "#fff",
+  font_family: "system-ui",
+  margin: "0",
+})
+style(".btn", { padding: "12px 18px", border_radius: "8px", background: "#3b82f6" })
+```
+
+`snake_case` keys are converted to `kebab-case`. Drop into raw CSS any time:
+
+```sdev
+raw_css("@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }")
+```
+
+## JavaScript
+
+```sdev
+onclick("#go", "alert('hello from sdev')")
+on("input", "#q", "console.log(event.target.value)")
+raw_js("fetch('/api').then(r => r.json()).then(console.log)")
+```
+
+## Raw HTML
+
+For anything we don't wrap (SVG, custom elements, web components), drop in
+source directly:
+
+```sdev
+raw_html("<svg viewBox='0 0 10 10'><circle cx='5' cy='5' r='4'/></svg>")
+```
+
+## Tips
+
+1. **Always call `endpage()`** — it auto-closes any container you forgot.
+2. **Mix freely.** `tag()`, `open()`/`close()`, `raw_html()`, `raw_css()`, and
+   `raw_js()` give you total escape hatches.
+3. **Use the Open-in-new-tab button** for full-window testing.
+4. **Hit Download** to ship the generated `.html` anywhere — no sdev runtime
+   needed to view it; the result is a plain web page.

@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { BookOpen, Variable, Wand2, GitBranch, Calculator, ArrowRight, Wrench, Sparkles } from 'lucide-react';
+import { BookOpen, Variable, Wand2, GitBranch, Calculator, ArrowRight, Wrench, Sparkles, Globe } from 'lucide-react';
 
 const REFERENCE = [
   {
@@ -81,6 +81,19 @@ forge result be nums |> each(x -> x * 2) |> sift(x -> x > 5)
 **Random:** \`chaos()\`, \`randint()\`, \`pick()\`, \`shuffle()\`
 **Tomes:** \`inscriptions()\`, \`contents()\`, \`entries()\`
 **JSON:** \`etch()\`, \`unetch()\``,
+  },
+  {
+    title: 'Web Building (HTML/CSS/JS)',
+    icon: Globe,
+    content: `Build real web pages — runs in the IDE's **WEB** preview panel.
+**Page:** \`page("Title")\` … \`endpage()\`
+**Elements:** \`h1()\`, \`p()\`, \`div()\`, \`a()\`, \`img()\` (+ \`html_<tag>\` for every HTML5 tag)
+**Containers:** \`open_div({class:"x"})\` … \`end_div()\`
+**CSS:** \`style("body", {background:"#0b1220", color:"white"})\`
+**JS:** \`onclick("#btn", "alert('hi')")\`, \`on("input", "#q", "...")\`
+**Raw passthrough:** \`raw_html()\`, \`raw_css()\`, \`raw_js()\`
+**Animations:** \`keyframes("spin", {...})\`
+Hit Run → preview opens in-IDE with Reload / Download / Open in new tab.`,
   },
   {
     title: 'Unique Syntax',

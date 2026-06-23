@@ -113,5 +113,26 @@
       "forge message be \"Hello, World!\"",
       "speak(message)"
     ]
+  },
+  "Web page": {
+    "prefix": "page",
+    "body": [
+      "page(\"${1:My Page}\")",
+      "  h1(\"${2:Welcome}\")",
+      "  p(\"${3:This is a real web page.}\")",
+      "endpage()"
+    ]
+  },
+  "Web styled button": {
+    "prefix": "webbtn",
+    "body": [
+      "page(\"${1:Counter}\")",
+      "  style(\"body\", { display: \"grid\", place_items: \"center\", height: \"100vh\", background: \"#0b1220\", color: \"#fff\", font_family: \"system-ui\" })",
+      "  style(\".btn\", { padding: \"12px 20px\", border_radius: \"10px\", background: \"#3b82f6\", color: \"#fff\", border: \"none\", cursor: \"pointer\" })",
+      "  h1(\"${2:Count: 0}\", { id: \"label\" })",
+      "  html_button(\"${3:Tap me}\", { id: \"btn\", class: \"btn\" })",
+      "  onclick(\"#btn\", \"const el=document.querySelector('#label'); const n=(+el.textContent.match(/\\\\d+/)[0])+1; el.textContent='Count: '+n;\")",
+      "endpage()"
+    ]
   }
 }

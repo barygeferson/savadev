@@ -2,7 +2,7 @@
 
 > sdev is a modern programming language with a browser-based IDE, dual Python/JavaScript runtimes, and built-in graphics, mapping, and GIS capabilities.
 
-sdev features a radically unique syntax (keywords like `forge`, `be`, `conjure`) designed to differ from Python, JavaScript, and Go. It ships with parity across a Python interpreter (for professional/desktop use) and a JS/TS interpreter (for the web IDE and Leaflet integration). The language includes a standard library, bytecode VM, virtual kernel, multi-language keyword support (26 languages), and a decentralized package system that loads libraries from GitHub Gists via the `summon` keyword.
+sdev features a radically unique syntax (keywords like `forge`, `be`, `conjure`) designed to differ from Python, JavaScript, and Go. It ships with parity across a Python interpreter (for professional/desktop use) and a JS/TS interpreter (for the web IDE and Leaflet integration). The language includes a standard library, bytecode VM, virtual kernel, multi-language keyword support (26 languages), a decentralized package system that loads libraries from GitHub Gists via the `summon` keyword, and a built-in Web DSL (`page`, `h1`, `style`, `onclick`, `raw_html`/`raw_css`/`raw_js`, …) that compiles to a full HTML document rendered in the IDE's WEB preview panel.
 
 ## Pages
 
