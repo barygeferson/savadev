@@ -651,8 +651,16 @@ export default function IDEPage() {
             },
           });
         }
+        // ── Web (HTML/CSS/JS) builtins ──
+        let producedWeb = false;
+        const web = createWebBuiltins((s) => {
+          producedWeb = true;
+          setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
+        });
+        web.forEach((fn, name) => env.define(name, fn));
         interpreter.interpret(ast);
-        if (producedUi) { setBottomPanel('app'); }
+        if (producedWeb) setBottomPanel('web');
+        else if (producedUi) { setBottomPanel('app'); }
       } else {
         // "Compiler" mode — uses the rebuilt sdev compiler pipeline:
         //   parse → compile-to-container → execute via the full Interpreter
@@ -703,8 +711,16 @@ export default function IDEPage() {
             },
           });
         }
+        // ── Web (HTML/CSS/JS) builtins ──
+        let producedWeb = false;
+        const web = createWebBuiltins((s) => {
+          producedWeb = true;
+          setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
+        });
+        web.forEach((fn, name) => env.define(name, fn));
         interpreter.interpret(ast);
-        if (producedUi) { setBottomPanel('app'); }
+        if (producedWeb) setBottomPanel('web');
+        else if (producedUi) { setBottomPanel('app'); }
       }
 
       // Stash the translated source so the "view translated" toggle works.
