@@ -4,7 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { BookOpen, Variable, Wand2, GitBranch, Calculator, ArrowRight, Wrench, Sparkles } from 'lucide-react';
+import { BookOpen, Variable, Wand2, GitBranch, Calculator, ArrowRight, Wrench, Sparkles, Globe } from 'lucide-react';
 
 const REFERENCE = [
   {
