@@ -570,6 +570,7 @@ export default function IDEPage() {
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
     uiStateRef.current = null;
     setUiState(null);
+    setWebState(null);
     setIsRunning(true);
     setStatusMsg('Running…');
 
