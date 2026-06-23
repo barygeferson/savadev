@@ -38,7 +38,9 @@ import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
+import { createWebBuiltins, type WebState } from '@/lang/web';
 import { AppPreviewPanel } from '@/components/ide/AppPreviewPanel';
+import { WebPreviewPanel } from '@/components/ide/WebPreviewPanel';
 import { useWorkspaceSync } from '@/hooks/useWorkspaceSync';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -262,7 +264,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas' | 'app' | 'problems';
+type BottomPanel = 'terminal' | 'canvas' | 'app' | 'web' | 'problems';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
@@ -419,6 +421,9 @@ export default function IDEPage() {
   const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
   const uiHandlerIdRef = useRef(0);
 
+  // Web (HTML/CSS/JS) preview state
+  const [webState, setWebState] = useState<WebState | null>(null);
+
   // Cursor position
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [selection, setSelection] = useState(0);
@@ -565,6 +570,7 @@ export default function IDEPage() {
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
     uiStateRef.current = null;
     setUiState(null);
+    setWebState(null);
     setIsRunning(true);
     setStatusMsg('Running…');
 
@@ -645,8 +651,16 @@ export default function IDEPage() {
             },
           });
         }
+        // ── Web (HTML/CSS/JS) builtins ──
+        let producedWeb = false;
+        const web = createWebBuiltins((s) => {
+          producedWeb = true;
+          setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
+        });
+        web.forEach((fn, name) => env.define(name, fn));
         interpreter.interpret(ast);
-        if (producedUi) { setBottomPanel('app'); }
+        if (producedWeb) setBottomPanel('web');
+        else if (producedUi) { setBottomPanel('app'); }
       } else {
         // "Compiler" mode — uses the rebuilt sdev compiler pipeline:
         //   parse → compile-to-container → execute via the full Interpreter
@@ -697,8 +711,16 @@ export default function IDEPage() {
             },
           });
         }
+        // ── Web (HTML/CSS/JS) builtins ──
+        let producedWeb = false;
+        const web = createWebBuiltins((s) => {
+          producedWeb = true;
+          setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
+        });
+        web.forEach((fn, name) => env.define(name, fn));
         interpreter.interpret(ast);
-        if (producedUi) { setBottomPanel('app'); }
+        if (producedWeb) setBottomPanel('web');
+        else if (producedUi) { setBottomPanel('app'); }
       }
 
       // Stash the translated source so the "view translated" toggle works.
@@ -1460,6 +1482,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         <Code className="w-3 h-3" /> APP
                       </button>
                     )}
+                    {webState && webState.produced && (
+                      <button
+                        onClick={() => setBottomPanel('web')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'web' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                      >
+                        <Globe className="w-3 h-3" /> WEB
+                      </button>
+                    )}
                     <button
                       onClick={() => setBottomPanel('problems')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'problems' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
@@ -1513,6 +1543,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev);
                       }}
                     />
+                  )}
+                  {bottomPanel === 'web' && (
+                    <WebPreviewPanel state={webState} />
                   )}
                   {bottomPanel === 'problems' && (
                     <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
