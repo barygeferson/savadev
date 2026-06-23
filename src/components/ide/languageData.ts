@@ -155,4 +155,6 @@ export const SDEV_SNIPPETS: Snippet[] = [
   { prefix: 'canvas',   body: 'canvas($1, $2)\nclear("$3")',                          description: 'Open canvas' },
   { prefix: 'turtle',   body: 'canvas(400, 400)\nclear("#0d0d15")\nturtle()\n$0',     description: 'Turtle graphics setup' },
   { prefix: 'window',   body: 'window("$1")\nbutton("$2", () -> ::\n  $3\n;;)',       description: 'UI window with button' },
+  { prefix: 'page',     body: 'page("$1")\n  h1("$2")\n  p("$3")\nendpage()',         description: 'Web page (renders in WEB preview panel)' },
+  { prefix: 'webform',  body: 'page("$1")\n  open_form({ id: "f" })\n    html_input({ name: "q", placeholder: "type..." })\n    html_button("Go", { type: "submit" })\n  end_form()\n  onclick("#f button", "event.preventDefault(); alert(document.querySelector(\'[name=q]\').value)")\nendpage()', description: 'Web form with click handler' },
 ];
