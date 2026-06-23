@@ -38,7 +38,9 @@ import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
+import { createWebBuiltins, type WebState } from '@/lang/web';
 import { AppPreviewPanel } from '@/components/ide/AppPreviewPanel';
+import { WebPreviewPanel } from '@/components/ide/WebPreviewPanel';
 import { useWorkspaceSync } from '@/hooks/useWorkspaceSync';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -262,7 +264,7 @@ const SNIPPETS: Record<string, string> = {
 };
 
 let fileIdCounter = 10;
-type BottomPanel = 'terminal' | 'canvas' | 'app' | 'problems';
+type BottomPanel = 'terminal' | 'canvas' | 'app' | 'web' | 'problems';
 
 const DEFAULT_SETTINGS: IdeSettings = {
   fontSize: 14,
@@ -418,6 +420,9 @@ export default function IDEPage() {
   const uiStateRef = useRef<UiState | null>(null);
   const uiHandlersRef = useRef<Map<number, UiCallback>>(new Map());
   const uiHandlerIdRef = useRef(0);
+
+  // Web (HTML/CSS/JS) preview state
+  const [webState, setWebState] = useState<WebState | null>(null);
 
   // Cursor position
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
