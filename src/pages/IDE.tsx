@@ -1482,6 +1482,14 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         <Code className="w-3 h-3" /> APP
                       </button>
                     )}
+                    {webState && webState.produced && (
+                      <button
+                        onClick={() => setBottomPanel('web')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'web' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                      >
+                        <Globe className="w-3 h-3" /> WEB
+                      </button>
+                    )}
                     <button
                       onClick={() => setBottomPanel('problems')}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono border-b-2 transition-all ${bottomPanel === 'problems' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
@@ -1535,6 +1543,9 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         setUiState(prev => prev ? { ...prev, values: new Map(prev.values).set(k, v) } : prev);
                       }}
                     />
+                  )}
+                  {bottomPanel === 'web' && (
+                    <WebPreviewPanel state={webState} />
                   )}
                   {bottomPanel === 'problems' && (
                     <IdeProblems problems={problems} onJump={(line) => editorRef.current?.jumpToLine(line)} />
