@@ -603,6 +603,17 @@ export default function IDEPage() {
       }
     } catch {/* fallback to raw lexer */}
 
+    // ─── Module linking ───
+    // Resolve `link "file.sdev"` directives by inlining other workspace files.
+    try {
+      const { resolveLinks } = await import('@/lang/linker');
+      code = resolveLinks(
+        code,
+        files.map(f => ({ name: f.name, content: f.content })),
+        { entryName: activeFile.name }
+      );
+    } catch {/* linker is best-effort */}
+
     // Translation already applied above — disable Lexer's built-in pass.
     const lexerOpts = { sourceLanguage: 'English' as const, translate: false };
 
