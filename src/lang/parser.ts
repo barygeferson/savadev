@@ -550,7 +550,7 @@ export class Parser {
         // Allow bare identifier keys (treated as string)
         let key: AST.ASTNode;
         const t = this.peek();
-        if (t.type === TokenType.IDENTIFIER && this.peekAhead(1)?.type === TokenType.COLON) {
+        if (t.type === TokenType.IDENTIFIER && this.tokens[this.pos + 1]?.type === TokenType.COLON) {
           this.advance();
           key = { type: 'StringLiteral', value: t.value, line: t.line };
         } else {
