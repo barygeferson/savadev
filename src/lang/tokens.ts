@@ -58,6 +58,9 @@ export enum TokenType {
   RPAREN = 'RPAREN',
   LBRACKET = 'LBRACKET',
   RBRACKET = 'RBRACKET',
+  LBRACE = 'LBRACE',
+  RBRACE = 'RBRACE',
+
   COMMA = 'COMMA',
   ARROW = 'ARROW',         // ->
   PIPE = 'PIPE',           // |>
