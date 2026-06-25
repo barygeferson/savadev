@@ -485,8 +485,12 @@ export class Parser {
       return this.parseArrayLiteral(token.line);
     }
 
-    // Dict literal: :: key: value, ... ;;
-    // Also handles empty dict ::;;
+    // Dict literal: :: key: value, ... ;;  OR  { key: value, ... }
+    // Also handles empty dict ::;;  or  {}
+    if (this.check(TokenType.LBRACE)) {
+      this.advance(); // consume {
+      return this.parseBraceDictLiteral(token.line);
+    }
     if (this.check(TokenType.DOUBLE_COLON)) {
       // Peek ahead to see if this is a dict literal (expression context)
       // We detect dict literal when next meaningful token after :: is either
@@ -506,6 +510,7 @@ export class Parser {
       this.advance(); // re-consume ::
       return this.parseDictLiteral(token.line);
     }
+
 
     throw new SdevError(`Unexpected token: '${token.value}'`, token.line, token.column);
   }
