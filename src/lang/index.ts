@@ -49,5 +49,7 @@ export {
   SUPPORTED_LANGUAGES,
   KEYWORD_TABLES,
 } from './translator';
+export { resolveLinks } from './linker';
+export type { LinkableFile } from './linker';
 export * from './tokens';
 export * from './ast';
