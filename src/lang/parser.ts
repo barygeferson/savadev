@@ -542,6 +542,30 @@ export class Parser {
     return { type: 'DictLiteral', entries, line };
   }
 
+  private parseBraceDictLiteral(line: number): AST.DictLiteral {
+    const entries: { key: AST.ASTNode; value: AST.ASTNode }[] = [];
+    if (!this.check(TokenType.RBRACE)) {
+      do {
+        if (this.check(TokenType.RBRACE)) break;
+        // Allow bare identifier keys (treated as string)
+        let key: AST.ASTNode;
+        const t = this.peek();
+        if (t.type === TokenType.IDENTIFIER && this.peekAhead(1)?.type === TokenType.COLON) {
+          this.advance();
+          key = { type: 'StringLiteral', value: t.value, line: t.line };
+        } else {
+          key = this.parseExpression();
+        }
+        this.consume(TokenType.COLON, "Expected ':'");
+        const value = this.parseExpression();
+        entries.push({ key, value });
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RBRACE, "Expected '}'");
+    return { type: 'DictLiteral', entries, line };
+  }
+
+
   // Helper methods
   private peek(): Token {
     return this.tokens[this.pos];
