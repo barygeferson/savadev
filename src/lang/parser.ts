@@ -485,8 +485,12 @@ export class Parser {
       return this.parseArrayLiteral(token.line);
     }
 
-    // Dict literal: :: key: value, ... ;;
-    // Also handles empty dict ::;;
+    // Dict literal: :: key: value, ... ;;  OR  { key: value, ... }
+    // Also handles empty dict ::;;  or  {}
+    if (this.check(TokenType.LBRACE)) {
+      this.advance(); // consume {
+      return this.parseBraceDictLiteral(token.line);
+    }
     if (this.check(TokenType.DOUBLE_COLON)) {
       // Peek ahead to see if this is a dict literal (expression context)
       // We detect dict literal when next meaningful token after :: is either
@@ -506,6 +510,7 @@ export class Parser {
       this.advance(); // re-consume ::
       return this.parseDictLiteral(token.line);
     }
+
 
     throw new SdevError(`Unexpected token: '${token.value}'`, token.line, token.column);
   }
@@ -536,6 +541,30 @@ export class Parser {
     this.consume(TokenType.DOUBLE_SEMI, "Expected ';;'");
     return { type: 'DictLiteral', entries, line };
   }
+
+  private parseBraceDictLiteral(line: number): AST.DictLiteral {
+    const entries: { key: AST.ASTNode; value: AST.ASTNode }[] = [];
+    if (!this.check(TokenType.RBRACE)) {
+      do {
+        if (this.check(TokenType.RBRACE)) break;
+        // Allow bare identifier keys (treated as string)
+        let key: AST.ASTNode;
+        const t = this.peek();
+        if (t.type === TokenType.IDENTIFIER && this.tokens[this.pos + 1]?.type === TokenType.COLON) {
+          this.advance();
+          key = { type: 'StringLiteral', value: t.value, line: t.line };
+        } else {
+          key = this.parseExpression();
+        }
+        this.consume(TokenType.COLON, "Expected ':'");
+        const value = this.parseExpression();
+        entries.push({ key, value });
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RBRACE, "Expected '}'");
+    return { type: 'DictLiteral', entries, line };
+  }
+
 
   // Helper methods
   private peek(): Token {
