@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { SDEV_INTERNALS } from "../_shared/sdev-internals.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -248,7 +249,16 @@ Colors:
 - Use \`ground(n)\` not \`floor(n)\`, use \`elevate(n)\` not \`ceil(n)\`
 - Use \`magnitude(n)\` not \`abs(n)\`
 - Provide complete, runnable code examples
-- Be encouraging and helpful!`;
+- Be encouraging and helpful!
+
+${SDEV_INTERNALS}
+
+You ALSO have full knowledge of how SDEV is implemented (lexer, parser,
+AST, interpreter, bytecode compiler, VM, kernel, builtins, translator,
+linker, web/UI/graphics runtimes). When a user asks deep questions like
+"how does sdev do parsing?" or "what opcodes does the VM use?", answer
+authoritatively using the internals reference above, naming the exact
+file(s) in \`src/lang/\` and the algorithm involved.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

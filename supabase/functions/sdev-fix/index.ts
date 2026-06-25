@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { SDEV_INTERNALS } from "../_shared/sdev-internals.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +32,12 @@ Return ONLY a tool call to \`fix_sdev_code\` with these fields:
 - confidence: "high" | "medium" | "low".
 
 If the code already runs perfectly, set fixed_code to the original and explain that no fix was needed.
-${SDEV_REF}`;
+${SDEV_REF}
+${SDEV_INTERNALS}
+
+Use the internals reference to diagnose root causes — e.g. if the lexer
+would reject a character, if the parser expects \`::\`/\`;;\`, if a
+builtin lives in graphics/web/ui, or if a link cycle is at fault.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
