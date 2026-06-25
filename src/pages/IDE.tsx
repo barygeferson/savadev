@@ -767,7 +767,7 @@ export default function IDEPage() {
     } finally {
       setIsRunning(false);
     }
-  }, [activeFile, runMode, selectedLanguage, recordRun]);
+  }, [activeFile, runMode, selectedLanguage, recordRun, files]);
 
   const newFile = useCallback((folderId: string | null = null) => {
     const id = String(++fileIdCounter);
