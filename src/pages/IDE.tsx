@@ -1265,6 +1265,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <Download className="w-3.5 h-3.5 text-neon-green" /> All files
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={packageAsExe} className="gap-2 text-xs cursor-pointer">
+                  <Cpu className="w-3.5 h-3.5 text-neon-cyan" />
+                  <div>
+                    <div className="font-medium">Compile to .exe</div>
+                    <div className="text-muted-foreground text-[10px]">Standalone Windows binary (~82 MB)</div>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadElectron} className="gap-2 text-xs cursor-pointer">
                   <Bug className="w-3.5 h-3.5 text-neon-violet" />
                   <div>
