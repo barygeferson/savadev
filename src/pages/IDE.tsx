@@ -54,6 +54,7 @@ import { useCloudFiles } from '@/hooks/useCloudFiles';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
 import sdevLogo from '@/assets/sdev-logo.png';
+import sdevStubAsset from '@/runtime/sdev-stub-win-x64.exe.asset.json';
 
 const STARTER_FILES: IdeFile[] = [
   {
@@ -891,6 +892,43 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     toast.success('Downloaded Electron wrapper! See README for setup.');
   };
 
+  // Package the active file as a true standalone Windows .exe.
+  // Mechanism (same as PyInstaller / Node SEA / pkg / Deno compile):
+  //   [ prebuilt runtime stub (node SEA with embedded sdev interpreter) ]
+  //   [ SDEV source bytes ]
+  //   [ MAGIC "SDEVPACK" (8 bytes) ][ payload length (u64 LE) ]
+  // On launch the stub reads its own file, finds the magic trailer at EOF,
+  // extracts the payload, and runs the SDEV interpreter on it.
+  const packageAsExe = async () => {
+    if (!activeFile) { toast.error('No file open'); return; }
+    const t = toast.loading('Packaging .exe — downloading runtime (~82 MB)…');
+    try {
+      const res = await fetch(sdevStubAsset.url);
+      if (!res.ok) throw new Error(`stub fetch failed: ${res.status}`);
+      const stub = new Uint8Array(await res.arrayBuffer());
+      const payload = new TextEncoder().encode(activeFile.content);
+      const magic = new TextEncoder().encode('SDEVPACK'); // 8 bytes
+      const lenBuf = new ArrayBuffer(8);
+      new DataView(lenBuf).setBigUint64(0, BigInt(payload.length), true); // little-endian
+      const out = new Uint8Array(stub.length + payload.length + 8 + 8);
+      out.set(stub, 0);
+      out.set(payload, stub.length);
+      out.set(magic, stub.length + payload.length);
+      out.set(new Uint8Array(lenBuf), stub.length + payload.length + 8);
+
+      const blob = new Blob([out], { type: 'application/vnd.microsoft.portable-executable' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = activeFile.name.replace(/\.sdev$/i, '') + '.exe';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Compiled to .exe — double-click to run on Windows', { id: t });
+    } catch (e) {
+      toast.error(`Package failed: ${e instanceof Error ? e.message : String(e)}`, { id: t });
+    }
+  };
+
   const uploadFile = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -1227,6 +1265,13 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                   <Download className="w-3.5 h-3.5 text-neon-green" /> All files
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={packageAsExe} className="gap-2 text-xs cursor-pointer">
+                  <Cpu className="w-3.5 h-3.5 text-neon-cyan" />
+                  <div>
+                    <div className="font-medium">Compile to .exe</div>
+                    <div className="text-muted-foreground text-[10px]">Standalone Windows binary (~82 MB)</div>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadElectron} className="gap-2 text-xs cursor-pointer">
                   <Bug className="w-3.5 h-3.5 text-neon-violet" />
                   <div>
