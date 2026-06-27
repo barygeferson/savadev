@@ -87,7 +87,7 @@ function Add-Shape($shape, $x, $y) { [Windows.Controls.Canvas]::SetLeft($shape, 
 $win = [Windows.Window]::new()
 $win.Title = '${escPs(title)}'
 $win.SizeToContent = 'WidthAndHeight'
-$win.ResizeMode = 'CanResize'
+$win.ResizeMode = 'NoResize'
 $win.WindowStartupLocation = 'CenterScreen'
 $cv = [Windows.Controls.Canvas]::new()
 $cv.Width = ${width}
@@ -246,6 +246,11 @@ async function main() {
       openInDefaultBrowser(html);
     }
 
+    // Always show canvas as its own standalone window when canvas commands exist.
+    if (runtime.commands.length > 0) {
+      showNativeCanvas(runtime.commands, 'SDEV Canvas');
+    }
+
     if (root && runtime.uiState) {
       const server = http.createServer((req, res) => {
         const url = new URL(req.url ?? '/', 'http://127.0.0.1');
@@ -280,12 +285,9 @@ async function main() {
       return;
     }
 
-    if (runtime.commands.length > 0) {
-      showNativeCanvas(runtime.commands, title);
-      return;
+    if (runtime.commands.length === 0) {
+      showOutputWindow(runtime.output);
     }
-
-    showOutputWindow(runtime.output);
   } catch (e) {
     showOutputWindow([e instanceof Error ? `${e.name}: ${e.message}` : String(e)], 'SDEV Error');
   }
