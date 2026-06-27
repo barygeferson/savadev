@@ -87,7 +87,7 @@ function Add-Shape($shape, $x, $y) { [Windows.Controls.Canvas]::SetLeft($shape, 
 $win = [Windows.Window]::new()
 $win.Title = '${escPs(title)}'
 $win.SizeToContent = 'WidthAndHeight'
-$win.ResizeMode = 'CanResize'
+$win.ResizeMode = 'NoResize'
 $win.WindowStartupLocation = 'CenterScreen'
 $cv = [Windows.Controls.Canvas]::new()
 $cv.Width = ${width}
