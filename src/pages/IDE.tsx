@@ -56,6 +56,23 @@ import { useSearchParams } from 'react-router-dom';
 import sdevLogo from '@/assets/sdev-logo.png';
 import sdevStubAsset from '@/runtime/sdev-stub-win-x64.exe.asset.json';
 
+const patchLegacyRuntimeStub = (stub: Uint8Array): boolean => {
+  // Existing uploaded Windows runtimes contain the web DSL helper named
+  // canvas(), which overwrites graphics canvas() inside the executable. Patch
+  // that single embedded string in-place so downloaded .exe files use the
+  // native canvas window without needing users to wait for a CDN replacement.
+  const pattern = new TextEncoder().encode('"object",\n  "canvas",\n  "svg"');
+  const replacement = new TextEncoder().encode('"object",\n  "xanvas",\n  "svg"');
+  outer: for (let i = 0; i <= stub.length - pattern.length; i++) {
+    for (let j = 0; j < pattern.length; j++) {
+      if (stub[i + j] !== pattern[j]) continue outer;
+    }
+    stub.set(replacement, i);
+    return true;
+  }
+  return false;
+};
+
 const STARTER_FILES: IdeFile[] = [
   {
     id: '1',
@@ -669,7 +686,9 @@ export default function IDEPage() {
           producedWeb = true;
           setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
         });
-        web.forEach((fn, name) => env.define(name, fn));
+        web.forEach((fn, name) => {
+          if (name !== 'canvas') env.define(name, fn);
+        });
         interpreter.interpret(ast);
         if (producedWeb) setBottomPanel('web');
         else if (producedUi) { setBottomPanel('app'); }
@@ -729,7 +748,9 @@ export default function IDEPage() {
           producedWeb = true;
           setWebState({ ...s, head: [...s.head], stack: s.stack.map(b => [...b]), css: [...s.css], js: [...s.js] });
         });
-        web.forEach((fn, name) => env.define(name, fn));
+        web.forEach((fn, name) => {
+          if (name !== 'canvas') env.define(name, fn);
+        });
         interpreter.interpret(ast);
         if (producedWeb) setBottomPanel('web');
         else if (producedUi) { setBottomPanel('app'); }
@@ -906,6 +927,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
       const res = await fetch(sdevStubAsset.url);
       if (!res.ok) throw new Error(`stub fetch failed: ${res.status}`);
       const stub = new Uint8Array(await res.arrayBuffer());
+      patchLegacyRuntimeStub(stub);
       const payload = new TextEncoder().encode(activeFile.content);
       const magic = new TextEncoder().encode('SDEVPACK'); // 8 bytes
       const lenBuf = new ArrayBuffer(8);

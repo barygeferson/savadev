@@ -221,7 +221,13 @@ function runSdev(source: string) {
   }
 
   createWebBuiltins((s) => { webState = { ...s, head: [...s.head], stack: s.stack.map((b) => [...b]), css: [...s.css], js: [...s.js] }; })
-    .forEach((fn, name) => env.define(name, fn));
+    .forEach((fn, name) => {
+      // Keep graphics canvas() authoritative. The web toolkit also exposes an
+      // HTML <canvas> helper named canvas(), and if it overwrites the graphics
+      // builtin then graphical programs produce a blank browser page instead of
+      // native drawing commands.
+      if (name !== 'canvas') env.define(name, fn);
+    });
 
   interpreter.interpret(ast);
   return { output, commands, uiState, webState, uiHandlers };
@@ -241,7 +247,7 @@ async function main() {
     const rootProps = (root?.props ?? {}) as { title?: string; width?: number; height?: number };
     const title = String(rootProps.title ?? (runtime.commands.length ? 'SDEV Canvas' : 'SDEV Application'));
 
-    if (runtime.webState?.produced) {
+    if (runtime.webState?.produced && runtime.commands.length === 0) {
       const html = writeTemp('index.html', renderWebDocument(runtime.webState));
       openInDefaultBrowser(html);
     }
