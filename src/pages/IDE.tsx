@@ -923,7 +923,10 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
       a.download = activeFile.name.replace(/\.sdev$/i, '') + '.exe';
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Compiled to .exe — double-click to run on Windows', { id: t });
+      toast.success('Compiled to .exe — double-click to run on Windows', {
+        id: t,
+        description: 'Graphical apps open as native Windows windows. Unsigned builds may still show SmartScreen until SDEV is code-signed.',
+      });
     } catch (e) {
       toast.error(`Package failed: ${e instanceof Error ? e.message : String(e)}`, { id: t });
     }
