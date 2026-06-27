@@ -140,10 +140,12 @@ function uiPowershell(port: number, title: string, width: number, height: number
   return `Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $base = 'http://127.0.0.1:${port}'
 function Fetch-State { try { return Invoke-RestMethod -Uri ($base + '/state') -UseBasicParsing } catch { return $null } }
-function Get-Val($st, $key, $fallback) { if (!$key) { return $fallback }; try { $v = $st.values.$key; if ($null -eq $v) { return $fallback }; return $v } catch { return $fallback } }
+function Get-Prop($obj, $key) { if (!$obj -or !$key) { return $null }; $p = $obj.PSObject.Properties[[string]$key]; if ($p) { return $p.Value }; return $null }
+function Get-Node($nodes, $id) { return Get-Prop $nodes ([string]$id) }
+function Get-Val($st, $key, $fallback) { if (!$key) { return $fallback }; $v = Get-Prop $st.values $key; if ($null -eq $v) { return $fallback }; return $v }
 function Prop-Or($obj, $name, $fallback) { try { $v = $obj.$name; if ($null -eq $v) { return $fallback }; return $v } catch { return $fallback } }
 function Text-For($p, $st) { if ($p.bind) { return [string](Get-Val $st ([string]$p.bind) '') }; if ($null -eq $p.text) { return '' }; return [string]$p.text }
-function Add-Kids($panel, $ids, $st) { foreach ($id in $ids) { $child = Render-Node $st.nodes.$id $st; if ($child) { [void]$panel.Children.Add($child) } } }
+function Add-Kids($panel, $ids, $st) { foreach ($id in $ids) { $child = Render-Node (Get-Node $st.nodes $id) $st; if ($child) { [void]$panel.Children.Add($child) } } }
 function Render-Node($n, $st) {
   if ($null -eq $n) { return $null }; $p = $n.props
   switch ([string]$n.type) {
@@ -165,7 +167,7 @@ function Render-Node($n, $st) {
     default { return $null }
   }
 }
-function Render-Root { $st=Fetch-State; if (!$st -or !$st.ui) { return }; $root=$st.ui.nodes.([string]$st.ui.rootId); $body.Children.Clear(); Add-Kids $body $root.children $st.ui }
+function Render-Root { $st=Fetch-State; if (!$st -or !$st.ui) { return }; $root=Get-Node $st.ui.nodes $st.ui.rootId; $body.Children.Clear(); Add-Kids $body $root.children $st.ui }
 $win = [Windows.Window]::new(); $win.Title='${escPs(title)}'; $win.Width=${width}; $win.Height=${height}; $win.MinWidth=260; $win.MinHeight=180; $win.WindowStartupLocation='CenterScreen'
 $scroll=[Windows.Controls.ScrollViewer]::new(); $scroll.VerticalScrollBarVisibility='Auto'; $body=[Windows.Controls.StackPanel]::new(); $body.Margin='14'; $scroll.Content=$body; $win.Content=$scroll
 Render-Root
