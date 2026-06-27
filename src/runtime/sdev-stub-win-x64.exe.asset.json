@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "daa0b38c-eb7c-4dab-857d-27fcf65819ba",
+  "asset_id": "91983572-8b8f-4af5-a4df-a5d583530dc4",
   "project_id": "a22dbf45-ae67-4c2a-ad36-5d59fd07d40a",
-  "url": "/__l5e/assets-v1/daa0b38c-eb7c-4dab-857d-27fcf65819ba/sdev-stub-win-x64.exe",
-  "r2_key": "a/v1/a22dbf45-ae67-4c2a-ad36-5d59fd07d40a/daa0b38c-eb7c-4dab-857d-27fcf65819ba/sdev-stub-win-x64.exe",
+  "url": "/__l5e/assets-v1/91983572-8b8f-4af5-a4df-a5d583530dc4/sdev-stub-win-x64.exe",
+  "r2_key": "a/v1/a22dbf45-ae67-4c2a-ad36-5d59fd07d40a/91983572-8b8f-4af5-a4df-a5d583530dc4/sdev-stub-win-x64.exe",
   "original_filename": "sdev-stub-win-x64.exe",
-  "size": 86199296,
+  "size": 86199808,
   "content_type": "application/octet-stream",
-  "created_at": "2026-06-27T15:20:28Z"
+  "created_at": "2026-06-27T17:19:17Z"
 }
