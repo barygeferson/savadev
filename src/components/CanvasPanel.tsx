@@ -15,6 +15,9 @@ export interface CanvasHandle {
 export const CanvasPanel = forwardRef<CanvasHandle, CanvasPanelProps>(({ commands, onClose }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const canvasSize = [...commands].reverse().find((cmd) => cmd.type === 'canvas');
+  const displayWidth = (canvasSize?.width as number | undefined) ?? 400;
+  const displayHeight = (canvasSize?.height as number | undefined) ?? 400;
   const turtleRef = useRef<TurtleState>({
     x: 200,
     y: 200,
@@ -526,13 +529,13 @@ export const CanvasPanel = forwardRef<CanvasHandle, CanvasPanelProps>(({ command
           </button>
         )}
       </div>
-      <div className="p-4 flex items-center justify-center bg-[#0d0d15]">
+      <div className="p-4 overflow-auto bg-[#0d0d15]">
         <canvas
           ref={canvasRef}
-          width={400}
-          height={400}
-          className="rounded-md shadow-lg max-w-full"
-          style={{ imageRendering: 'auto' }}
+          width={displayWidth}
+          height={displayHeight}
+          className="rounded-md shadow-lg block mx-auto"
+          style={{ imageRendering: 'auto', width: displayWidth, height: displayHeight }}
         />
       </div>
     </div>
