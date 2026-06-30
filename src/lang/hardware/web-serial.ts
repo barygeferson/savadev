@@ -116,7 +116,7 @@ async function readN(reader: ReadableStreamDefaultReader<Uint8Array>, n: number,
 }
 
 async function command(writer: WritableStreamDefaultWriter<Uint8Array>, reader: ReadableStreamDefaultReader<Uint8Array>, bytes: number[], expectExtra = 0): Promise<Uint8Array> {
-  await writer.write(new Uint8Array([...bytes, STK.CRC_EOP]));
+  await writer.write(new Uint8Array([...bytes, STK.CRC_EOP]) as unknown as Uint8Array);
   const [insync] = await readN(reader, 1, 2000);
   if (insync !== STK.IN_SYNC) throw new Error(`STK500: expected IN_SYNC, got 0x${insync.toString(16)}`);
   let extra = new Uint8Array(0);
