@@ -270,6 +270,30 @@ speak("Keys:", m.keys())
 speak("Has age:", m.has("age"))
 `,
   },
+  {
+    id: '99',
+    name: 'blink.sdev',
+    content: `// Arduino Uno — classic blink, written in sdev.
+// Open the Hardware panel (Usb icon), pick your board, hit Detect Board,
+// then Compile + Upload. Requires Chrome / Edge / Opera on desktop.
+
+board "uno" {
+  conjure setup() {
+    pin 13 be output
+    serial begin 9600
+  }
+
+  conjure loop() {
+    pin 13 write high
+    serial println "ON"
+    wait 500
+    pin 13 write low
+    serial println "OFF"
+    wait 500
+  }
+}
+`,
+  },
 ];
 
 const SNIPPETS: Record<string, string> = {
