@@ -2,6 +2,7 @@ import { Lexer, LexerOptions } from './lexer';
 import { Parser } from './parser';
 import { Interpreter } from './interpreter';
 import { SdevError } from './errors';
+import { stripBoardBlocks } from './hardware/strip';
 
 export interface ExecutionResult {
   success: boolean;
@@ -17,7 +18,8 @@ export function execute(source: string, options: ExecuteOptions = {}): Execution
   const output: string[] = [];
 
   try {
-    const lexer = new Lexer(source, options);
+    const cleaned = stripBoardBlocks(source);
+    const lexer = new Lexer(cleaned, options);
     const tokens = lexer.tokenize();
 
     const parser = new Parser(tokens);

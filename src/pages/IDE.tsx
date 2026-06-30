@@ -32,10 +32,12 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe, Usb,
 } from 'lucide-react';
+import { HardwarePanel } from '@/components/ide/HardwarePanel';
 import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
+import { stripBoardBlocks } from '@/lang/hardware/strip';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
 import { createWebBuiltins, type WebState } from '@/lang/web';
@@ -267,6 +269,30 @@ m.set("city", "NYC")
 speak("Get name:", m.get("name"))
 speak("Keys:", m.keys())
 speak("Has age:", m.has("age"))
+`,
+  },
+  {
+    id: '99',
+    name: 'blink.sdev',
+    content: `// Arduino Uno — classic blink, written in sdev.
+// Open the Hardware panel (Usb icon), pick your board, hit Detect Board,
+// then Compile + Upload. Requires Chrome / Edge / Opera on desktop.
+
+board "uno" {
+  conjure setup() {
+    pin 13 be output
+    serial begin 9600
+  }
+
+  conjure loop() {
+    pin 13 write high
+    serial println "ON"
+    wait 500
+    pin 13 write low
+    serial println "OFF"
+    wait 500
+  }
+}
 `,
   },
 ];
@@ -582,7 +608,7 @@ export default function IDEPage() {
   const runCode = useCallback(async () => {
     if (!activeFile) return;
 
-    let code = activeFile.content;
+    let code = stripBoardBlocks(activeFile.content);
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
@@ -996,6 +1022,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'outline'  as SidePanel, icon: ListTree,  label: 'Outline (Ctrl+Shift+O)' },
     { id: 'problems' as SidePanel, icon: AlertCircle, label: `Problems (${problems.length})` },
     { id: 'assistant' as SidePanel, icon: Sparkles,  label: 'AI Doctor — fix & explain' },
+    { id: 'hardware' as SidePanel, icon: Usb,       label: 'Hardware — boards & uploader' },
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
@@ -1453,6 +1480,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                         if (!activeFile) return;
                         setFiles(prev => prev.map(f => f.id === activeId ? { ...f, content: fixed, modified: true } : f));
                       }}
+                    />
+                  )}
+                  {sidePanel === 'hardware' && (
+                    <HardwarePanel
+                      source={activeFile?.content ?? ''}
+                      onAppendLog={(line) => setOutput(prev => [...prev, line])}
                     />
                   )}
                   {sidePanel === 'settings' && (
