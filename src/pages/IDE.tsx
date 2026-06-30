@@ -607,7 +607,7 @@ export default function IDEPage() {
   const runCode = useCallback(async () => {
     if (!activeFile) return;
 
-    let code = activeFile.content;
+    let code = stripBoardBlocks(activeFile.content);
     const outputLines: string[] = [];
     const commands: GraphicsCommand[] = [];
     let turtleState: TurtleState = { x: 200, y: 200, angle: -90, penDown: true, color: '#00ff88', width: 2 };
