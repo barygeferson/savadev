@@ -17,7 +17,8 @@ export function execute(source: string, options: ExecuteOptions = {}): Execution
   const output: string[] = [];
 
   try {
-    const lexer = new Lexer(source, options);
+    const cleaned = stripBoardBlocks(source);
+    const lexer = new Lexer(cleaned, options);
     const tokens = lexer.tokenize();
 
     const parser = new Parser(tokens);
