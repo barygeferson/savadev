@@ -2,6 +2,7 @@ import { Lexer, LexerOptions } from './lexer';
 import { Parser } from './parser';
 import { Interpreter } from './interpreter';
 import { SdevError } from './errors';
+import { stripBoardBlocks } from './hardware/strip';
 
 export interface ExecutionResult {
   success: boolean;
