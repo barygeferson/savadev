@@ -37,6 +37,7 @@ import {
 import { HardwarePanel } from '@/components/ide/HardwarePanel';
 import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
+import { stripBoardBlocks } from '@/lang/hardware/strip';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
 import { createUiBuiltins, type UiState, type UiCallback } from '@/lang/ui';
 import { createWebBuiltins, type WebState } from '@/lang/web';
