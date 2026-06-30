@@ -86,7 +86,7 @@ const STK = {
   READ_SIGN: 0x75,
 };
 
-async function withReader<T>(port: WebSerialPort, fn: (reader: ReadableStreamDefaultReader<Uint8Array>, writer: WritableStreamDefaultWriter<Uint8Array>) => Promise<T>): Promise<T> {
+async function withReader<T>(port: WebSerialPort, fn: (reader: ReadableStreamDefaultReader<Uint8Array>, writer: WritableStreamDefaultWriter<BufferSource>) => Promise<T>): Promise<T> {
   const reader = port.readable.getReader();
   const writer = port.writable.getWriter();
   try { return await fn(reader, writer); }
@@ -116,7 +116,7 @@ async function readN(reader: ReadableStreamDefaultReader<Uint8Array>, n: number,
   return out;
 }
 
-async function command(writer: WritableStreamDefaultWriter<Uint8Array>, reader: ReadableStreamDefaultReader<Uint8Array>, bytes: number[], expectExtra = 0): Promise<Uint8Array> {
+async function command(writer: WritableStreamDefaultWriter<BufferSource>, reader: ReadableStreamDefaultReader<Uint8Array>, bytes: number[], expectExtra = 0): Promise<Uint8Array> {
   await writer.write(new Uint8Array([...bytes, STK.CRC_EOP]) as unknown as Uint8Array);
   const [insync] = await readN(reader, 1, 2000);
   if (insync !== STK.IN_SYNC) throw new Error(`STK500: expected IN_SYNC, got 0x${insync.toString(16)}`);
