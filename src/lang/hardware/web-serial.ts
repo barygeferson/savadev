@@ -3,6 +3,13 @@
 // ============================================================
 // Browser-only. Guard callers with `isWebSerialSupported()`.
 
+
+function toBuf(bytes: number[] | Uint8Array): Uint8Array {
+  const buf = new ArrayBuffer(bytes.length);
+  const u = new Uint8Array(buf);
+  u.set(bytes as ArrayLike<number>);
+  return u;
+}
 export function isWebSerialSupported(): boolean {
   return typeof navigator !== 'undefined' && 'serial' in navigator;
 }
@@ -117,10 +124,10 @@ async function readN(reader: ReadableStreamDefaultReader<Uint8Array>, n: number,
 }
 
 async function command(writer: WritableStreamDefaultWriter<BufferSource>, reader: ReadableStreamDefaultReader<Uint8Array>, bytes: number[], expectExtra = 0): Promise<Uint8Array> {
-  await writer.write(new Uint8Array([...bytes, STK.CRC_EOP]) as unknown as Uint8Array);
+  await writer.write(toBuf([...bytes, STK.CRC_EOP]));
   const [insync] = await readN(reader, 1, 2000);
   if (insync !== STK.IN_SYNC) throw new Error(`STK500: expected IN_SYNC, got 0x${insync.toString(16)}`);
-  let extra = new Uint8Array(0);
+  let extra: Uint8Array = new Uint8Array(new ArrayBuffer(0));
   if (expectExtra > 0) extra = await readN(reader, expectExtra, 2000);
   const [ok] = await readN(reader, 1, 2000);
   if (ok !== STK.OK) throw new Error(`STK500: expected OK, got 0x${ok.toString(16)}`);
@@ -156,7 +163,7 @@ export async function flashAvr(port: WebSerialPort, hex: string, onProgress?: (p
       let synced = false;
       for (let i = 0; i < 10; i++) {
         try {
-          await writer.write(new Uint8Array([STK.GET_SYNC, STK.CRC_EOP]));
+          await writer.write(toBuf([STK.GET_SYNC, STK.CRC_EOP]));
           const [a, b] = await readN(reader, 2, 250);
           if (a === STK.IN_SYNC && b === STK.OK) { synced = true; break; }
         } catch { /* retry */ }
