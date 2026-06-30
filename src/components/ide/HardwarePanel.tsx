@@ -108,7 +108,9 @@ export function HardwarePanel({ source, onAppendLog }: Props) {
     if (board.uploader !== 'avrdude-stk500') {
       toast.message(`${board.uploader} flashing isn't wired in this build yet — download the firmware and use the vendor tool.`);
       const { data } = parseIntelHex(hex);
-      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const ab = new ArrayBuffer(data.length);
+      new Uint8Array(ab).set(data);
+      const blob = new Blob([ab], { type: 'application/octet-stream' });
       triggerDownload(blob, `${board.id}.bin`);
       return;
     }
