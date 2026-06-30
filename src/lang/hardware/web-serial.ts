@@ -13,7 +13,8 @@ export interface WebSerialPort {
   close(): Promise<void>;
   setSignals(signals: { dataTerminalReady?: boolean; requestToSend?: boolean }): Promise<void>;
   readable: ReadableStream<Uint8Array>;
-  writable: WritableStream<Uint8Array>;
+  // Loose buffer type avoids ArrayBuffer/SharedArrayBuffer variance noise.
+  writable: WritableStream<BufferSource>;
   getInfo(): { usbVendorId?: number; usbProductId?: number };
 }
 
