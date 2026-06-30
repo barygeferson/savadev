@@ -5,11 +5,17 @@ import * as AST from './ast';
 import { OpCode, Instruction, FunctionDef, Chunk, BYTECODE_VERSION, BYTECODE_MAGIC, ConstantPool, DebugInfo } from './bytecode';
 import { SdevError } from './errors';
 
+interface LoopContext {
+  breakJumps: number[];        // jump indices to patch on loop exit
+  continueJumps: number[];     // jump indices to patch to the loop's continue target
+}
+
 class FunctionCompiler {
   code: Instruction[] = [];
   functions: FunctionDef[] = [];
   name: string;
   params: string[];
+  loopStack: LoopContext[] = [];
 
   constructor(name: string, params: string[]) {
     this.name = name;
@@ -27,6 +33,10 @@ class FunctionCompiler {
 
   patchJump(jumpIndex: number): void {
     this.code[jumpIndex].operand = this.code.length;
+  }
+
+  patchJumpTo(jumpIndex: number, target: number): void {
+    this.code[jumpIndex].operand = target;
   }
 
   currentPos(): number {
