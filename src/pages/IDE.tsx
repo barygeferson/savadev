@@ -1457,6 +1457,12 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
                       }}
                     />
                   )}
+                  {sidePanel === 'hardware' && (
+                    <HardwarePanel
+                      source={activeFile?.content ?? ''}
+                      onAppendLog={(line) => setOutput(prev => [...prev, line])}
+                    />
+                  )}
                   {sidePanel === 'settings' && (
                     <IdeSettingsPanel settings={settings} onChange={setSettings} />
                   )}
