@@ -333,84 +333,77 @@ export class Compiler {
   }
 
   private compileWhile(node: AST.WhileStatement, fn: FunctionCompiler): void {
+    const ctx: LoopContext = { breakJumps: [], continueJumps: [] };
+    fn.loopStack.push(ctx);
+
     const loopStart = fn.currentPos();
     this.compileNode(node.condition, fn);
     const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
     this.compileStatements(node.body.statements, fn);
+
+    // continue target = loop top
+    for (const j of ctx.continueJumps) fn.patchJumpTo(j, loopStart);
+
     fn.emit(OpCode.JUMP, loopStart, node.line);
     fn.patchJump(exitJump);
+    for (const j of ctx.breakJumps) fn.patchJump(j);
+    fn.loopStack.pop();
   }
 
   private compileForEach(node: AST.ForEachStatement, fn: FunctionCompiler): void {
-    const iterVar = `__iter_${node.line}`;
-    const idxVar = `__idx_${node.line}`;
-
-    this.compileNode(node.iterable, fn);
-    fn.emit(OpCode.DEFINE, iterVar, node.line);
-
-    fn.emit(OpCode.PUSH_NUM, 0, node.line);
-    fn.emit(OpCode.DEFINE, idxVar, node.line);
-
-    const loopStart = fn.currentPos();
-    // len(__iter) > __idx
-    fn.emit(OpCode.LOAD, 'len', node.line);
-    fn.emit(OpCode.LOAD, iterVar, node.line);
-    fn.emit(OpCode.CALL, 1, node.line);
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.GT, undefined, node.line);
-    const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
-
-    // item = __iter[__idx]
-    fn.emit(OpCode.LOAD, iterVar, node.line);
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.INDEX_GET, undefined, node.line);
-    fn.emit(OpCode.DEFINE, node.variable, node.line);
-
-    this.compileStatements(node.body.statements, fn);
-
-    // __idx = __idx + 1
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.PUSH_NUM, 1, node.line);
-    fn.emit(OpCode.ADD, undefined, node.line);
-    fn.emit(OpCode.STORE, idxVar, node.line);
-
-    fn.emit(OpCode.JUMP, loopStart, node.line);
-    fn.patchJump(exitJump);
+    this.compileIndexedForLoop(node.variable, node.iterable, node.body, node.line, fn);
   }
 
   private compileForIn(node: AST.ForInStatement, fn: FunctionCompiler): void {
-    // ForIn is same as ForEach in sdev
-    const iterVar = `__iter_${node.line}`;
-    const idxVar = `__idx_${node.line}`;
+    this.compileIndexedForLoop(node.variable, node.iterable, node.body, node.line, fn);
+  }
 
-    this.compileNode(node.iterable, fn);
-    fn.emit(OpCode.DEFINE, iterVar, node.line);
+  private compileIndexedForLoop(
+    variable: string,
+    iterable: AST.ASTNode,
+    body: AST.BlockStatement,
+    line: number,
+    fn: FunctionCompiler
+  ): void {
+    const iterVar = `__iter_${line}_${fn.currentPos()}`;
+    const idxVar = `__idx_${line}_${fn.currentPos()}`;
+    const ctx: LoopContext = { breakJumps: [], continueJumps: [] };
+    fn.loopStack.push(ctx);
 
-    fn.emit(OpCode.PUSH_NUM, 0, node.line);
-    fn.emit(OpCode.DEFINE, idxVar, node.line);
+    this.compileNode(iterable, fn);
+    fn.emit(OpCode.DEFINE, iterVar, line);
+
+    fn.emit(OpCode.PUSH_NUM, 0, line);
+    fn.emit(OpCode.DEFINE, idxVar, line);
 
     const loopStart = fn.currentPos();
-    fn.emit(OpCode.LOAD, 'len', node.line);
-    fn.emit(OpCode.LOAD, iterVar, node.line);
-    fn.emit(OpCode.CALL, 1, node.line);
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.GT, undefined, node.line);
-    const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, node.line);
+    fn.emit(OpCode.LOAD, 'len', line);
+    fn.emit(OpCode.LOAD, iterVar, line);
+    fn.emit(OpCode.CALL, 1, line);
+    fn.emit(OpCode.LOAD, idxVar, line);
+    fn.emit(OpCode.GT, undefined, line);
+    const exitJump = fn.emitJump(OpCode.JUMP_IF_FALSE, line);
 
-    fn.emit(OpCode.LOAD, iterVar, node.line);
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.INDEX_GET, undefined, node.line);
-    fn.emit(OpCode.DEFINE, node.variable, node.line);
+    fn.emit(OpCode.LOAD, iterVar, line);
+    fn.emit(OpCode.LOAD, idxVar, line);
+    fn.emit(OpCode.INDEX_GET, undefined, line);
+    fn.emit(OpCode.DEFINE, variable, line);
 
-    this.compileStatements(node.body.statements, fn);
+    this.compileStatements(body.statements, fn);
 
-    fn.emit(OpCode.LOAD, idxVar, node.line);
-    fn.emit(OpCode.PUSH_NUM, 1, node.line);
-    fn.emit(OpCode.ADD, undefined, node.line);
-    fn.emit(OpCode.STORE, idxVar, node.line);
+    // continue target = increment step
+    const incrPos = fn.currentPos();
+    for (const j of ctx.continueJumps) fn.patchJumpTo(j, incrPos);
 
-    fn.emit(OpCode.JUMP, loopStart, node.line);
+    fn.emit(OpCode.LOAD, idxVar, line);
+    fn.emit(OpCode.PUSH_NUM, 1, line);
+    fn.emit(OpCode.ADD, undefined, line);
+    fn.emit(OpCode.STORE, idxVar, line);
+
+    fn.emit(OpCode.JUMP, loopStart, line);
     fn.patchJump(exitJump);
+    for (const j of ctx.breakJumps) fn.patchJump(j);
+    fn.loopStack.pop();
   }
 
   private compileTryCatch(node: AST.TryStatement, fn: FunctionCompiler): void {
