@@ -997,6 +997,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
     { id: 'outline'  as SidePanel, icon: ListTree,  label: 'Outline (Ctrl+Shift+O)' },
     { id: 'problems' as SidePanel, icon: AlertCircle, label: `Problems (${problems.length})` },
     { id: 'assistant' as SidePanel, icon: Sparkles,  label: 'AI Doctor — fix & explain' },
+    { id: 'hardware' as SidePanel, icon: Usb,       label: 'Hardware — boards & uploader' },
     { id: 'settings' as SidePanel, icon: Settings,  label: 'Settings' },
   ];
 
