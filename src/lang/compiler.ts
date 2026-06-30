@@ -237,15 +237,19 @@ export class Compiler {
         this.compileTryCatch(node, fn);
         break;
 
-      case 'BreakStatement':
-        // Handled by loop compilation via jump patching
-        // For now emit a NOP placeholder
-        fn.emit(OpCode.NOP, undefined, node.line);
+      case 'BreakStatement': {
+        const ctx = fn.loopStack[fn.loopStack.length - 1];
+        if (!ctx) throw new SdevError("'break' used outside of a loop", node.line);
+        ctx.breakJumps.push(fn.emitJump(OpCode.JUMP, node.line));
         break;
+      }
 
-      case 'ContinueStatement':
-        fn.emit(OpCode.NOP, undefined, node.line);
+      case 'ContinueStatement': {
+        const ctx = fn.loopStack[fn.loopStack.length - 1];
+        if (!ctx) throw new SdevError("'continue' used outside of a loop", node.line);
+        ctx.continueJumps.push(fn.emitJump(OpCode.JUMP, node.line));
         break;
+      }
 
       case 'ClassDeclaration':
         this.compileClass(node, fn);
