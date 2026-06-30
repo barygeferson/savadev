@@ -3,7 +3,7 @@
 // about the hardware DSL. The blocks are extracted separately for transpilation
 // to Arduino .ino by `src/lang/hardware/transpile.ts`.
 
-import { extractBoardBlock } from './hardware/transpile';
+import { extractBoardBlock } from './transpile';
 
 export function stripBoardBlocks(source: string): string {
   let out = source;
