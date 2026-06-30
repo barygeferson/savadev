@@ -32,8 +32,9 @@ import {
   ChevronDown, Search, Terminal, Code, BookOpen, RotateCcw,
   Maximize2, Minimize2, SplitSquareHorizontal, FolderOpen, Command,
   Bug, Palette, X, Languages, RefreshCw, CheckCircle2, Eye, EyeOff,
-  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe,
+  AlertCircle, Hash, Wand2, ListTree, ArrowRight, Sparkles, Github, Globe, Usb,
 } from 'lucide-react';
+import { HardwarePanel } from '@/components/ide/HardwarePanel';
 import { GitHubPushDialog } from '@/components/ide/GitHubPushDialog';
 import { toast } from 'sonner';
 import type { IdeFile, IdeFolder, SidePanel, IdeSettings } from '@/components/ide/types';
