@@ -4,11 +4,10 @@
 // Browser-only. Guard callers with `isWebSerialSupported()`.
 
 
-function toBuf(bytes: number[] | Uint8Array): Uint8Array {
+function toBuf(bytes: number[] | Uint8Array): ArrayBuffer {
   const buf = new ArrayBuffer(bytes.length);
-  const u = new Uint8Array(buf);
-  u.set(bytes as ArrayLike<number>);
-  return u;
+  new Uint8Array(buf).set(bytes as ArrayLike<number>);
+  return buf;
 }
 export function isWebSerialSupported(): boolean {
   return typeof navigator !== 'undefined' && 'serial' in navigator;
