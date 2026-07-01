@@ -3024,5 +3024,48 @@ Use **Open in new tab** to pop it out, or **Download** to save the `.html` file.
 
 ---
 
+## Hardware / Microcontrollers
+
+sdev can program Arduino, ESP32, ESP8266, Raspberry Pi Pico, Teensy, and more via the `board { }` DSL. Full reference lives in **`SDEV_HARDWARE_DOCUMENTATION.md`**.
+
+Quick blink:
+
+```sdev
+board "uno" {
+  conjure setup() ::
+    pin 13 be output
+  ;;
+  conjure loop() ::
+    pin 13 write high
+    wait 500
+    pin 13 write low
+    wait 500
+  ;;
+}
+```
+
+Open the IDE's Hardware panel (USB icon in the left sidebar) → **Detect Board** → **Upload**. Supports the full Arduino library ecosystem via the built-in Library Manager (backed by Arduino's official index).
+
+Highlights added in this release:
+- `board "<target>" { setup(), loop() }` blocks — targets: `uno`, `nano`, `nano-old`, `mega`, `leonardo`, `micro`, `esp32`, `esp32-s3`, `esp8266`, `pico`, `teensy41`.
+- Hardware statements: `pin N be output|input|input_pullup`, `pin N write high|low`, `pin N read`, `analog N read/write`, `wait`, `wait_us`, `now()`, `serial begin/print/println/read/avail`, `tone`, `notone`, `pulsein`, `shiftout`, `attach`/`detach`.
+- `use "LibraryName"` for any Arduino C++ library.
+- `cpp { ... }` raw C++ escape hatch.
+- Web Serial-based board detection (USB VID/PID lookup), STK500v1 flasher for AVR, `esptool-js` for ESP, UF2 drop for RP2040.
+- Serial Monitor with baud selector (300 – 2 000 000).
+- Library Manager mirroring `downloads.arduino.cc/libraries/library_index.json`.
+
+### Bytecode compiler upgrades
+
+Shipped alongside the hardware layer:
+- Proper `break` / `continue` in `cycle` (while) and `iterate` (forEach / forIn) loops via a shared `LoopContext` stack — these previously compiled to `NOP`.
+- Bitwise opcodes (`BIT_AND`/`OR`/`XOR`/`NOT`/`SHL`/`SHR`) for register-level firmware work.
+- Systems opcodes: `SYSCALL`, `ALLOC`, `FREE`, `HEAP_LOAD`, `HEAP_STORE`, `INTERRUPT`.
+- Task opcodes: `TASK_CREATE`, `TASK_YIELD`, `TASK_KILL`.
+- Binary chunk format v2: `magic "SDEV" | version | len | JSON payload` (`serializeChunk` / `deserializeChunk`).
+
+---
+
 *This documentation covers sdev version 1.x. For the latest updates and additional examples, visit the sdev IDE.*
+
 
